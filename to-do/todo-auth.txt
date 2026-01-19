@@ -1,0 +1,37 @@
+* Module Authetification:
+    	- Firebase:
+    		- Inscription Utilisateurs
+    		- Authentification Utilisateurs
+		- Gestion de sessions
+		- Gestion de tentatives de connexion
+    		- Gestion de synchronisation entre DB local / DB Firebase
+    		
+    	- Base de données (POSTGRES):
+    		- Table Utilisateurs (id, mail, password, dure_session, tentative_connexion, etc...)
+    		
+    	- Mobile:
+    		- Front-office:
+    			- Formulaire d'authenification en ligne (firebase)
+    		- Back-office:
+    			- Envoi des credentials à Firebase
+    			- Vérification authentification
+    			
+    	- Web:
+    		- Back-office:
+    			- Verification session
+    			- Verification tentatives
+    			- 
+    		- Front-office:
+    			- Formulaire d'authentification web
+    			
+    		
+    	- ID GENERATOR (Fournissaur d'identification):
+    		- Inscription d'utilisateur
+    		- Connexion d'utilisateur (en-ligne + hors-ligne)
+    		- Generateur de token local
+    		- Recuperation et affectation de token (en-ligne + hors-ligne)
+    		- Gestion de session
+			- Modification infos USERS
+			- Documentation API via Swagger
+    		
+    		

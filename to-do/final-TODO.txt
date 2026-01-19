@@ -1,0 +1,137 @@
+Setup DOCKER
+- Installation DOCKER : 
+    - base Postgres
+    - serveur de carte Offline
+        - ville ANTANANARIVO aves ses rues
+    - serveur ID Generator
+    - serveur Back Web
+    - serveur Front Web
+        - Utiliser leaflet pour afficher/manipuler la carte dans l’application web
+
+* Module Authetification:
+    	- Firebase:
+    		- Inscription Utilisateurs
+    		- Authentification Utilisateurs
+		- Gestion de sessions
+		- Gestion de tentatives de connexion
+    		- Gestion de synchronisation entre DB local / DB Firebase
+    		
+    	- Base de données (POSTGRES):
+    		- Table Utilisateurs (id, mail, password, dure_session, tentative_connexion, etc...)
+    		
+    	- Mobile:
+    		- Front-office:
+    			- Formulaire d'authenification en ligne (firebase)
+    		- Back-office:
+    			- Envoi des credentials à Firebase
+    			- Vérification authentification
+    			
+    	- Web:
+    		- Back-office:
+    			- Verification session
+    			- Verification tentatives
+    			- 
+    		- Front-office:
+    			- Formulaire d'authentification web
+    			
+    		
+    	- ID GENERATOR (Fournissaur d'identification):
+    		- Inscription d'utilisateur
+    		- Connexion d'utilisateur (en-ligne + hors-ligne)
+    		- Generateur de token local
+    		- Recuperation et affectation de token (en-ligne + hors-ligne)
+    		- Gestion de session
+			- Modification infos USERS
+			- Documentation API via Swagger
+    		
+* Module WEB:		
+    - Backend Firebase 
+        - Fonctions :
+            - CRUD des signalements
+            - synchronisation :
+                - Signalement 
+                - Users 
+    - Backend WEB :
+        - Fonctionnalités par Profil :
+            - Visiteur (sans compte)
+                - Voir la carte avec les différents points représentants les Signalement d'un problème routier
+                - Affichage signalement : lorsqu'on survole un point, voir les infos sur le problème :
+                    - date
+                    - statut (nouveau, en cours, terminé)
+                    - surface en m2
+                    - budget
+                    - entreprise concernée
+                - Filtre des signalements
+                    - par statut en cours
+                    - par surface min
+                    - par surface max
+            - Manager 
+                - Bouton "Synchronisation"
+                    - Récupérer les signalements en ligne (FIREBASE)
+                    - Envoi les données nécessaires en ligne (FIREBASE) pour un affichage sur Mobile
+                - Débloquer les Utilisateur bloqués
+                - Gestion des signalements
+                    - Ajout/Affichage/Suppresion/Modification signalement : lorsqu'on survole un point de signalement de problèmes routiers sur carte
+                        - Infos :
+                            - date
+                            - statut (nouveau, en cours, terminé)
+                            - surface en m2
+                            - budget
+                            - entreprise concernée
+                        - Modification des statut de chaque signalement
+                    - Filtre des signalements
+                        - par statut en cours
+                        - par surface min
+                        - par surface max
+    - Frontend WEB
+        - Page login (1):
+            - Connexion Manager
+            - Connexion sans compte (Visiteur)
+        - Page Visiteur (1) :
+            - Voir la carte avec les différents points représentants les Signalement d'un problème routier
+                - Affichage signalement : lorsqu'on survole un point, voir les infos sur le problème :
+                    - date
+                    - statut (nouveau, en cours, terminé)
+                    - surface en m2
+                    - budget
+                    - entreprise concernée
+        - Page (3) : 
+            - Voir la carte avec les différents points représentants les Signalement d'un problème routier
+                - Ajout/Affichage/Suppresion/Modification signalement : lorsqu'on survole un point de signalement de problèmes routiers sur carte signalement : lorsqu'on survole un point, voir les infos sur le problème :
+                    - date
+                    - statut (nouveau, en cours, terminé)
+                    - surface en m2
+                    - budget
+                    - entreprise concernée
+            - Page de Synchronisation :
+                - Bouton  => Synchroniser les  Utilisateurs (bloqués et débloqué)
+                - Bouton  => Récupérer les signalements en ligne (FIREBASE)
+                - Bouton  => Envoi les données nécessaires en ligne (FIREBASE) pour un affichage sur Mobile
+            - Page de déblocage des Utilisateur bloqués 
+
+* Module Mobile:		
+    - Backend Firebase :
+        - Récupération des données depuis le formulaire d'authenification mobile
+        - Réception et envoie de données de signalement
+    - Frontend 
+        - Page (1) Utilisateur (Affichage cartes avec Leaflet de OpenStreetMap)
+            - Authentification via FIREBASE
+            - Ajout de Signalement d'un problème routier 
+                - Infos :
+                    - date
+                    - statut (nouveau, en cours, terminé)
+                    - surface en m2
+                    - budget
+                    - entreprise concernée
+            - Affichage signalement : lorsqu'on survole un point, voir les infos sur le problème :
+                - Infos :
+                    - date
+                    - statut (nouveau, en cours, terminé)
+                    - surface en m2
+                    - budget
+                    - entreprise concernée
+            - Filtre des signalements
+                - mes signalements uniquement
+                - par statut en cours
+                - par surface min
+                - par surface max

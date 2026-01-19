@@ -1,0 +1,23 @@
+- Backend
+- Frontend Mobile
+    - Utilisateur (Affichage cartes avec Leaflet de OpenStreetMap)
+        - Authentification via FIREBASE
+        - Ajout de Signalement d'un problème routier 
+            - Infos :
+                - date
+                - statut (nouveau, en cours, terminé)
+                - surface en m2
+                - budget
+                - entreprise concernée
+        - Affichage signalement : lorsqu'on survole un point, voir les infos sur le problème :
+            - Infos :
+                - date
+                - statut (nouveau, en cours, terminé)
+                - surface en m2
+                - budget
+                - entreprise concernée
+        - Filtre des signalements
+            - mes signalements uniquement
+            - par statut en cours
+            - par surface min
+            - par surface max

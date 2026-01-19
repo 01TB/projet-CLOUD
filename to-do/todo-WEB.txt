@@ -1,0 +1,97 @@
+- Backend FIREBASE 
+    - Fonctions :
+        - CRUD des signalements
+            - getAllSignalements()
+            - getSignament(id)
+            - deleteSignament(id)
+            - updateSignament(id,...)
+        - blockUser(idUser)
+        - fonctions de Synchronisation :
+            - Signalement :
+                - getAllDockerSignalements()
+                - sendAllSignalements()
+            - Users :
+                - getUsersBlocked()
+                - sendUsersBlocked()
+
+- DOCKER
+    - Installation DOCKER : 
+        - base Postgres
+        - serveur de carte Offline
+            - ville ANTANANARIVO aves ses rues
+        - serveur ID Generator
+        - serveur Back Web
+        - serveur Front Web
+            - Utiliser leaflet pour afficher/manipuler la carte dans l’application web
+    - WEB Service - Backend WEB
+        - Fonctions :
+            - CRUD des signalements
+                - getAllSignalements()
+                - getSignament(id)
+                - deleteSignament(id)
+                - updateSignament(id,...)
+            - blockUser(idUser)
+            - fonctions de Synchronisation :
+                - Signalement :
+                    - getAllOnlineSignalements()
+                    - sendAllSignalements()
+                - Users :
+                    - getUsersBlocked()
+                    - sendUsersBlocked()
+        - Fonctionnalités par Profil :
+            - Visiteur (sans compte)
+                - Voir la carte avec les différents points représentants les Signalement d'un problème routier
+                - Affichage signalement : lorsqu'on survole un point, voir les infos sur le problème :
+                    - date
+                    - statut (nouveau, en cours, terminé)
+                    - surface en m2
+                    - budget
+                    - entreprise concernée
+                - Filtre des signalements
+                    - par statut en cours
+                    - par surface min
+                    - par surface max
+            - Manager 
+                - Bouton "Synchronisation"
+                    - Récupérer les signalements en ligne (FIREBASE)
+                    - Envoi les données nécessaires en ligne (FIREBASE) pour un affichage sur Mobile
+                - Débloquer les Utilisateur bloqués
+                - Gestion des signalements
+                    - Ajout/Affichage/Suppresion/Modification signalement : lorsqu'on survole un point de signalement de problèmes routiers sur carte
+                        - Infos :
+                            - date
+                            - statut (nouveau, en cours, terminé)
+                            - surface en m2
+                            - budget
+                            - entreprise concernée
+                        - Modification des statut de chaque signalement
+                    - Filtre des signalements
+                        - par statut en cours
+                        - par surface min
+                        - par surface max
+
+    - Frontend WEB
+        - Page login (1):
+            - Connexion Manager
+            - Connexion sans compte (Visiteur)
+        - Page Visiteur (1) :
+            - Voir la carte avec les différents points représentants les Signalement d'un problème routier
+                - Affichage signalement : lorsqu'on survole un point, voir les infos sur le problème :
+                    - date
+                    - statut (nouveau, en cours, terminé)
+                    - surface en m2
+                    - budget
+                    - entreprise concernée
+        - Page (3) : 
+            - Voir la carte avec les différents points représentants les Signalement d'un problème routier
+                - Ajout/Affichage/Suppresion/Modification signalement : lorsqu'on survole un point de signalement de problèmes routiers sur carte signalement : lorsqu'on survole un point, voir les infos sur le problème :
+                    - date
+                    - statut (nouveau, en cours, terminé)
+                    - surface en m2
+                    - budget
+                    - entreprise concernée
+            - Page de Synchronisation :
+                - Bouton  => Synchroniser les  Utilisateurs (bloqués et débloqué)
+                - Bouton  => Récupérer les signalements en ligne (FIREBASE)
+                - Bouton  => Envoi les données nécessaires en ligne (FIREBASE) pour un affichage sur Mobile
+            - Page de déblocage des Utilisateur bloqués 

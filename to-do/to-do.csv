@@ -1,0 +1,67 @@
+Categorie,Module,Tâches,Type,Qui,Estimation (min)
+Infrastructure,Environment,Setup Docker + PostgreSQL,Configuration,ETU003117,60
+Infrastructure,Environment,Configurer Firebase Auth,Configuration,ETU003097,45
+Infrastructure,Carte Offline,Installer TileServer GL,Configuration,ETU003166,90
+Infrastructure,Carte Offline,Télécharger données Antananarivo,Téléchargement,ETU003150,120
+Infrastructure,Environment,Serveur ID Generator,Configuration,ETU003117,60
+Infrastructure,Environment,Serveur Back Web,Configuration,ETU003097,60
+Infrastructure,Environment,Serveur Front Web,Configuration,ETU003166,60
+Backend,Authentification,Modele User (PostgreSQL),Métier,ETU003150,45
+Backend,Authentification,API Inscription (POST),Métier,ETU003117,60
+Backend,Authentification,API Connexion (POST),Métier,ETU003097,60
+Backend,Authentification,Gestion sessions (JWT),Métier,ETU003166,90
+Backend,Authentification,Blocage après 3 tentatives,Métier,ETU003150,45
+Backend,Authentification,API Déblocage utilisateur,Métier,ETU003117,30
+Backend,Authentification,Documentation Swagger,Documentation,ETU003097,120
+Backend,Authentification,API Connexion hors-ligne (ID Generator),Métier,ETU003166,60
+Backend,Authentification,API Récupération token local,Métier,ETU003150,60
+Backend,Signalements,Modele RoadIssue,Métier,ETU003117,60
+Backend,Signalements,API Création signalement,Métier,ETU003097,90
+Backend,Signalements,API Liste signalements,Métier,ETU003166,60
+Backend,Signalements,API Mise à jour statut,Métier,ETU003150,45
+Backend,Signalements,API Filtrage signalements (statut, surface),Métier,ETU003117,90
+Backend,Signalements,API Synchronisation Firebase (CRUD),Métier,ETU003097,90
+Frontend Web,Authentification,Synchronisation Firebase,Métier,ETU003166,60
+Frontend Web,Authentification,Page Login,Affichage,ETU003150,60
+Frontend Web,Authentification,Page Inscription,Affichage,ETU003117,120
+Frontend Web,Authentification,Intégration API Login,Intégration,ETU003097,90
+Frontend Web,Authentification,Intégration API Inscription,Intégration,ETU003166,60
+Frontend Web,Carte,Intégration Leaflet,Affichage,ETU003150,90
+Frontend Web,Carte,Affichage points interactifs,Affichage,ETU003117,120
+Frontend Web,Carte,Tooltip infos signalement,Affichage,ETU003097,60
+Frontend Web,Carte,Récapitulatif (tableau),Affichage,ETU003166,30
+Frontend Web,Carte,Connexion API signalements,Intégration,ETU003150,90
+Frontend Web,Visiteur,Vue publique (carte + tableau),Affichage,ETU003117,60
+Frontend Web,Visiteur,Sans auth,Métier,ETU003097,120
+Frontend Web,Visiteur,Filtre signalements (statut, surface),Affichage,ETU003166,90
+Frontend Web,Utilisateur,Page profil,Affichage,ETU003150,120
+Frontend Web,Utilisateur,Modification infos,Métier,ETU003117,30
+Frontend Web,Utilisateur,Création signalement (form),Affichage,ETU003097,90
+Frontend Web,Utilisateur,Envoi signalement API,Intégration,ETU003166,60
+Frontend Web,Manager,Dashboard manager,Affichage,ETU003150,120
+Frontend Web,Manager,Bouton synchronisation,Affichage,ETU003117,90
+Frontend Web,Manager,Logique synchronisation,Métier,ETU003097,150
+Frontend Web,Manager,Page déblocage utilisateurs,Affichage,ETU003166,90
+Frontend Web,Manager,API déblocage (intégration),Intégration,ETU003150,120
+Frontend Web,Manager,Gestion statuts signalements,Affichage,ETU003117,90
+Frontend Web,Manager,Filtre signalements manager,Affichage,ETU003097,60
+Mobile,Authentification,Page Login mobile,Affichage,ETU003166,45
+Mobile,Authentification,Intégration Firebase Auth,Intégration,ETU003150,120
+Mobile,Carte,Intégration Leaflet mobile,Affichage,ETU003117,180
+Mobile,Carte,Geolocalisation,Métier,ETU003097,150
+Mobile,Carte,Création signalement (carte),Affichage,ETU003166,120
+Mobile,Carte,Envoi signalement Firebase,Intégration,ETU003150,90
+Mobile,Fonctionnalités,Affichage récapitulatif,Affichage,ETU003117,120
+Mobile,Fonctionnalités,Filtre "mes signalements",Métier,ETU003097,60
+Mobile,Fonctionnalités,Synchronisation données,Intégration,ETU003166,45
+Mobile,Fonctionnalités,Filtre signalements (statut, surface),Métier,ETU003150,60
+Tests,Backend,Tests unitaires API,Test,ETU003117,90
+Tests,Frontend Web,Tests E2E (Cypress),Test,ETU003097,45
+Tests,Mobile,Tests fonctionnels,Test,ETU003166,30
+Documentation,Technique,MCD (Modele Conceptuel),Documentation,ETU003150,60
+Documentation,Technique,Scénarios utilisateurs,Documentation,ETU003117,90
+Documentation,Technique,Capture écrans,Documentation,ETU003097,120
+Documentation,Projet,README GitHub,Documentation,ETU003166,60
+Livrables,Déploiement,Build APK mobile,Build,ETU003150,45
+Livrables,Déploiement,Hébergement web (ex: Vercel),Déploiement,ETU003117,60
+Livrables,Déploiement,Backup base de données,Configuration,ETU003097,90
