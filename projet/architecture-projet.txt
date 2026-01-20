@@ -1,0 +1,29 @@
+signalisation-routiere/
+│
+├── docker-compose.yml          # Orchestration des services
+├── .env                        # Variables d'environnement
+│
+├── backend/                    # Module Web + Authentification (Spring Boot)
+│   ├── Dockerfile
+│   ├── src/
+│   └── pom.xml
+│
+├── frontend-web/               # Frontend Web (Angular)
+│   ├── Dockerfile
+│   ├── src/
+│   └── package.json
+│
+├── mobile-api/                 # Module mobile (Firebase cloud functions / Node.js)
+│   ├── Dockerfile
+│   ├── src/
+│   └── package.json
+│
+├── tileserver/                 # Carte offline Antananarivo (TileServer GL)
+│   ├── Dockerfile
+│   └── data/                   # Fichiers .mbtiles de la carte
+│
+├── postgres/                   # Base de données PostgreSQL + PostGIS
+│   └── init.sql                # Initialisation de la base avec PostGIS
+│
+└── nginx/                      # Reverse proxy optionnel
+    └── nginx.conf
