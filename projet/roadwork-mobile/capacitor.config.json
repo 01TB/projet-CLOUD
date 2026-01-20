@@ -1,0 +1,20 @@
+{
+  "appId": "com.roadwork.mobile",
+  "appName": "RoadWork Mobile",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true
+  },
+  "plugins": {
+    "Geolocation": {
+      "enableHighAccuracy": true
+    },
+    "Camera": {
+      "quality": 90
+    },
+    "Network": {
+      "interfaceName": "en0"
+    }
+  }
+}
