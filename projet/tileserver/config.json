@@ -1,0 +1,48 @@
+{
+  "options": {
+    "paths": {
+      "root": "/data",
+      "fonts": "fonts",
+      "sprites": "sprites",
+      "styles": "styles",
+      "mbtiles": "/data"
+    },
+    "formatQuality": {
+      "jpeg": 85,
+      "webp": 90,
+      "png": 100
+    },
+    "maxScaleFactor": 3,
+    "pbfAlias": "pbf",
+    "serveStaticMaps": true,
+    "domains": ["localhost", "tileserver"],
+    "headers": {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type"
+    }
+  },
+  "data": {
+    "antananarivo": {
+      "mbtiles": "antananarivo.mbtiles",
+      "description": "Carte offline d'Antananarivo - Signalisation Routière",
+      "bounds": [47.46, -18.98, 47.59, -18.82],
+      "center": [47.5079, -18.8792, 13],
+      "minzoom": 10,
+      "maxzoom": 18,
+      "format": "png"
+    }
+  },
+  "styles": {
+    "osm-bright": {
+      "style": "osm-bright",
+      "tilejson": {
+        "type": "overlay"
+      }
+    },
+    "basic": {
+      "style": "https://raw.githubusercontent.com/maptiler/tileserver-gl/master/styles/basic-preview/style.json",
+      "serve_rendered": false
+    }
+  }
+}

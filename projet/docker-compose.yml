@@ -1,87 +1,236 @@
 version: '3.8'
 
+# Définition des réseaux
+networks:
+  signalisation-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# Définition des volumes
+volumes:
+  postgres_data:
+    driver: local
+  tileserver_data:
+    driver: local
+  backend_logs:
+    driver: local
+
+# Services
 services:
-  postgis:
-    image: postgis/postgis:15-3.3
-    container_name: postgis_db
+  # ========== BASE DE DONNÉES ==========
+  postgres:
+    image: postgis/postgis:15-3.3-alpine
+    container_name: signalisation-postgres
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: signalisation
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: securepassword
+      POSTGRES_DB: ${POSTGRES_DB:-signalisation_db}
+      POSTGRES_USER: ${POSTGRES_USER:-signalisation_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-Signalisation2024!}
       POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+      PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./postgres/migrations:/docker-entrypoint-initdb.d/migrations
     networks:
-      - app-network
+      signalisation-network:
+        ipv4_address: 172.20.0.10
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-signalisation_user} -d ${POSTGRES_DB:-signalisation_db}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    command: >
+      postgres -c shared_buffers=256MB
+               -c max_connections=200
+               -c effective_cache_size=1GB
 
+  # ========== BACKEND SPRING BOOT ==========
   backend:
-    build: ./backend
-    container_name: springboot_backend
-    ports:
-      - "8080:8080"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgis:5432/signalisation
-      SPRING_DATASOURCE_USERNAME: admin
-      SPRING_DATASOURCE_PASSWORD: securepassword
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        JAR_FILE: target/*.jar
+    container_name: signalisation-backend
+    restart: unless-stopped
     depends_on:
-      - postgis
-    networks:
-      - app-network
-
-  frontend-web:
-    build: ./frontend-web
-    container_name: angular_frontend
+      postgres:
+        condition: service_healthy
     ports:
-      - "4200:4200"
+      - "${BACKEND_PORT:-8080}:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-signalisation_db}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-signalisation_user}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-Signalisation2024!}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
+      SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: true
+      JWT_SECRET: ${JWT_SECRET:-YourSuperSecretKeyForJWT2024!}
+      JWT_EXPIRATION: 86400000
+    volumes:
+      - backend_logs:/app/logs
+      - ./backend/application-docker.yml:/app/config/application.yml:ro
+    networks:
+      signalisation-network:
+        ipv4_address: 172.20.0.20
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=PathPrefix(`/api`)"
+      - "traefik.http.services.backend.loadbalancer.server.port=8080"
+
+  # ========== TILESERVER GL (CARTE OFFLINE) ==========
+  tileserver:
+    build:
+      context: ./tileserver
+      dockerfile: Dockerfile
+    container_name: signalisation-tileserver
+    restart: unless-stopped
+    ports:
+      - "${TILESERVER_PORT:-8081}:8080"
+    environment:
+      NODE_ENV: production
+      THREADS: 4
+      CORS: "*"
+      MAX_ZOOM: 18
+      MIN_ZOOM: 10
+      CACHE_SIZE: 512
+    volumes:
+      - tileserver_data:/data
+      - ./tileserver/config.json:/data/config.json:ro
+    networks:
+      signalisation-network:
+        ipv4_address: 172.20.0.30
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 15s
+      retries: 3
+    command: >
+      tileserver-gl-light
+      --config /data/config.json
+      --verbose
+      --public_url http://localhost:${TILESERVER_PORT:-8081}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tileserver.rule=Host(`tileserver.localhost`)"
+
+  # ========== FRONTEND ANGULAR ==========
+  frontend:
+    build:
+      context: ./frontend-web
+      dockerfile: Dockerfile
+      args:
+        NODE_ENV: production
+    container_name: signalisation-frontend
+    restart: unless-stopped
     depends_on:
       - backend
-    networks:
-      - app-network
-
-  tileserver:
-    build: ./tileserver
-    container_name: tileserver_gl
+      - tileserver
     ports:
-      - "8081:8080"
-    volumes:
-      - ./tileserver/data:/data
-    networks:
-      - app-network
-
-  mobile-api:
-    build: ./mobile-api
-    container_name: firebase_mobile_api
-    ports:
-      - "5000:5000"
+      - "${FRONTEND_PORT:-4200}:80"
     environment:
-      FIREBASE_CREDENTIALS: /app/firebase-creds.json
+      NG_APP_API_URL: http://localhost:${BACKEND_PORT:-8080}/api
+      NG_APP_TILESERVER_URL: http://localhost:${TILESERVER_PORT:-8081}
+      NG_APP_MAP_CENTER_LAT: -18.8792
+      NG_APP_MAP_CENTER_LNG: 47.5079
+      NG_APP_MAP_ZOOM: 13
     volumes:
-      - ./mobile-api/firebase-creds.json:/app/firebase-creds.json:ro
+      - ./frontend-web/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./frontend-web/src/assets/config:/usr/share/nginx/html/assets/config:ro
     networks:
-      - app-network
+      signalisation-network:
+        ipv4_address: 172.20.0.40
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
+  # ========== API MOBILE FIREBASE ==========
+  mobile-api:
+    build:
+      context: ./mobile-api
+      dockerfile: Dockerfile
+    container_name: signalisation-mobile-api
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - tileserver
+    ports:
+      - "${MOBILE_API_PORT:-5000}:5000"
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
+      FIREBASE_PRIVATE_KEY: ${FIREBASE_PRIVATE_KEY}
+      FIREBASE_CLIENT_EMAIL: ${FIREBASE_CLIENT_EMAIL}
+      BACKEND_API_URL: http://backend:8080/api
+      TILESERVER_URL: http://tileserver:8080
+    volumes:
+      - ./mobile-api/firebase-config.json:/app/firebase-config.json:ro
+      - ./mobile-api/firebase-service-account.json:/app/firebase-service-account.json:ro
+    networks:
+      signalisation-network:
+        ipv4_address: 172.20.0.50
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ========== NGINX REVERSE PROXY ==========
   nginx:
-    image: nginx:alpine
-    container_name: nginx_proxy
+    image: nginx:1.23-alpine
+    container_name: signalisation-nginx
+    restart: unless-stopped
+    depends_on:
+      - frontend
+      - backend
+      - tileserver
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-    depends_on:
-      - backend
-      - frontend-web
-      - tileserver
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/logs:/var/log/nginx
     networks:
-      - app-network
+      signalisation-network:
+        ipv4_address: 172.20.0.60
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-networks:
-  app-network:
-    driver: bridge
-
-volumes:
-  postgres_data:
+  # ========== ADMINER (OPTIONNEL) ==========
+  adminer:
+    image: adminer:latest
+    container_name: signalisation-adminer
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    ports:
+      - "${ADMINER_PORT:-8082}:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+      ADMINER_DESIGN: pepa-linha
+    networks:
+      signalisation-network:
+        ipv4_address: 172.20.0.70
+    labels:
+      - "traefik.enable=false"

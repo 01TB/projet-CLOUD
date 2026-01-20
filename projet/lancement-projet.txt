@@ -1,0 +1,35 @@
+# ---------------- lancement du projet ----------------
+# 1. Rendre exécutable le script d'initialisation
+chmod +x init-project.sh
+
+# 2. Lancer l'initialisation (tout sera configuré automatiquement)
+./init-project.sh
+
+# 3. Alternative: Lancer manuellement
+docker-compose up --build -d
+
+# 4. Vérifier que tout fonctionne
+docker-compose ps
+curl http://localhost:8080/api/health
+curl http://localhost:8081/
+
+
+# ---------------- verification et tests ----------------
+# Backend Spring Boot
+curl http://localhost:8080/api/health
+# Réponse: {"status":"UP","service":"signalisation-backend"}
+
+# TileServer
+curl http://localhost:8081/
+# Doit retourner la page d'accueil de TileServer
+
+# Frontend
+curl -I http://localhost:4200
+# Doit retourner HTTP 200
+
+# Base de données
+docker exec signalisation-postgres psql -U signalisation_user -d signalisation_prod -c "SELECT PostGIS_Version();"
+
+# Mobile API
+curl http://localhost:5000/health
+
