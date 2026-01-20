@@ -8,14 +8,15 @@ WORKDIR /app
 COPY pom.xml mvnw ./
 COPY .mvn .mvn
 
-# Installer les dépendances Maven (sans le code source)
-RUN ./mvnw dependency:go-offline
+# Installer uniquement les dépendances déclarées dans le pom local (mode batch, sans interaction)
+# Référence explicite du pom pour éviter que Maven n'explore un parent ou d'autres modules présents
+RUN ./mvnw -B -f pom.xml -DskipTests dependency:go-offline
 
 # Copier le code source
 COPY src ./src
 
-# Build du jar (skip tests pour accélérer)
-RUN ./mvnw clean package -DskipTests
+# Build du jar (mode batch, skip tests pour accélérer)
+RUN ./mvnw -B -f pom.xml -ntp clean package -DskipTests
 
 # --------------------------
 # Étape 2 : Image finale
