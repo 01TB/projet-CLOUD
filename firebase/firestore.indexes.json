@@ -1,0 +1,78 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "signalements",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "id_utilisateur_createur", "order": "ASCENDING" },
+        { "fieldPath": "date_creation", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "signalements",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "id_entreprise", "order": "ASCENDING" },
+        { "fieldPath": "date_creation", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "signalements",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "synchro", "order": "ASCENDING" },
+        { "fieldPath": "date_creation", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "signalements",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "id_entreprise", "order": "ASCENDING" },
+        { "fieldPath": "budget", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "avancements_signalement",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "id_signalement", "order": "ASCENDING" },
+        { "fieldPath": "date_modification", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "avancements_signalement",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "id_utilisateur", "order": "ASCENDING" },
+        { "fieldPath": "date_modification", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "avancements_signalement",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "id_signalement", "order": "ASCENDING" },
+        { "fieldPath": "id_statut_avancement", "order": "ASCENDING" },
+        { "fieldPath": "date_modification", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "utilisateurs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "id_role", "order": "ASCENDING" },
+        { "fieldPath": "email", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "utilisateurs_bloques",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "id_utilisateur", "order": "ASCENDING" },
+        { "fieldPath": "date_blocage", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
