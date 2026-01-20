@@ -1,0 +1,118 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Fonction helper pour vérifier si l'utilisateur est Manager
+    function isManager() {
+      return request.auth != null && 
+             exists(/databases/$(database)/documents/utilisateurs/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/roles/$(get(/databases/$(database)/documents/utilisateurs/$(request.auth.uid)).data.id_role)).data.nom == 'Manager';
+    }
+    
+    // Fonction helper pour vérifier si l'utilisateur est un Utilisateur simple
+    function isUtilisateur() {
+      return request.auth != null && 
+             exists(/databases/$(database)/documents/utilisateurs/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/roles/$(get(/databases/$(database)/documents/utilisateurs/$(request.auth.uid)).data.id_role)).data.nom == 'Utilisateur';
+    }
+    
+    // Fonction helper pour vérifier la propriété
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Fonction helper pour vérifier si l'utilisateur est bloqué
+    function isBlocked() {
+      return request.auth != null && exists(/databases/$(database)/documents/utilisateurs_bloques/$(request.auth.uid));
+    }
+    
+    // Collection ROLES (uniquement 2 rôles: Manager et Utilisateur)
+    match /roles/{roleId} {
+      allow read: if true; // Accessible à tous pour vérifier les rôles
+      allow write: if isManager();
+    }
+    
+    // Collection ENTREPRISES
+    match /entreprises/{entrepriseId} {
+      allow read: if true; // Visible par tous
+      allow write: if isManager();
+    }
+    
+    // Collection STATUTS_AVANCEMENT
+    match /statuts_avancement/{statutId} {
+      allow read: if true; // Visible par tous
+      allow write: if isManager();
+    }
+    
+    // Collection PARAMETRES
+    match /parametres/{parametreId} {
+      allow read: if isManager();
+      allow write: if isManager();
+    }
+    
+    // Collection UTILISATEURS
+    match /utilisateurs/{userId} {
+      // Lecture : utilisateur peut lire son propre profil ou Manager peut tout lire
+      allow read: if isOwner(userId) || isManager();
+      
+      // Création : auto-inscription avec validation (rôle Utilisateur par défaut)
+      allow create: if request.auth != null &&
+                      request.auth.uid == userId &&
+                      request.resource.data.keys().hasAll(['email', 'id_role', 'synchro']) &&
+                      get(/databases/$(database)/documents/roles/$(request.resource.data.id_role)).data.nom == 'Utilisateur'; // Seulement rôle Utilisateur à la création
+      
+      // Mise à jour : utilisateur peut modifier son profil (sauf rôle) ou Manager peut tout modifier
+      allow update: if (isOwner(userId) && request.resource.data.id_role == resource.data.id_role) ||
+                      isManager();
+      
+      allow delete: if isManager();
+    }
+    
+    // Collection UTILISATEURS_BLOQUES
+    match /utilisateurs_bloques/{blocageId} {
+      allow read: if isManager();
+      allow write: if isManager();
+    }
+    
+    // Collection SIGNALEMENTS
+    match /signalements/{signalementId} {
+      // Lecture : TOUS les visiteurs peuvent voir les signalements (même sans compte)
+      allow read: if true;
+      
+      // Création : Utilisateurs authentifiés non bloqués (Utilisateur ou Manager)
+      allow create: if request.auth != null &&
+                      !isBlocked() &&
+                      request.resource.data.keys().hasAll(['date_creation', 'surface', 'budget', 'localisation', 'synchro', 'id_utilisateur_createur', 'id_entreprise']) &&
+                      request.resource.data.id_utilisateur_createur == request.auth.uid &&
+                      request.resource.data.surface > 0 &&
+                      request.resource.data.budget > 0;
+      
+      // Mise à jour : Manager peut tout modifier, Utilisateurs ne peuvent pas modifier
+      allow update: if request.auth != null &&
+                      !isBlocked() &&
+                      isManager();
+      
+      allow delete: if isManager();
+    }
+    
+    // Collection AVANCEMENTS_SIGNALEMENT
+    match /avancements_signalement/{avancementId} {
+      // Lecture : Visible par tous (comme les signalements)
+      allow read: if true;
+      
+      // Création : Uniquement les Managers
+      allow create: if request.auth != null &&
+                      !isBlocked() &&
+                      isManager() &&
+                      request.resource.data.keys().hasAll(['date_modification', 'synchro', 'id_utilisateur', 'id_statut_avancement', 'id_signalement']) &&
+                      request.resource.data.id_utilisateur == request.auth.uid;
+      
+      // Mise à jour : Uniquement les Managers
+      allow update: if request.auth != null &&
+                      !isBlocked() &&
+                      isManager();
+      
+      allow delete: if isManager();
+    }
+  }
+}
