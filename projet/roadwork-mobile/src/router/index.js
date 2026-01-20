@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/modules/auth';
 const routes = [
   {
     path: '/',
-    redirect: '/map'
+    redirect: '/login'
   },
   {
     path: '/login',

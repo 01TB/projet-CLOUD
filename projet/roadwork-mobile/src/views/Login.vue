@@ -12,7 +12,7 @@
     <ion-content class="ion-padding">
       <div class="login-container">
         <div class="logo-section">
-          <ion-icon :icon="road" size="large" color="primary"></ion-icon>
+          <ion-icon :icon="map" size="large" color="primary"></ion-icon>
           <h2>RoadWork Mobile</h2>
           <p>Connectez-vous pour signaler des problèmes routiers</p>
         </div>
@@ -98,7 +98,7 @@ import {
   IonIcon, IonText, IonSpinner, IonBackButton, IonButtons,
   toastController
 } from '@ionic/vue';
-import { road, warning } from 'ionicons/icons';
+import { map, warning } from 'ionicons/icons';
 import { useAuthStore } from '@/store/modules/auth';
 import { Network } from '@capacitor/network';
 
