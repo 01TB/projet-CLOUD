@@ -16,6 +16,9 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  optimizeDeps: {
+    include: ['leaflet']
+  },
   test: {
     globals: true,
     environment: 'jsdom'

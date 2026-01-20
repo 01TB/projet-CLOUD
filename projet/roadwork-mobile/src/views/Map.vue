@@ -83,41 +83,31 @@
         </ion-fab-button>
       </ion-fab>
 
-      <!-- Panneau de statistiques -->
-      <ion-slides
-        v-if="showStats"
-        :options="slideOptions"
-        class="stats-slides"
-      >
-        <ion-slide>
+      <!-- Statistiques simplifiées (temporairement sans slides) -->
+      <div v-if="showStats" class="stats-container">
+        <div class="stats-grid">
           <div class="stat-card">
             <ion-icon :icon="alertCircle" size="large"></ion-icon>
             <h3>{{ stats.total_signalements || 0 }}</h3>
             <p>Signalements</p>
           </div>
-        </ion-slide>
-        <ion-slide>
           <div class="stat-card">
             <ion-icon :icon="square" size="large"></ion-icon>
             <h3>{{ stats.total_surface || 0 }} m²</h3>
             <p>Surface totale</p>
           </div>
-        </ion-slide>
-        <ion-slide>
           <div class="stat-card">
             <ion-icon :icon="cash" size="large"></ion-icon>
             <h3>{{ formatBudget(stats.total_budget) }}</h3>
             <p>Budget total</p>
           </div>
-        </ion-slide>
-        <ion-slide>
           <div class="stat-card">
             <ion-icon :icon="trendingUp" size="large"></ion-icon>
             <h3>{{ stats.avancement_moyen || 0 }}%</h3>
             <p>Avancement moyen</p>
           </div>
-        </ion-slide>
-      </ion-slides>
+        </div>
+      </div>
 
       <!-- Filtre modal -->
       <ion-modal 
@@ -177,7 +167,7 @@ import { useRouter } from 'vue-router';
 import { 
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
   IonButton, IonIcon, IonButtons, IonMenuButton, IonFab,
-  IonFabButton, IonSlides, IonSlide, IonModal, IonList,
+  IonFabButton, IonModal, IonList,
   IonListHeader, IonItem, IonCheckbox, IonLabel, IonBadge,
   alertController 
 } from '@ionic/vue';
@@ -192,12 +182,12 @@ import { useAuthStore } from '@/store/modules/auth';
 import { useSignalementsStore } from '@/store/modules/signalements';
 import L from 'leaflet';
 
-// Configuration Leaflet
+// Configuration Leaflet avec URLs CDN
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
-  iconUrl: require('leaflet/dist/images/marker-icon.png'),
-  shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 });
 
 const router = useRouter();
@@ -219,13 +209,6 @@ const filters = ref({
   statuts: ['Nouveau', 'En cours', 'Terminé'],
   mesSignalements: false
 });
-
-// Options des slides
-const slideOptions = {
-  slidesPerView: 2.5,
-  spaceBetween: 10,
-  freeMode: true
-};
 
 // Computed
 const isAuthenticated = computed(() => authStore.isAuthenticated);
@@ -453,25 +436,29 @@ onMounted(() => {
   left: 0;
 }
 
-.stats-slides {
-  position: absolute;
-  bottom: 80px;
-  width: 100%;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 10px 0;
+.stats-container {
+  padding: 1rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
 }
 
 .stat-card {
   text-align: center;
-  padding: 15px;
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  padding: 1.5rem;
+  background: var(--ion-color-light);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.stat-card ion-icon {
+  margin-bottom: 0.5rem;
 }
 
 .stat-card h3 {
-  margin: 10px 0 5px;
-  font-size: 1.5em;
   color: #2c3e50;
 }
 
