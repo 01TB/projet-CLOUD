@@ -1,0 +1,79 @@
+package web.backend.project.entities;
+
+
+import jakarta.persistence.*;
+import java.util.Objects;
+
+@Entity
+@Table(name = "parametre")
+public class Parametre {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Long id;
+
+    @Column(name = "nb_tentatives_connexion", nullable = false)
+    private Integer nbTentativesConnexion;
+
+    @Column(name = "duree_session", nullable = false)
+    private Integer dureeSession;
+
+    @Column(name = "synchro", nullable = false)
+    private Boolean synchro;
+
+    // Constructeurs
+    public Parametre() {}
+
+    public Parametre(Integer nbTentativesConnexion, Integer dureeSession, Boolean synchro) {
+        this.nbTentativesConnexion = nbTentativesConnexion;
+        this.dureeSession = dureeSession;
+        this.synchro = synchro;
+    }
+
+    // Getters et Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Integer getNbTentativesConnexion() {
+        return nbTentativesConnexion;
+    }
+
+    public void setNbTentativesConnexion(Integer nbTentativesConnexion) {
+        this.nbTentativesConnexion = nbTentativesConnexion;
+    }
+
+    public Integer getDureeSession() {
+        return dureeSession;
+    }
+
+    public void setDureeSession(Integer dureeSession) {
+        this.dureeSession = dureeSession;
+    }
+
+    public Boolean getSynchro() {
+        return synchro;
+    }
+
+    public void setSynchro(Boolean synchro) {
+        this.synchro = synchro;
+    }
+
+    // Equals et HashCode
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Parametre parametre = (Parametre) o;
+        return Objects.equals(id, parametre.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+}
