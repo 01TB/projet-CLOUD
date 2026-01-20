@@ -1,0 +1,7 @@
+{
+  "name": "roadwork-mobile",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "vue-vite"
+}
