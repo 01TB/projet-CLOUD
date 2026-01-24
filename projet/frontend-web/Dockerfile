@@ -1,32 +1,68 @@
-# Build stage
-FROM node:18-alpine AS build
+# Stage 1: Build Angular app
+FROM node:18-alpine AS angular-builder
+
+# Install git et autres outils
+RUN apk add --no-cache git python3 make g++
+
 WORKDIR /app
 
-# Installation des dépendances
-COPY package*.json ./
-RUN npm ci --only=production
+# Copy package files first for better caching
+COPY angular-app/package*.json ./
 
-# Copie du code source
-COPY . .
+# Clean install with force flag to handle potential issues
+RUN npm ci --force --legacy-peer-deps
 
-# Build de l'application
-RUN npm run build -- --configuration=production
+# Copy Angular source code
+COPY angular-app/ .
 
-# Runtime stage
-FROM nginx:1.23-alpine
+# Build Angular for production
+RUN npm run build -- --configuration production --output-path=dist
 
-# Copie des fichiers buildés
-COPY --from=build /app/dist/* /usr/share/nginx/html/
+# Stage 2: Final frontend with Nginx and Tileserver
+FROM nginx:alpine
 
-# Copie de la configuration nginx
+# Install dependencies
+RUN apk add --no-cache \
+    curl \
+    bash \
+    gettext \
+    sqlite \
+    nodejs \
+    npm \
+    python3 \
+    py3-pip
+
+# Install tileserver-gl globally
+RUN npm install -g tileserver-gl
+
+# Copy built Angular app
+COPY --from=angular-builder /app/dist /usr/share/nginx/html
+
+# Copy configuration files
 COPY nginx.conf /etc/nginx/nginx.conf
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Exposition du port
+# Copy scripts
+RUN mkdir -p /scripts
+COPY scripts/download-map.sh /scripts/
+RUN chmod +x /scripts/download-map.sh
+
+# Create directories
+RUN mkdir -p /data /usr/share/nginx/html/assets
+
+# Create assets directory if not exists
+RUN mkdir -p /usr/share/nginx/html/assets
+
+# Copy Leaflet images
+RUN mkdir -p /usr/share/nginx/html/assets/leaflet
+COPY --from=angular-builder /app/node_modules/leaflet/dist/images/* /usr/share/nginx/html/assets/leaflet/
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
+    CMD curl -f http://localhost/ || exit 1
+
 EXPOSE 80
 
-# Healthcheck
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:80/ || exit 1
-
-# Démarrage
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]

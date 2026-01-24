@@ -1,47 +1,43 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgis/postgis:15-3.3-alpine
-    container_name: postgres-db
-    environment:
-      POSTGRES_DB: signalisation
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - "5433:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-      - ./init-scripts:/docker-entrypoint-initdb.d
-    networks:
-      - app-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  app:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: spring-app
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/signalisation
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+  # Backend Spring Boot
+  backend:
+    build: ./backend
+    container_name: gis-backend
     ports:
       - "8080:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
     networks:
-      - app-network
+      - gis-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
-volumes:
-  postgres-data:
+  # Frontend Angular avec Tileserver intégré
+  frontend:
+    build: ./frontend-web
+    container_name: gis-frontend-web
+    ports:
+      - "80:80"
+      - "8081:8081"
+    networks:
+      - gis-network
+    depends_on:
+      backend:
+        condition: service_healthy
+    volumes:
+      - map-data:/data
+    environment:
+      - BACKEND_URL=http://backend:8080
 
 networks:
-  app-network:
+  gis-network:
     driver: bridge
+
+volumes:
+  map-data:

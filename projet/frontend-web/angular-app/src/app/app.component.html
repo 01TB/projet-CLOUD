@@ -1,0 +1,68 @@
+<div class="container">
+  <header class="header">
+    <h1>{{ title }}</h1>
+    <div class="status" [class.connected]="backendStatus.includes('Connecté')">
+      <strong>État du backend:</strong> {{ backendStatus }}
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="controls">
+      <button (click)="checkBackendHealth()">
+        Vérifier le backend
+      </button>
+      <button (click)="fetchData()">
+        Données du backend
+      </button>
+      <button (click)="getMapInfo()">
+        Infos de la carte
+      </button>
+      <button (click)="zoomIn()">
+        Zoom +
+      </button>
+      <button (click)="zoomOut()">
+        Zoom -
+      </button>
+      <button (click)="resetView()">
+        Réinitialiser vue
+      </button>
+    </div>
+
+    <div class="map-container">
+      <div *ngIf="isLoading" class="loading">
+        Chargement de la carte...
+      </div>
+      <div id="map" [style.height]="isLoading ? '100px' : '500px'"></div>
+    </div>
+
+    <div class="info-panel">
+      <h3>Informations du projet</h3>
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>📡 Communication</h4>
+          <p>Frontend ↔ Backend: HTTP via Docker network</p>
+          <p>Carte: Tileserver local (port 8081)</p>
+        </div>
+        
+        <div class="info-card">
+          <h4>🗺️ Carte</h4>
+          <p>Ville: Antananarivo, Madagascar</p>
+          <p>Coordonnées: -18.8792° S, 47.5079° E</p>
+          <p>Zoom: 10-18</p>
+        </div>
+        
+        <div class="info-card">
+          <h4>🔧 Technologies</h4>
+          <p>Frontend: Angular {{ngVersion}}</p>
+          <p>Backend: Spring Boot 3</p>
+          <p>Conteneurisation: Docker Compose</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>Projet GIS - Développé avec Angular, Spring Boot & Tileserver</p>
+    <p class="timestamp">Démarré le {{ currentDate }}</p>
+  </footer>
+</div>

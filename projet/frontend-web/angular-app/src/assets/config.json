@@ -1,0 +1,31 @@
+{
+  "api": {
+    "baseUrl": "http://backend:8080",
+    "endpoints": {
+      "health": "/api/health",
+      "data": "/api/data",
+      "mapInfo": "/api/map-info"
+    }
+  },
+  "map": {
+    "tileserver": "http://localhost:8081",
+    "defaultView": {
+      "lat": -18.8792,
+      "lng": 47.5079,
+      "zoom": 13
+    },
+    "bounds": {
+      "south": -18.966,
+      "west": 47.40,
+      "north": -18.792,
+      "east": 47.59
+    },
+    "maxZoom": 18,
+    "minZoom": 10
+  },
+  "app": {
+    "name": "GIS Madagascar",
+    "version": "1.0.0",
+    "description": "Application de cartographie pour Antananarivo"
+  }
+}
