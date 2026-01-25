@@ -14,7 +14,7 @@ WORKDIR /usr/share/nginx/html
 RUN rm -rf ./*
 
 # Copier le build Angular
-COPY --from=build /app/dist/angular-app ./
+COPY --from=build /app/dist/antananarivo-map ./
 
 # Copier la configuration Nginx
 COPY nginx.conf /etc/nginx/conf.d/default.conf

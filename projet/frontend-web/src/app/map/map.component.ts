@@ -1,5 +1,6 @@
 // src/app/map/map.component.ts
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { HttpClient } from '@angular/common/http'; // <-- Ajouter cette importation
 import * as L from 'leaflet';
 
 @Component({
@@ -8,6 +9,7 @@ import * as L from 'leaflet';
   styleUrls: ['./map.component.css']
 })
 export class MapComponent implements OnInit, OnDestroy {
+  constructor(private http: HttpClient) { } // <-- Injecter HttpClient
   private map!: L.Map;
   private tileServerUrl = '/tiles/styles/antananarivo/{z}/{x}/{y}.png';
   
@@ -16,6 +18,7 @@ export class MapComponent implements OnInit, OnDestroy {
   private defaultZoom = 13;
 
   ngOnInit(): void {
+    this.testTileAccess();
     this.initMap();
     this.addMarkers();
   }
@@ -25,6 +28,32 @@ export class MapComponent implements OnInit, OnDestroy {
       this.map.remove();
     }
   }
+
+  private testTileAccess(): void {
+  // Test avec des coordonnées fixes
+  const testUrl = '/tiles/styles/antananarivo/13/4200/3100.png';
+  
+  console.log('Testing tile access:', testUrl);
+  
+  this.http.get(testUrl, { responseType: 'blob' }).subscribe(
+    (blob) => {
+      console.log('✅ Tile loaded successfully, size:', blob.size);
+      
+      // Créez une URL pour afficher l'image
+      const imageUrl = URL.createObjectURL(blob);
+      console.log('Image URL:', imageUrl);
+      
+      // Optionnel: Affichez l'image pour vérifier
+      const img = new Image();
+      img.src = imageUrl;
+      img.onload = () => console.log('✅ Image loaded correctly');
+    },
+    (error) => {
+      console.error('❌ Failed to load tile:', error);
+      console.log('Error details:', error.status, error.statusText);
+    }
+  );
+}
 
   private initMap(): void {
     // Initialiser la carte
