@@ -17,15 +17,15 @@ body {
 }
 
 /* Fix pour les icônes Leaflet par défaut */
-.leaflet-default-icon-path {
+/* .leaflet-default-icon-path {
   background-image: url('assets/markers/marker-icon.png');
-}
+} */
 
 /* Correction du chemin des images Leaflet */
-.leaflet-marker-icon {
+/* .leaflet-marker-icon {
   background-image: url('assets/markers/marker-icon.png') !important;
-}
+} */
 
-.leaflet-marker-shadow {
+/* .leaflet-marker-shadow {
   background-image: url('assets/markers/marker-shadow.png') !important;
-}
+} */
