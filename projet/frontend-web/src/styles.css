@@ -1,0 +1,31 @@
+/* You can add global styles to this file, and also import other style files */
+/* src/styles.css - Styles globaux */
+
+/* Import Leaflet CSS */
+@import 'leaflet/dist/leaflet.css';
+
+/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  overflow: hidden;
+}
+
+/* Fix pour les icônes Leaflet par défaut */
+.leaflet-default-icon-path {
+  background-image: url('assets/markers/marker-icon.png');
+}
+
+/* Correction du chemin des images Leaflet */
+.leaflet-marker-icon {
+  background-image: url('assets/markers/marker-icon.png') !important;
+}
+
+.leaflet-marker-shadow {
+  background-image: url('assets/markers/marker-shadow.png') !important;
+}

@@ -1,34 +1,56 @@
-FROM maptiler/tileserver-gl:v5.1.0
+# Version la plus simple - Sans fichier config
+FROM node:18-alpine AS download
 
-# Mise à jour et installation des outils
-RUN apt-get update && apt-get install -y \
-    curl \
+WORKDIR /download
+
+# Installer les outils nécessaires
+RUN apk add --no-cache \
     wget \
-    unzip \
+    curl \
     python3 \
-    python3-pip \
-    && rm -rf /var/lib/apt/lists/*
+    py3-pip \
+    git \
+    sqlite \
+    build-base \
+    sqlite-dev \
+    zlib-dev \
+    bash
 
-# Installation d'outils supplémentaires
-RUN pip3 install osmium
+# Installer tippecanoe
+RUN git clone https://github.com/felt/tippecanoe.git \
+    && cd tippecanoe \
+    && make -j \
+    && make install \
+    && cd .. \
+    && rm -rf tippecanoe
 
-# Création des répertoires
-RUN mkdir -p /data/styles /data/fonts /data/sprites
+# Télécharger les données OSM d'Antananarivo via Overpass API
+RUN wget -O antananarivo.osm \
+    "https://overpass-api.de/api/map?bbox=47.3,-18.95,47.6,-18.8"
 
-# Copie des configurations
-COPY config.json /data/config.json
-COPY entrypoint.sh /entrypoint.sh
-COPY download-map.sh /download-map.sh
+# Convertir OSM XML en GeoJSON
+RUN npm install -g osmtogeojson \
+    && osmtogeojson antananarivo.osm > antananarivo.geojson
 
-# Permissions
-RUN chmod +x /entrypoint.sh /download-map.sh
+# Convertir GeoJSON en MBTiles
+RUN tippecanoe \
+    -o antananarivo.mbtiles \
+    -z14 \
+    -Z0 \
+    --drop-densest-as-needed \
+    --extend-zooms-if-still-dropping \
+    --layer=osm \
+    antananarivo.geojson
 
-# Téléchargement des styles par défaut
-RUN curl -L https://github.com/maptiler/tileserver-gl/raw/master/styles/osm-bright/style.json \
-    -o /data/styles/osm-bright.json
+# Stage final
+FROM maptiler/tileserver-gl:latest
 
-# Exposition du port
+WORKDIR /data
+
+# Copier seulement le fichier mbtiles
+COPY --from=download /download/antananarivo.mbtiles /data/antananarivo.mbtiles
+
 EXPOSE 8080
 
-# Point d'entrée
-ENTRYPOINT ["/entrypoint.sh"]
+# Lancer TileServer directement avec le fichier mbtiles
+CMD ["tileserver-gl", "--mbtiles", "/data/antananarivo.mbtiles", "--verbose"]
