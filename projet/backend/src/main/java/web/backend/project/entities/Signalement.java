@@ -10,7 +10,7 @@ public class Signalement {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private Long id;
+    private Integer id;
 
     @Column(name = "date_creation", nullable = false, length = 50)
     private String dateCreation;
@@ -51,11 +51,11 @@ public class Signalement {
     }
 
     // Getters et Setters
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 

@@ -19,7 +19,7 @@ public class AvancementSignalement {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private Long id;
+    private Integer id;
 
     @Column(name = "date_modification", nullable = false)
     private LocalDateTime dateModification;
@@ -53,11 +53,11 @@ public class AvancementSignalement {
     }
 
     // Getters et Setters
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 

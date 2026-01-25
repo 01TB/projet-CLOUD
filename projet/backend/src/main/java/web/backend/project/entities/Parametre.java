@@ -10,7 +10,7 @@ public class Parametre {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private Long id;
+    private Integer id;
 
     @Column(name = "nb_tentatives_connexion", nullable = false)
     private Integer nbTentativesConnexion;
@@ -31,11 +31,11 @@ public class Parametre {
     }
 
     // Getters et Setters
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
