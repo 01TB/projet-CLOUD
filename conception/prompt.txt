@@ -1,0 +1,11 @@
+nous avons un projet de SIG sur les signalements de réparations routières. Nous avons un backend springboot et un frontend angular. 
+Nous allons implémenter un frontend static, prêt pour integration API au backend. 
+Nous avons deja le component map pour tester une map offline qui est gérée par tileserver gl car on a un environnement docker.
+Notre base de donnee est dans signalement_scheme pour avoir un aperçu de ce qui nous attend
+Les fonctionnalités attendues sont déjà dans le fichier fonctionnalités
+Voici d'autres precisions :
+- il faudrait peut-etre penser à un sidebar pour de futurs filtres
+- on peut avoir différents types de marqeurs
+- on peut bloquer-debloquer des utilisateurs donc il y aura une interface pour ça
+- on peut modifier le status de chaque signalement
+- on voit les infos d'un signalement n survolant le marqueur

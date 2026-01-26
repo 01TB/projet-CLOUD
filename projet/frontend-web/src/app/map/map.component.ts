@@ -9,7 +9,7 @@ import * as L from 'leaflet';
 })
 export class MapComponent implements OnInit, OnDestroy {
   private map!: L.Map;
-  private tileServerUrl = '/tiles/styles/antananarivo/{z}/{x}/{y}.png';
+  private tileServerUrl = '/tiles/styles/basic-preview/{z}/{x}/{y}.png';
   
   // Coordonnées d'Antananarivo
   private antananarivoCenter: L.LatLngExpression = [-18.8792, 47.5236];
