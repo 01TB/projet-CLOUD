@@ -32,11 +32,11 @@ WHERE NOT EXISTS (SELECT 1 FROM parametre LIMIT 1);
 -- Insertion d'utilisateurs de test (password: 'password123' hashé avec BCrypt)
 -- Note: Vous devriez remplacer ces passwords par des hashs BCrypt réels
 INSERT INTO utilisateur (email, password, synchro, id_role) VALUES 
-    ('admin@signalisation.mg', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', false, 
+    ('admin@signalisation.mg', 'password123', false, 
      (SELECT id FROM role WHERE nom = 'ADMIN')),
-    ('user@signalisation.mg', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', false, 
+    ('user@signalisation.mg', 'password123', false, 
      (SELECT id FROM role WHERE nom = 'UTILISATEUR')),
-    ('superviseur@signalisation.mg', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', false, 
+    ('superviseur@signalisation.mg', 'password123', false, 
      (SELECT id FROM role WHERE nom = 'SUPERVISEUR'))
 ON CONFLICT (email) DO NOTHING;
 
