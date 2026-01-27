@@ -24,6 +24,14 @@ public class AuthController {
         return authService.login(credentials.email(), credentials.password());
     }
 
+    @PostMapping("/sign-in")
+    public String signIn(@RequestBody String entity) {
+        //TODO: process POST request
+        
+        return entity;
+    }
+    
+
     @GetMapping()
     public String test() {
         return "Auth controller is working!";
