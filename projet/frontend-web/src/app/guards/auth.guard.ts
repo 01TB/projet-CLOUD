@@ -1,45 +1,24 @@
+// src/app/guards/auth.guard.ts
 import { Injectable } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
 @Injectable({
   providedIn: 'root'
 })
-export class AuthGuard {
+export class AuthGuard implements CanActivate {
   constructor(
-    private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private authService: AuthService
   ) {}
 
-  canActivate(): boolean {
-    const isAuthenticated = this.authService.getCurrentUser() !== null;
-    
-    if (!isAuthenticated) {
-      this.router.navigate(['/login']);
-      return false;
+  canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
+    const currentUser = this.authService.currentUserValue;
+    if (currentUser) {
+      return true;
     }
-    
-    return true;
-  }
-}
 
-@Injectable({
-  providedIn: 'root'
-})
-export class AdminGuard {
-  constructor(
-    private authService: AuthService,
-    private router: Router
-  ) {}
-
-  canActivate(): boolean {
-    const user = this.authService.getCurrentUser();
-    
-    if (!user || !this.authService.isAdmin()) {
-      this.router.navigate(['/map']);
-      return false;
-    }
-    
-    return true;
+    this.router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
+    return false;
   }
 }

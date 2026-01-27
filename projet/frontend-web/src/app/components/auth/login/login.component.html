@@ -1,34 +1,71 @@
+<!-- src/app/components/auth/login/login.component.html -->
 <div class="login-container">
   <div class="login-card">
-    <div class="card-header">
-      <h3>Connexion</h3>
-      <p>Système de Signalement Routier</p>
+    <div class="login-header">
+      <div class="login-icon">🗺️</div>
+      <h2>SIG Signalements Routiers</h2>
+      <p class="subtitle">Antananarivo, Madagascar</p>
     </div>
-    <div class="card-body">
-      <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
-        <div class="form-group">
-          <label for="email">Email</label>
-          <input type="email" id="email" [(ngModel)]="email" name="email" required class="form-control">
-        </div>
-        <div class="form-group">
-          <label for="password">Mot de passe</label>
-          <input type="password" id="password" [(ngModel)]="password" name="password" required class="form-control">
-        </div>
-        <div class="form-check">
-          <input type="checkbox" id="remember" [(ngModel)]="rememberMe" name="remember" class="form-check-input">
-          <label for="remember" class="form-check-label">Se souvenir de moi</label>
-        </div>
-        <div *ngIf="errorMessage" class="alert alert-danger">
-          {{ errorMessage }}
-        </div>
-        <button type="submit" class="btn btn-primary btn-block" [disabled]="!loginForm.form.valid">
-          Se connecter
-        </button>
-      </form>
-      <div class="login-links">
-        <a routerLink="/forgot-password">Mot de passe oublié ?</a>
-        <a routerLink="/register">Créer un compte</a>
+
+    <form (ngSubmit)="onSubmit()" class="login-form">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input 
+          type="email" 
+          id="email" 
+          class="form-control" 
+          [(ngModel)]="email" 
+          name="email"
+          placeholder="votre@email.com"
+          required
+        />
       </div>
+
+      <div class="form-group">
+        <label>Type de compte</label>
+        <div class="role-selector">
+          <label class="role-option" [class.active]="selectedRole === 'Visiteur'">
+            <input 
+              type="radio" 
+              [(ngModel)]="selectedRole" 
+              name="role" 
+              value="Visiteur"
+            />
+            <div class="role-card">
+              <span class="role-icon">👁️</span>
+              <span class="role-name">Visiteur</span>
+              <small>Consultation uniquement</small>
+            </div>
+          </label>
+
+          <label class="role-option" [class.active]="selectedRole === 'Manager'">
+            <input 
+              type="radio" 
+              [(ngModel)]="selectedRole" 
+              name="role" 
+              value="Manager"
+            />
+            <div class="role-card">
+              <span class="role-icon">👨‍💼</span>
+              <span class="role-name">Manager</span>
+              <small>Gestion complète</small>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="alert alert-danger" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block">
+        Se connecter
+      </button>
+    </form>
+
+    <div class="login-footer">
+      <p>Mode démonstration - Frontend statique</p>
+      <small>Version 1.0.0</small>
     </div>
   </div>
 </div>

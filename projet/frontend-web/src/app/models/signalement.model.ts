@@ -1,33 +1,46 @@
-import { Entreprise } from "./entreprise.model";
-import { StatutAvancement } from "./statut-avancement.model";
-import { Utilisateur } from "./utilisateur.model";
+// src/app/models/signalement.model.ts
+
+export interface Localisation {
+  lat: number;
+  lng: number;
+}
+
+export interface StatutAvancement {
+  id: number;
+  nom: string;
+  valeur: number; // 1: Nouveau, 2: En cours, 3: Terminé, 4: Annulé
+}
+
+export interface Entreprise {
+  id: number;
+  nom: string;
+}
+
+export interface Role {
+  id: number;
+  nom: string; // 'Manager' ou 'Visiteur'
+}
+
+export interface Utilisateur {
+  id: number;
+  email: string;
+  role: Role;
+}
 
 export interface Signalement {
   id: number;
   date_creation: string;
-  surface: number;
-  budget: number;
-  localisation: {
-    lat: number;
-    lng: number;
-  };
-  synchro: boolean;
+  surface: number; // en m²
+  budget: number; // en MGA
+  localisation: Localisation;
+  entreprise: Entreprise;
+  statut_actuel: StatutAvancement;
   id_utilisateur_createur: number;
-  id_entreprise: number;
-  statut_actuel?: StatutAvancement;
-  photos?: string[];
-  utilisateur_createur?: Utilisateur;
-  entreprise?: Entreprise;
-  avancements?: AvancementSignalement[];
 }
 
-export interface AvancementSignalement {
-  id: number;
-  date_modification: Date;
-  synchro: boolean;
-  id_utilisateur: number;
-  id_statut_avancement: number;
-  id_signalement: number;
-  utilisateur?: Utilisateur;
-  statut?: StatutAvancement;
+export interface StatistiquesRecap {
+  nb_signalements: number;
+  surface_totale: number;
+  budget_total: number;
+  avancement_pct: number;
 }
