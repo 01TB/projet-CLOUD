@@ -25,25 +25,35 @@ services:
       timeout: 5s
       retries: 5
 
-  # Backend Spring Boot
+  # Backend Spring Boot avec Hot Reload
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     container_name: springboot-api
     restart: unless-stopped
     ports:
       - "${BACKEND_PORT:-8080}:8080"
+      - "35729:35729"  # Port LiveReload
+      - "5005:5005"    # Port Debug (optionnel)
     networks:
       - app-network
     environment:
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILE:-prod}
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILE:-dev}
       - DB_HOST=database
       - DB_PORT=5432
       - DB_NAME=${DB_NAME}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - TZ=Africa/Nairobi
+      - SPRING_DEVTOOLS_RESTART_ENABLED=true
+      - SPRING_DEVTOOLS_LIVERELOAD_ENABLED=true
+    volumes:
+      # Montage du code source pour hot reload
+      - ./backend/src:/app/src
+      - ./backend/pom.xml:/app/pom.xml
+      # Cache Maven pour accélérer les recompilations
+      - maven-cache:/root/.m2
     depends_on:
       database:
         condition: service_healthy
@@ -96,4 +106,6 @@ networks:
 
 volumes:
   postgres-data:
+    driver: local
+  maven-cache:
     driver: local
