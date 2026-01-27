@@ -1,8 +1,6 @@
 import axios from 'axios';
-import { useAuthStore } from '@/store/modules/auth';
 
-// Configuration de l'API
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://us-central1-projet-cloud-e2146.cloudfunctions.net';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -12,16 +10,13 @@ const api = axios.create({
   }
 });
 
-// Intercepteur pour ajouter le token JWT
+// Request interceptor pour ajouter le token
 api.interceptors.request.use(
   (config) => {
-    const authStore = useAuthStore();
-    const token = authStore.token;
-    
+    const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
     return config;
   },
   (error) => {
@@ -29,24 +24,15 @@ api.interceptors.request.use(
   }
 );
 
-// Intercepteur pour gérer les erreurs
+// Response interceptor pour gérer les erreurs
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response) {
-      // Erreurs spécifiques
-      switch (error.response.status) {
-        case 401:
-          // Token expiré ou invalide
-          const authStore = useAuthStore();
-          authStore.logout();
-          window.location.href = '/login';
-          break;
-        case 423:
-          // Compte bloqué
-          console.error('Compte bloqué:', error.response.data);
-          break;
-      }
+    if (error.response?.status === 401) {
+      // Token expiré ou invalide
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   }

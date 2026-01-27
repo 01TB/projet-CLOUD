@@ -1,159 +1,133 @@
 import api from './api';
-import { initializeApp } from 'firebase/app';
-import { 
-  getAuth, 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged 
-} from 'firebase/auth';
 
 class AuthService {
   constructor() {
-    this.firebaseApp = null;
-    this.firebaseAuth = null;
-    this.initializeFirebase();
+    this.token = localStorage.getItem('token');
+    this.user = JSON.parse(localStorage.getItem('user') || 'null');
   }
 
-  initializeFirebase() {
-    const firebaseConfig = {
-      apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-      authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-      projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-      storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-      messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-      appId: import.meta.env.VITE_FIREBASE_APP_ID
-    };
-
-    try {
-      this.firebaseApp = initializeApp(firebaseConfig);
-      this.firebaseAuth = getAuth(this.firebaseApp);
-    } catch (error) {
-      console.warn('Firebase initialization failed, using offline mode:', error.message);
-    }
-  }
-
-  // Inscription
-  async register(userData) {
-    try {
-      // Créer en local d'abord
-      const response = await api.post('/auth/register', userData);
-      
-      // Synchroniser avec Firebase si disponible
-      if (this.firebaseAuth) {
-        try {
-          await createUserWithEmailAndPassword(
-            this.firebaseAuth,
-            userData.email,
-            userData.password
-          );
-        } catch (firebaseError) {
-          console.warn('Firebase registration failed, continuing locally:', firebaseError.message);
-        }
-      }
-      
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
-  }
-
-  // Connexion
   async login(credentials) {
     try {
-      let firebaseUser = null;
+      const response = await api.post('/login', credentials);
       
-      // Essayer Firebase d'abord si en ligne
-      if (this.firebaseAuth && navigator.onLine) {
-        try {
-          const firebaseCredential = await signInWithEmailAndPassword(
-            this.firebaseAuth,
-            credentials.email,
-            credentials.password
-          );
-          firebaseUser = firebaseCredential.user;
-        } catch (firebaseError) {
-          console.warn('Firebase login failed, trying local:', firebaseError.message);
-        }
+      if (response.data.success) {
+        this.token = response.data.token;
+        this.user = response.data.user;
+        
+        localStorage.setItem('token', this.token);
+        localStorage.setItem('user', JSON.stringify(this.user));
+        
+        return { success: true, user: this.user };
       }
       
-      // Toujours se connecter en local (mode offline)
-      const response = await api.post('/auth/login', credentials);
-      const { user, token } = response.data;
-      
-      return {
-        user,
-        token,
-        firebaseUser
-      };
+      return { success: false, error: response.data.error?.message || 'Erreur de connexion' };
     } catch (error) {
-      throw this.handleError(error);
+      console.error('Login error:', error);
+      return { 
+        success: false, 
+        error: error.response?.data?.error?.message || 'Erreur de connexion' 
+      };
     }
   }
 
-  // Déconnexion
+  async register(userData) {
+    try {
+      const response = await api.post('/register', userData);
+      
+      if (response.data.success) {
+        this.token = response.data.token;
+        this.user = response.data.user;
+        
+        localStorage.setItem('token', this.token);
+        localStorage.setItem('user', JSON.stringify(this.user));
+        
+        return { success: true, user: this.user };
+      }
+      
+      return { success: false, error: response.data.error?.message || 'Erreur d\'inscription' };
+    } catch (error) {
+      console.error('Register error:', error);
+      return { 
+        success: false, 
+        error: error.response?.data?.error?.message || 'Erreur d\'inscription' 
+      };
+    }
+  }
+
   async logout() {
     try {
-      // Déconnecter de Firebase si disponible
-      if (this.firebaseAuth) {
-        await signOut(this.firebaseAuth);
+      if (this.token) {
+        await api.post('/logout');
       }
-      
-      // Appeler l'API de déconnexion
-      await api.post('/auth/logout');
-      
     } catch (error) {
-      console.warn('Logout error:', error.message);
+      console.error('Logout error:', error);
+    } finally {
+      this.token = null;
+      this.user = null;
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
     }
   }
 
-  // Récupérer l'utilisateur courant
-  async getCurrentUser() {
+  async checkAuth() {
+    if (!this.token) {
+      return false;
+    }
+
     try {
-      const response = await api.get('/auth/me');
-      return response.data.user;
+      const response = await api.get('/me');
+      
+      if (response.data.success) {
+        this.user = response.data.user;
+        localStorage.setItem('user', JSON.stringify(this.user));
+        return true;
+      }
     } catch (error) {
-      throw this.handleError(error);
+      console.error('Auth check error:', error);
+      this.logout();
     }
+    
+    return false;
   }
 
-  // Mettre à jour le profil
   async updateProfile(userData) {
     try {
-      const response = await api.put('/auth/update', userData);
-      return response.data;
+      const response = await api.put('/update', userData);
+      
+      if (response.data.success) {
+        this.user = response.data.user;
+        localStorage.setItem('user', JSON.stringify(this.user));
+        return { success: true, user: this.user };
+      }
+      
+      return { success: false, error: response.data.error?.message || 'Erreur de mise à jour' };
     } catch (error) {
-      throw this.handleError(error);
+      console.error('Update profile error:', error);
+      return { 
+        success: false, 
+        error: error.response?.data?.error?.message || 'Erreur de mise à jour' 
+      };
     }
   }
 
-  // Vérifier l'état d'authentification Firebase
-  onAuthStateChanged(callback) {
-    if (this.firebaseAuth) {
-      return onAuthStateChanged(this.firebaseAuth, callback);
-    }
-    return () => {};
+  isAuthenticated() {
+    return !!this.token;
   }
 
-  // Gestion des erreurs
-  handleError(error) {
-    if (error.response) {
-      return {
-        message: error.response.data.message || 'Erreur serveur',
-        code: error.response.status,
-        details: error.response.data
-      };
-    } else if (error.request) {
-      return {
-        message: 'Erreur réseau. Vérifiez votre connexion Internet.',
-        code: 'NETWORK_ERROR'
-      };
-    } else {
-      return {
-        message: error.message || 'Erreur inconnue',
-        code: 'UNKNOWN_ERROR'
-      };
-    }
+  isUser() {
+    return this.user?.role === 2; // Utilisateur
+  }
+
+  isManager() {
+    return this.user?.role === 1; // Manager
+  }
+
+  getUser() {
+    return this.user;
+  }
+
+  getToken() {
+    return this.token;
   }
 }
 
