@@ -6,15 +6,6 @@
     "serveStaticMaps": true,
     "cors": true
   },
-  "styles": {
-    "osm-bright": {
-      "style": "osm-bright.json",
-      "tilejson": {
-        "type": "overlay",
-        "bounds": [47.3, -18.95, 47.6, -18.8]
-      }
-    }
-  },
   "data": {
     "antananarivo": {
       "mbtiles": "antananarivo.mbtiles"

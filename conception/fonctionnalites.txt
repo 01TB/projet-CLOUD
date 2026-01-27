@@ -1,0 +1,15 @@
+Angular Setup - Configurer services AuthService, ApiService, SyncService
+Auth Web - Page login (email/password)
+Auth Web - Page inscription (form complet)
+Auth Web - Page mot de passe oublié
+Auth Web - Page profil utilisateur (édition)
+Carte - Component Map avec Leaflet + tuiles offline
+Carte - Intégration géolocalisation HTML5
+Carte - Marqueurs interactifs signalements
+Signalements - Formulaire création signalement avec upload photo
+Signalements - Liste paginée avec filtres (statut, date)
+Signalements - Export PDF/Excel des signalements
+Synchronisation - Bouton 'Sync maintenant' dans interface admin
+Synchronisation - Interface choix données à sync (tout / nouveaux)
+Dashboard Admin - Stats utilisateurs et signalements
+Dashboard Admin - Logs de synchronisation visibles
