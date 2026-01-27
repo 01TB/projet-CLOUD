@@ -23,6 +23,7 @@
   align-items: center;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
   z-index: 100;
+  gap: 2rem;
 }
 
 .header-left {
@@ -50,6 +51,40 @@
   font-weight: 400;
 }
 
+/* Navigation Manager */
+.header-nav {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.nav-link {
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  padding: 0.625rem 1.25rem;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.nav-link:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.nav-link.nav-active {
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.nav-icon {
+  font-size: 1.125rem;
+}
+
 .header-right {
   display: flex;
   align-items: center;
@@ -75,11 +110,25 @@
 }
 
 .user-badge {
-  background: rgba(255, 255, 255, 0.2);
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
   font-size: 0.8rem;
   font-weight: 600;
+}
+
+.badge-manager {
+  background: rgba(66, 165, 245, 0.3);
+  border: 1px solid rgba(66, 165, 245, 0.5);
+}
+
+.badge-user {
+  background: rgba(156, 39, 176, 0.3);
+  border: 1px solid rgba(156, 39, 176, 0.5);
+}
+
+.badge-visitor {
+  background: rgba(139, 195, 74, 0.3);
+  border: 1px solid rgba(139, 195, 74, 0.5);
 }
 
 .btn-logout {

@@ -11,10 +11,12 @@ import { AppComponent } from './app.component';
 import { MapComponent } from './components/map/map.component';
 import { LoginComponent } from './components/auth/login/login.component';
 import { SidebarComponent } from './components/sidebar/sidebar.component';
+import { UserManagementComponent } from './components/admin/user-management/user-management.component';
 
 // Services
 import { AuthService } from './services/auth.service';
 import { MockDataService } from './services/mock-data.service';
+import { UserManagementService } from './services/user-management.service';
 
 // Guards
 import { AuthGuard } from './guards/auth.guard';
@@ -24,7 +26,8 @@ import { AuthGuard } from './guards/auth.guard';
     AppComponent,
     MapComponent,
     LoginComponent,
-    SidebarComponent
+    SidebarComponent,
+    UserManagementComponent
   ],
   imports: [
     BrowserModule,
@@ -35,6 +38,7 @@ import { AuthGuard } from './guards/auth.guard';
   providers: [
     AuthService,
     MockDataService,
+    UserManagementService,
     AuthGuard
   ],
   bootstrap: [AppComponent]

@@ -12,7 +12,8 @@ export class AuthService {
 
   private roles: Role[] = [
     { id: 1, nom: 'Manager' },
-    { id: 2, nom: 'Visiteur' }
+    { id: 2, nom: 'Utilisateur' },
+    { id: 3, nom: 'Visiteur' }
   ];
 
   constructor() {
@@ -35,12 +36,20 @@ export class AuthService {
     return this.currentUserValue?.role?.nom === 'Manager';
   }
 
+  public isUser(): boolean {
+    return this.currentUserValue?.role?.nom === 'Utilisateur';
+  }
+
   public isVisitor(): boolean {
     return this.currentUserValue?.role?.nom === 'Visiteur';
   }
 
+  public canCreateSignalement(): boolean {
+    return this.isManager() || this.isUser();
+  }
+
   // Connexion simulée
-  login(email: string, roleType: 'Manager' | 'Visiteur'): Observable<Utilisateur> {
+  login(email: string, roleType: 'Manager' | 'Utilisateur' | 'Visiteur'): Observable<Utilisateur> {
     const role = this.roles.find(r => r.nom === roleType)!;
     const user: Utilisateur = {
       id: Math.floor(Math.random() * 1000),

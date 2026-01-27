@@ -10,7 +10,7 @@ import { AuthService } from '../../../services/auth.service';
 })
 export class LoginComponent implements OnInit {
   email = '';
-  selectedRole: 'Manager' | 'Visiteur' = 'Visiteur';
+  selectedRole: 'Manager' | 'Utilisateur' | 'Visiteur' = 'Utilisateur';
   returnUrl = '';
   errorMessage = '';
 

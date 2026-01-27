@@ -1,7 +1,7 @@
 // src/app/app.component.ts
 import { Component, OnInit } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
-import { filter } from 'rxjs/operators';
+import { filter, map } from 'rxjs/operators';
 import { AuthService } from './services/auth.service';
 
 @Component({
@@ -14,6 +14,15 @@ export class AppComponent implements OnInit {
   currentUser$ = this.authService.currentUser$;
   isAuthenticated$ = this.authService.isAuthenticated$;
   showSidebar = false;
+
+  // Observables pour les rôles
+  isManager$ = this.authService.currentUser$.pipe(
+    map(user => user?.role?.nom === 'Manager')
+  );
+  
+  isUser$ = this.authService.currentUser$.pipe(
+    map(user => user?.role?.nom === 'Utilisateur')
+  );
 
   constructor(
     private authService: AuthService,

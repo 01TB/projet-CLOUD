@@ -4,6 +4,7 @@ import { RouterModule, Routes } from '@angular/router';
 
 import { MapComponent } from './components/map/map.component';
 import { LoginComponent } from './components/auth/login/login.component';
+import { UserManagementComponent } from './components/admin/user-management/user-management.component';
 import { AuthGuard } from './guards/auth.guard';
 
 const routes: Routes = [
@@ -12,6 +13,11 @@ const routes: Routes = [
   { 
     path: 'map', 
     component: MapComponent,
+    canActivate: [AuthGuard]
+  },
+  { 
+    path: 'admin/users', 
+    component: UserManagementComponent,
     canActivate: [AuthGuard]
   },
   { path: '**', redirectTo: '/map' }

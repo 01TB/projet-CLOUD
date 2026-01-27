@@ -124,7 +124,6 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
       1: 'red',      // Nouveau
       2: 'orange',   // En cours
       3: 'green',    // Terminé
-      4: 'grey'      // Annulé
     };
     
     const color = iconMap[statusValue] || 'blue';

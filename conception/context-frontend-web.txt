@@ -1,0 +1,13 @@
+nous avons un projet de SIG sur les signalements de réparations routières. Nous avons un backend springboot et un frontend angular. Nous allons implémenter un frontend static. Nous avons deja le component map pour tester une map offline qui est gérée par tileserver gl car on a un environnement docker. Notre base de donnee est dans signalement_scheme pour avoir un aperçu de ce qui nous attend. Voici ce que nous attendons avec l'interface :
+* nous aurons 2 types d'utilisateur : manager, visiteur :
+   * manager :
+      * création d'un compte utilisateur,
+      * map avec gestion des infos nécessaires sur chaque signalement (surface en m2, budget, entreprise concerné, …). On peut Modifier les statuts de chaque signalement. Rajouter un bouton synchroniser (à implémenter plus tard);
+   * visiteur :
+      * map : Lorsqu’on survole un point, on doit voir les infos sur le problème ( date, status (nouveau, en cours, terminé), surface en m2, budget, entreprise concerné)
+      * Voir le tableau de récapitulation actuel ( Nb de point, total surface, avancement en %, total budget).
+Voici d'autres precisions :
+* il faudrait peut-etre penser à un sidebar pour de futurs filtres
+* il faut penser à avoir différents types de marqeurs (marqueur bleu, rouge, ...)
+* on voit les infos d'un signalement n survolant le marqueur
+* nous ne ferons pas encore d'appel API mais juste le front static

@@ -18,13 +18,22 @@ export interface Entreprise {
 
 export interface Role {
   id: number;
-  nom: string; // 'Manager' ou 'Visiteur'
+  nom: string; // 'Manager', 'Utilisateur' ou 'Visiteur'
 }
 
 export interface Utilisateur {
   id: number;
   email: string;
   role: Role;
+  date_creation?: string;
+  est_bloque?: boolean;
+  date_blocage?: string | null;
+}
+
+export interface UtilisateurBloque {
+  id: number;
+  date_blocage: string;
+  id_utilisateur: number;
 }
 
 export interface Signalement {
