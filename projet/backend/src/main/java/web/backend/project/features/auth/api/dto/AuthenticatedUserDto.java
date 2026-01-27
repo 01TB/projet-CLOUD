@@ -1,4 +1,4 @@
-package web.backend.project.features.auth.dto;
+package web.backend.project.features.auth.api.dto;
 
 public record AuthenticatedUserDto(
                 Integer id,

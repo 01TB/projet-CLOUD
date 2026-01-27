@@ -1,4 +1,4 @@
-package web.backend.project.features.auth;
+package web.backend.project.features.auth.repositories;
 
 import java.util.Optional;
 

@@ -114,7 +114,6 @@ public class Signalement {
     public void setEntreprise(Entreprise entreprise) {
         this.entreprise = entreprise;
     }
-
     // Equals et HashCode
     @Override
     public boolean equals(Object o) {

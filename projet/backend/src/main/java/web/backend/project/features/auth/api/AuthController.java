@@ -1,10 +1,10 @@
-package web.backend.project.features.auth;
+package web.backend.project.features.auth.api;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import web.backend.project.features.auth.dto.AuthenticatedUserDto;
-import web.backend.project.features.auth.dto.LoginCredentialsDto;
+import web.backend.project.features.auth.api.dto.LoginCredentialsDto;
+import web.backend.project.features.auth.services.AuthService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,7 +19,7 @@ public class AuthController {
     AuthService authService;
 
     @PostMapping("/login")
-    public AuthenticatedUserDto login(@RequestBody LoginCredentialsDto credentials) {
+    public String login(@RequestBody LoginCredentialsDto credentials) {
         // System.out.println("Login attempt for email: " + credentials.email());
         return authService.login(credentials.email(), credentials.password());
     }
