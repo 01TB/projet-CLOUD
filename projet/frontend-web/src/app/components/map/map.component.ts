@@ -39,12 +39,12 @@ export class MapComponent implements OnInit, OnDestroy {
       center: this.antananarivoCenter,
       zoom: this.defaultZoom,
       minZoom: 0,
-      maxZoom: 14
+      maxZoom: 20
     });
 
     L.tileLayer(this.tileServerUrl, {
       attribution: '© OpenStreetMap contributors',
-      maxZoom: 14,
+      maxZoom: 20,
       errorTileUrl: 'assets/placeholder-tile.png'
     }).addTo(this.map);
 
