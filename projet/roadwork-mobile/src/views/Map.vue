@@ -51,7 +51,7 @@
             />
             <l-popup>
               <div class="signalement-popup">
-                <h3>Signalement #{{ signalement.id }}</h3>
+                <h3>{{ signalement.description }}</h3>
                 <p><strong>Statut:</strong> {{ getCurrentStatus(signalement) }}</p>
                 <p><strong>Surface:</strong> {{ signalement.surface }} m²</p>
                 <p><strong>Budget:</strong> {{ formatBudget(signalement.budget) }}</p>
