@@ -2,6 +2,7 @@ import * as admin from "firebase-admin";
 
 export const db = admin.firestore();
 export const auth = admin.auth();
+export const apiKEY = 'AIzaSyDhLRO2eNXgH2_qHnZeIZYmRjIJvwr38RU';
 
 // Vérifier si l'utilisateur est Manager
 export async function isManager(uid: string): Promise<boolean> {
@@ -49,6 +50,7 @@ export async function verifyToken(
   try {
     return await auth.verifyIdToken(token);
   } catch (error) {
+    console.error("Erreur détaillée :", error); // Regardez les logs dans la console Firebase
     return null;
   }
 }

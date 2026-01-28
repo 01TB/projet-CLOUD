@@ -24,3 +24,6 @@ export { getStatuts } from "./statuts";
 
 // Statistiques
 export { getStats } from "./stats";
+
+// Synchronisation
+export { syncToBackend } from "./sync";

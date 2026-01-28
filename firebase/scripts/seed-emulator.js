@@ -52,12 +52,16 @@ async function seedData() {
 
   // 1. CRÉER LES RÔLES
   console.log("📝 Création des rôles...");
-  const roleManager = await db.collection("roles").add({
-    nom: "Manager",
+  const roleAdministrateur = await db.collection("roles").add({
+    nom: "Administrateur",
     synchro: true,
   });
   const roleUtilisateur = await db.collection("roles").add({
     nom: "Utilisateur",
+    synchro: true,
+  });
+  const roleEntreprise = await db.collection("roles").add({
+    nom: "Entreprise",
     synchro: true,
   });
   console.log("✅ Rôles créés");
@@ -66,10 +70,9 @@ async function seedData() {
   console.log("🏢 Création des entreprises...");
   const entreprises = [];
   const entrepriseNames = [
-    "JIRAMA",
-    "TelMa",
-    "Air Madagascar",
-    "Orange Madagascar",
+    "BTP Rénovation",
+    "Eco-Construction",
+    "Travaux Express",
   ];
   for (const nom of entrepriseNames) {
     const entreprise = await db.collection("entreprises").add({
@@ -84,11 +87,11 @@ async function seedData() {
   console.log("📊 Création des statuts d'avancement...");
   const statuts = [];
   const statutsData = [
-    { nom: "En attente", valeur: 0 },
-    { nom: "En cours", valeur: 25 },
-    { nom: "En validation", valeur: 50 },
-    { nom: "Validé", valeur: 75 },
-    { nom: "Terminé", valeur: 100 },
+    { nom: "Nouveau", valeur: 0 },
+    { nom: "En cours d'analyse", valeur: 25 },
+    { nom: "Travaux commencés", valeur: 50 },
+    { nom: "Travaux terminés", valeur: 100 },
+    { nom: "Rejeté", valeur: -1 },
   ];
   for (const statut of statutsData) {
     const statutRef = await db.collection("statuts_avancement").add({
@@ -102,7 +105,7 @@ async function seedData() {
   // 4. CRÉER LES PARAMÈTRES
   console.log("⚙️ Création des paramètres...");
   await db.collection("parametres").add({
-    nb_tentatives_connexion: 3,
+    nb_tentatives_connexion: 5,
     duree_session: 3600, // en secondes
     synchro: true,
   });
@@ -111,57 +114,71 @@ async function seedData() {
   // 5. CRÉER LES UTILISATEURS (avec Firebase Auth)
   console.log("👥 Création des utilisateurs...");
 
-  // Manager
-  const managerAuth = await auth.createUser({
-    uid: "manager001",
-    email: "manager@signalement.mg",
-    password: "manager123",
-    displayName: "Jean Manager",
+  // Administrateur
+  const adminAuth = await auth.createUser({
+    uid: "admin001",
+    email: "admin@signalement.com",
+    password: "admin123",
+    displayName: "Administrateur",
   });
-  await db.collection("utilisateurs").doc("manager001").set({
-    email: "manager@signalement.mg",
-    password: "hashed_password_manager", // En prod, utiliser bcrypt
-    id_role: roleManager.id,
+  await db.collection("utilisateurs").doc("admin001").set({
+    email: "admin@signalement.com",
+    password: "hashed_password_admin", // En prod, utiliser bcrypt
+    id_role: roleAdministrateur.id,
     synchro: true,
   });
 
-  // Utilisateur 1
+  // Jean Dupont (Utilisateur)
   const user1Auth = await auth.createUser({
     uid: "user001",
-    email: "rakoto@example.mg",
+    email: "jean.dupont@email.com",
     password: "user123",
-    displayName: "Rakoto Jean",
+    displayName: "Jean Dupont",
   });
   await db.collection("utilisateurs").doc("user001").set({
-    email: "rakoto@example.mg",
+    email: "jean.dupont@email.com",
     password: "hashed_password_user1",
     id_role: roleUtilisateur.id,
     synchro: true,
   });
 
-  // Utilisateur 2
+  // Marie Curie (Utilisateur)
   const user2Auth = await auth.createUser({
     uid: "user002",
-    email: "ravelo@example.mg",
-    password: "user123",
-    displayName: "Ravelo Marie",
+    email: "marie.curie@email.com",
+    password: "user456",
+    displayName: "Marie Curie",
   });
   await db.collection("utilisateurs").doc("user002").set({
-    email: "ravelo@example.mg",
+    email: "marie.curie@email.com",
     password: "hashed_password_user2",
     id_role: roleUtilisateur.id,
     synchro: true,
   });
 
-  // Utilisateur 3 (bloqué)
+  // Entreprise BTP Rénovation
+  const entrepriseAuth = await auth.createUser({
+    uid: "entreprise001",
+    email: "contact@btp-renovation.com",
+    password: "entr123",
+    displayName: "BTP Rénovation",
+  });
+  await db.collection("utilisateurs").doc("entreprise001").set({
+    email: "contact@btp-renovation.com",
+    password: "hashed_password_entreprise",
+    id_role: roleEntreprise.id,
+    synchro: true,
+  });
+
+  // Spammeur (à bloquer)
   const user3Auth = await auth.createUser({
     uid: "user003",
-    email: "blocked@example.mg",
-    password: "user123",
-    displayName: "Utilisateur Bloqué",
+    email: "spammeur@bad.com",
+    password: "badpass",
+    displayName: "Spammeur",
   });
   await db.collection("utilisateurs").doc("user003").set({
-    email: "blocked@example.mg",
+    email: "spammeur@bad.com",
     password: "hashed_password_user3",
     id_role: roleUtilisateur.id,
     synchro: true,
@@ -173,7 +190,9 @@ async function seedData() {
   console.log("🚫 Création d'utilisateur bloqué...");
   await db.collection("utilisateurs_bloques").add({
     id_utilisateur: "user003",
-    date_blocage: admin.firestore.Timestamp.now(),
+    date_blocage: admin.firestore.Timestamp.fromDate(
+      new Date("2023-10-25T14:00:00Z"),
+    ),
     synchro: true,
   });
   console.log("✅ Utilisateur bloqué");
@@ -184,39 +203,30 @@ async function seedData() {
 
   const signalementsData = [
     {
-      date_creation: "2026-01-15T10:30:00Z",
-      surface: 150.5,
-      budget: 5000000,
-      localisation: new admin.firestore.GeoPoint(-18.8792, 47.5079), // Antananarivo
-      id_utilisateur_createur: "user001",
-      id_entreprise: entreprises[0].id, // JIRAMA
+      date_creation: "2023-11-01T09:30:00Z",
+      surface: 45.5,
+      budget: 15000,
+      localisation: new admin.firestore.GeoPoint(18.9, 47.5), // SQL: POINT(47.50 18.90) → GeoPoint(lat, lng)
+      id_utilisateur_createur: "user001", // Jean Dupont
+      id_entreprise: entreprises[0].id, // BTP Rénovation
       synchro: true,
     },
     {
-      date_creation: "2026-01-16T14:20:00Z",
-      surface: 75.3,
-      budget: 2500000,
-      localisation: new admin.firestore.GeoPoint(-18.9333, 47.5167), // Ankatso
-      id_utilisateur_createur: "user002",
-      id_entreprise: entreprises[1].id, // TelMa
+      date_creation: "2023-11-02T10:15:00Z",
+      surface: 120.0,
+      budget: 50000,
+      localisation: new admin.firestore.GeoPoint(-12.28, 49.29), // SQL: POINT(49.29 -12.28) → GeoPoint(lat, lng)
+      id_utilisateur_createur: "user002", // Marie Curie
+      id_entreprise: entreprises[1].id, // Eco-Construction
       synchro: true,
     },
     {
-      date_creation: "2026-01-18T09:00:00Z",
-      surface: 200.0,
-      budget: 8000000,
-      localisation: new admin.firestore.GeoPoint(-18.8955, 47.5235), // Analakely
-      id_utilisateur_createur: "user001",
-      id_entreprise: entreprises[0].id, // JIRAMA
-      synchro: true,
-    },
-    {
-      date_creation: "2026-01-19T16:45:00Z",
-      surface: 120.8,
-      budget: 3500000,
-      localisation: new admin.firestore.GeoPoint(-18.91, 47.53), // Ambohijatovo
-      id_utilisateur_createur: "user002",
-      id_entreprise: entreprises[2].id, // Air Madagascar
+      date_creation: "2023-11-03T16:00:00Z",
+      surface: 15.0,
+      budget: 2000,
+      localisation: new admin.firestore.GeoPoint(18.92, 47.52), // SQL: POINT(47.52 18.92) → GeoPoint(lat, lng)
+      id_utilisateur_createur: "user001", // Jean Dupont
+      id_entreprise: entreprises[2].id, // Travaux Express
       synchro: true,
     },
   ];
@@ -230,44 +240,53 @@ async function seedData() {
   // 8. CRÉER DES AVANCEMENTS DE SIGNALEMENT
   console.log("📈 Création des avancements...");
 
-  // Signalement 1 : progression complète
+  // Historique pour le signalement 1 (2 avancements)
+  // NOW() - INTERVAL '3 days' → 3 jours avant aujourd'hui
+  const now = new Date();
   await db.collection("avancements_signalement").add({
     id_signalement: signalements[0].id,
-    id_utilisateur: "manager001",
-    id_statut_avancement: statuts[0].id, // En attente
+    id_utilisateur: "user001", // Jean Dupont (créateur)
+    id_statut_avancement: statuts[0].id, // Nouveau
     date_modification: admin.firestore.Timestamp.fromDate(
-      new Date("2026-01-15T11:00:00Z"),
+      new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000),
     ),
     synchro: true,
   });
   await db.collection("avancements_signalement").add({
     id_signalement: signalements[0].id,
-    id_utilisateur: "manager001",
-    id_statut_avancement: statuts[1].id, // En cours
+    id_utilisateur: "admin001", // Admin
+    id_statut_avancement: statuts[1].id, // En cours d'analyse
     date_modification: admin.firestore.Timestamp.fromDate(
-      new Date("2026-01-16T08:00:00Z"),
+      new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000),
     ),
     synchro: true,
   });
 
-  // Signalement 2 : début de traitement
+  // Historique pour le signalement 2 (3 avancements)
   await db.collection("avancements_signalement").add({
     id_signalement: signalements[1].id,
-    id_utilisateur: "manager001",
-    id_statut_avancement: statuts[0].id, // En attente
+    id_utilisateur: "user002", // Marie Curie (créatrice)
+    id_statut_avancement: statuts[0].id, // Nouveau
     date_modification: admin.firestore.Timestamp.fromDate(
-      new Date("2026-01-16T15:00:00Z"),
+      new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000),
     ),
     synchro: true,
   });
-
-  // Signalement 3 : terminé
   await db.collection("avancements_signalement").add({
-    id_signalement: signalements[2].id,
-    id_utilisateur: "manager001",
-    id_statut_avancement: statuts[4].id, // Terminé
+    id_signalement: signalements[1].id,
+    id_utilisateur: "admin001", // Admin
+    id_statut_avancement: statuts[1].id, // En cours d'analyse
     date_modification: admin.firestore.Timestamp.fromDate(
-      new Date("2026-01-19T12:00:00Z"),
+      new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000),
+    ),
+    synchro: true,
+  });
+  await db.collection("avancements_signalement").add({
+    id_signalement: signalements[1].id,
+    id_utilisateur: "entreprise001", // Entreprise
+    id_statut_avancement: statuts[2].id, // Travaux commencés
+    date_modification: admin.firestore.Timestamp.fromDate(
+      new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000),
     ),
     synchro: true,
   });
@@ -276,12 +295,12 @@ async function seedData() {
 
   console.log("\n🎉 Toutes les données ont été créées avec succès !");
   console.log("\n📊 RÉSUMÉ:");
-  console.log(`   - 2 rôles (Manager, Utilisateur)`);
+  console.log(`   - 3 rôles (Administrateur, Utilisateur, Entreprise)`);
   console.log(`   - ${entreprises.length} entreprises`);
   console.log(`   - ${statuts.length} statuts d'avancement`);
-  console.log(`   - 4 utilisateurs (dont 1 bloqué)`);
+  console.log(`   - 5 utilisateurs (dont 1 bloqué)`);
   console.log(`   - ${signalements.length} signalements`);
-  console.log(`   - 4 avancements de signalement`);
+  console.log(`   - 5 avancements de signalement`);
   console.log("\n🌐 Accédez à l'interface: http://localhost:4000");
 
   process.exit(0);

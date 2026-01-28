@@ -1,5 +1,6 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
+import axios from "axios";
 import {
   db,
   auth,
@@ -9,6 +10,7 @@ import {
   errorResponse,
   extractToken,
   verifyToken,
+  apiKEY,
 } from "../utils/helpers";
 
 // POST /api/auth/register
@@ -201,8 +203,18 @@ export const login = functions.https.onRequest(async (req, res) => {
 
     const userData = userDoc.data();
 
-    // Créer un custom token
+    // 1. Créer un custom token
     const token = await auth.createCustomToken(userRecord.uid);
+    // 2. L'échanger immédiatement contre un ID Token via l'API REST de Google
+    const responseIdentity = await axios.post(
+      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=${apiKEY}`,
+      {
+        token: token,
+        returnSecureToken: true,
+      }
+    );
+    // 3. Récupérer le idToken de la réponse
+    const idToken = responseIdentity.data.idToken;
 
     const response = successResponse({
       user: {
@@ -215,7 +227,7 @@ export const login = functions.https.onRequest(async (req, res) => {
         date_creation: userData?.date_creation?.toDate().toISOString(),
         date_modification: userData?.date_modification?.toDate().toISOString(),
       },
-      token,
+      idToken,
     });
 
     res.status(response.status).json(response.body);

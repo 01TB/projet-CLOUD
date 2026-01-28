@@ -877,20 +877,232 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
 
 ---
 
-## 🔑 Codes d'erreur
+## � Synchronisation
 
-| Code                    | Message                   | Description                 |
-| ----------------------- | ------------------------- | --------------------------- |
-| `AUTH_REQUIRED`         | Token requis              | Authentification nécessaire |
-| `UNAUTHORIZED`          | Token invalide            | Token expiré ou invalide    |
-| `FORBIDDEN`             | Accès interdit            | Permissions insuffisantes   |
-| `VALIDATION_ERROR`      | Erreur de validation      | Données invalides           |
-| `EMAIL_EXISTS`          | Email déjà utilisé        | Email déjà enregistré       |
-| `INVALID_CREDENTIALS`   | Identifiants incorrects   | Email/password incorrects   |
-| `USER_NOT_FOUND`        | Utilisateur non trouvé    | Utilisateur inexistant      |
-| `SIGNALEMENT_NOT_FOUND` | Signalement non trouvé    | Signalement inexistant      |
-| `METHOD_NOT_ALLOWED`    | Méthode non autorisée     | Mauvaise méthode HTTP       |
-| `INTERNAL_ERROR`        | Erreur interne du serveur | Erreur non prévue           |
+### 13. POST /syncToBackend
+
+**Description** : Synchroniser les données Firestore vers le backend Spring Boot. Récupère toutes les données non synchronisées (synchro = false), les envoie au backend, puis met à jour synchro = true.
+
+**URL complète** : `https://us-central1-projet-cloud-e2146.cloudfunctions.net/syncToBackend`
+
+**Méthode HTTP** : `POST`
+
+**Authentification** : ❌ Non requise (endpoint public pour le backend Spring Boot)
+
+**Headers** :
+
+```json
+{
+  "Content-Type": "application/json"
+}
+```
+
+**Corps de la requête** : Aucun
+
+**Réponse succès (200)** :
+
+```json
+{
+  "success": true,
+  "data": {
+    "synced": 15,
+    "timestamp": "2026-01-27T14:30:45.123Z",
+    "data": {
+      "roles": [
+        {
+          "id": "role123",
+          "nom": "Administrateur",
+          "synchro": false
+        }
+      ],
+      "entreprises": [
+        {
+          "id": "entr001",
+          "nom": "BTP Rénovation",
+          "synchro": false
+        },
+        {
+          "id": "entr002",
+          "nom": "Eco-Construction",
+          "synchro": false
+        }
+      ],
+      "statuts_avancement": [
+        {
+          "id": "statut001",
+          "nom": "Nouveau",
+          "valeur": 0,
+          "synchro": false
+        }
+      ],
+      "parametres": [
+        {
+          "id": "param001",
+          "nb_tentatives_connexion": 5,
+          "duree_session": 3600,
+          "synchro": false
+        }
+      ],
+      "utilisateurs": [
+        {
+          "id": "user001",
+          "email": "jean.dupont@email.com",
+          "password": "hashed_password",
+          "id_role": "role123",
+          "synchro": false
+        }
+      ],
+      "utilisateurs_bloques": [
+        {
+          "id": "block001",
+          "id_utilisateur": "user003",
+          "date_blocage": "2023-10-25T14:00:00.000Z",
+          "synchro": false
+        }
+      ],
+      "signalements": [
+        {
+          "id": "signal001",
+          "date_creation": "2023-11-01T09:30:00.000Z",
+          "surface": 45.5,
+          "budget": 15000,
+          "localisation": {
+            "latitude": 18.9,
+            "longitude": 47.5
+          },
+          "id_utilisateur_createur": "user001",
+          "id_entreprise": "entr001",
+          "synchro": false
+        }
+      ],
+      "avancements_signalement": [
+        {
+          "id": "avanc001",
+          "date_modification": "2023-11-02T10:00:00.000Z",
+          "id_utilisateur": "user001",
+          "id_statut_avancement": "statut001",
+          "id_signalement": "signal001",
+          "synchro": false
+        }
+      ]
+    },
+    "updated": {
+      "roles": ["role123"],
+      "entreprises": ["entr001", "entr002"],
+      "statuts_avancement": ["statut001"],
+      "parametres": ["param001"],
+      "utilisateurs": ["user001"],
+      "utilisateurs_bloques": ["block001"],
+      "signalements": ["signal001"],
+      "avancements_signalement": ["avanc001"]
+    }
+  }
+}
+```
+
+**Structure de la réponse** :
+
+- `success` (boolean) : Statut de la requête
+- `data.synced` (number) : Nombre total de documents synchronisés
+- `data.timestamp` (string) : Horodatage de la synchronisation (ISO 8601)
+- `data.data` (object) : Données par collection avec synchro = false
+  - Chaque collection contient un tableau d'objets avec leurs IDs
+  - Les `Timestamp` Firestore sont convertis en ISO 8601 strings
+  - Les `GeoPoint` sont convertis en objets `{latitude, longitude}`
+- `data.updated` (object) : Liste des IDs de documents mis à jour par collection
+
+**Réponse si aucune donnée à synchroniser (200)** :
+
+```json
+{
+  "success": true,
+  "data": {
+    "synced": 0,
+    "timestamp": "2026-01-27T14:30:45.123Z",
+    "data": {},
+    "updated": {}
+  }
+}
+```
+
+**Réponses erreur** :
+
+```json
+// 500 - Erreur lors de la synchronisation
+{
+  "success": false,
+  "error": {
+    "code": "SYNC_ERROR",
+    "message": "Erreur lors de la synchronisation"
+  }
+}
+
+// 405 - Méthode non autorisée
+{
+  "success": false,
+  "error": {
+    "code": "METHOD_NOT_ALLOWED",
+    "message": "Méthode non autorisée"
+  }
+}
+```
+
+**Collections synchronisées** :
+
+1. `roles`
+2. `entreprises`
+3. `statuts_avancement`
+4. `parametres`
+5. `utilisateurs`
+6. `utilisateurs_bloques`
+7. `signalements`
+8. `avancements_signalement`
+
+**Notes importantes** :
+
+- ⚠️ Après synchronisation, tous les documents récupérés auront `synchro = true`
+- 📦 Limite Firestore : 500 opérations par batch (gérée automatiquement)
+- 🔄 Conversion automatique des types Firestore :
+  - `Timestamp` → ISO 8601 string
+  - `GeoPoint` → `{latitude: number, longitude: number}`
+- 🚀 Idéal pour appel périodique depuis Spring Boot (cron job)
+
+**Exemple d'utilisation depuis Spring Boot** :
+
+```java
+// RestTemplate
+RestTemplate restTemplate = new RestTemplate();
+HttpHeaders headers = new HttpHeaders();
+headers.setContentType(MediaType.APPLICATION_JSON);
+
+HttpEntity<Void> request = new HttpEntity<>(headers);
+ResponseEntity<SyncResponse> response = restTemplate.postForEntity(
+    "https://us-central1-projet-cloud-e2146.cloudfunctions.net/syncToBackend",
+    request,
+    SyncResponse.class
+);
+
+SyncResponse syncData = response.getBody();
+System.out.println("Documents synchronisés: " + syncData.getData().getSynced());
+```
+
+---
+
+## �🔑 Codes d'erreur
+
+| Code                    | Message                        | Description                 |
+| ----------------------- | ------------------------------ | --------------------------- |
+| `AUTH_REQUIRED`         | Token requis                   | Authentification nécessaire |
+| `UNAUTHORIZED`          | Token invalide                 | Token expiré ou invalide    |
+| `FORBIDDEN`             | Accès interdit                 | Permissions insuffisantes   |
+| `VALIDATION_ERROR`      | Erreur de validation           | Données invalides           |
+| `EMAIL_EXISTS`          | Email déjà utilisé             | Email déjà enregistré       |
+| `INVALID_CREDENTIALS`   | Identifiants incorrects        | Email/password incorrects   |
+| `USER_NOT_FOUND`        | Utilisateur non trouvé         | Utilisateur inexistant      |
+| `SIGNALEMENT_NOT_FOUND` | Signalement non trouvé         | Signalement inexistant      |
+| `METHOD_NOT_ALLOWED`    | Méthode non autorisée          | Mauvaise méthode HTTP       |
+| `SYNC_ERROR`            | Erreur lors de synchronisation | Échec de synchronisation    |
+| `INTERNAL_ERROR`        | Erreur interne du serveur      | Erreur non prévue           |
 
 ---
 
@@ -958,6 +1170,10 @@ curl https://us-central1-projet-cloud-e2146.cloudfunctions.net/getStatuts
 
 # Get stats
 curl https://us-central1-projet-cloud-e2146.cloudfunctions.net/getStats
+
+# Synchronisation (pour backend Spring Boot)
+curl -X POST https://us-central1-projet-cloud-e2146.cloudfunctions.net/syncToBackend \
+  -H "Content-Type: application/json"
 ```
 
 ---
