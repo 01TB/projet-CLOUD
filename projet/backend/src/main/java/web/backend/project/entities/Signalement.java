@@ -1,12 +1,17 @@
 package web.backend.project.entities;
 
 import jakarta.persistence.*;
+import web.backend.project.entities.dto.SignalementDTO;
+import web.backend.project.utils.GeometryUtils;
+
 import org.locationtech.jts.geom.Geometry;
+
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
-@Table(name = "signalement")
-public class Signalement {
+@Table(name = "signalements")
+public class Signalement implements Syncable<SignalementDTO> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -36,11 +41,12 @@ public class Signalement {
     private Entreprise entreprise;
 
     // Constructeurs
-    public Signalement() {}
+    public Signalement() {
+    }
 
-    public Signalement(String dateCreation, Double surface, Integer budget, 
-                      Geometry localisation, Boolean synchro, 
-                      Utilisateur utilisateurCreateur, Entreprise entreprise) {
+    public Signalement(String dateCreation, Double surface, Integer budget,
+            Geometry localisation, Boolean synchro,
+            Utilisateur utilisateurCreateur, Entreprise entreprise) {
         this.dateCreation = dateCreation;
         this.surface = surface;
         this.budget = budget;
@@ -48,6 +54,21 @@ public class Signalement {
         this.synchro = synchro;
         this.utilisateurCreateur = utilisateurCreateur;
         this.entreprise = entreprise;
+    }
+
+    @Override
+    public SignalementDTO toDTO() {
+        SignalementDTO s = new SignalementDTO();
+        s.setId(this.id);
+        s.setDateCreation(this.dateCreation);
+        s.setSurface(this.surface);
+        s.setBudget(this.budget);
+        s.setLocalisationWkt(GeometryUtils.geometryToWKT(this.localisation));
+        s.setSynchro(this.synchro);
+        s.setUtilisateurCreateurId(this.utilisateurCreateur.getId());
+        s.setEntrepriseId(this.getEntreprise().getId());
+        s.setLastModified(LocalDateTime.now());
+        return s;
     }
 
     // Getters et Setters
@@ -118,8 +139,10 @@ public class Signalement {
     // Equals et HashCode
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         Signalement that = (Signalement) o;
         return Objects.equals(id, that.id);
     }
@@ -128,4 +151,5 @@ public class Signalement {
     public int hashCode() {
         return Objects.hash(id);
     }
+
 }

@@ -1,0 +1,22 @@
+# Dockerfile de développement avec hot reload
+FROM maven:3.9-eclipse-temurin-17-alpine
+
+WORKDIR /app
+
+# Copier les fichiers de configuration Maven
+COPY pom.xml .
+
+# Télécharger les dépendances (mise en cache)
+RUN mvn dependency:resolve -B -q
+
+# Copier le code source
+COPY src ./src
+
+# Exposer les ports
+EXPOSE 8080
+EXPOSE 35729
+
+# Lancer Maven en mode watch avec spring-boot-devtools
+CMD ["mvn", "spring-boot:run", \
+     "-Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005", \
+     "-Dspring-boot.run.fork=false"]
