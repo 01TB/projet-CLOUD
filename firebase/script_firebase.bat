@@ -1,0 +1,2 @@
+firebase emulators:start
+firebase deploy --only functions

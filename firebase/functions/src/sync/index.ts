@@ -54,7 +54,7 @@ export const syncToBackend = functions.https.onRequest(async (req, res) => {
         const data = doc.data();
 
         // Convertir les types spéciaux Firestore
-        const serializedData: { [key: string]: any } = { id: doc.id };
+        const serializedData: { id: string; [key: string]: any } = { id: doc.id };
 
         for (const [key, value] of Object.entries(data)) {
           if (value instanceof admin.firestore.Timestamp) {
