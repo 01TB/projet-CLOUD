@@ -124,7 +124,7 @@
               <ion-icon slot="icon-only" :icon="map"></ion-icon>
             </ion-item-option>
             <ion-item-option color="tertiary" @click="shareSignalement(signalement)" v-if="canShare">
-              <ion-icon slot="icon-only" :icon="share"></ion-icon>
+              <ion-icon slot="icon-only" :icon="shareSocial"></ion-icon>
             </ion-item-option>
           </ion-item-options>
         </ion-item-sliding>
@@ -158,10 +158,10 @@ import {
   IonNote, IonSpinner, IonChip, IonSegment, IonSegmentButton,
   IonGrid, IonRow, IonCol, IonItemSliding, IonItemOptions,
   IonItemOption, IonFab, IonFabButton,
-  toastController, share
+  toastController, shareSocial
 } from '@ionic/vue';
 import {
-  filter, refreshIcon, documentText, map, share as shareIcon,
+  filter, refreshIcon, documentText, map, shareSocial,
   add, alertCircle, checkmarkCircle, time, warning
 } from 'ionicons/icons';
 import { useAuthStore } from '@/store/modules/auth';

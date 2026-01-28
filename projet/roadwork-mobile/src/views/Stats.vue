@@ -171,7 +171,7 @@ import {
   toastController
 } from '@ionic/vue';
 import {
-  refresh, download, share, alertCircle, checkmarkCircle, time,
+  refresh, download, shareSocial, alertCircle, checkmarkCircle, time,
   warning, construct, water, warningOutline, pulse
 } from 'ionicons/icons';
 import { useAuthStore } from '@/store/modules/auth';

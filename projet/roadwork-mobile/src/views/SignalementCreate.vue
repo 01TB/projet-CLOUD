@@ -45,10 +45,40 @@
           </ion-item>
 
           <ion-item>
+            <ion-label position="floating">Surface (m²) *</ion-label>
+            <ion-input
+              v-model="form.surface"
+              type="number"
+              min="0.1"
+              step="0.1"
+              placeholder="Ex: 150.5"
+              required
+              @input="validateSurface"
+            ></ion-input>
+            <ion-note slot="helper" v-if="!surfaceError">Surface estimée de la zone affectée</ion-note>
+            <ion-note slot="error" v-if="surfaceError">{{ surfaceError }}</ion-note>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="floating">Budget estimé (Ar) *</ion-label>
+            <ion-input
+              v-model="form.budget"
+              type="number"
+              min="1000"
+              step="1000"
+              placeholder="Ex: 5000000"
+              required
+              @input="validateBudget"
+            ></ion-input>
+            <ion-note slot="helper" v-if="!budgetError">Budget estimé pour les réparations</ion-note>
+            <ion-note slot="error" v-if="budgetError">{{ budgetError }}</ion-note>
+          </ion-item>
+
+          <ion-item>
             <ion-label position="floating">Adresse</ion-label>
             <ion-input
               v-model="form.adresse"
-              placeholder="Rue, quartier..."
+              placeholder="Ex: Route Ambohijatovo, Antananarivo"
               @focus="geocodeLocation"
             ></ion-input>
             <ion-button slot="end" fill="clear" @click="geocodeLocation">
@@ -69,27 +99,6 @@
                 <ion-label>Autre</ion-label>
               </ion-segment-button>
             </ion-segment>
-          </ion-item>
-
-          <ion-item>
-            <ion-label position="floating">Surface (m²)</ion-label>
-            <ion-input
-              v-model="form.surface"
-              type="number"
-              min="0"
-              step="0.1"
-              placeholder="Ex: 2.5"
-            ></ion-input>
-          </ion-item>
-
-          <ion-item>
-            <ion-label position="floating">Estimation budget (Ar)</ion-label>
-            <ion-input
-              v-model="form.budget"
-              type="number"
-              min="0"
-              placeholder="Ex: 500000"
-            ></ion-input>
           </ion-item>
 
           <ion-item>
@@ -172,7 +181,8 @@ import {
   locate, pin, search, camera, closeCircle,
   warning, checkmarkCircle
 } from 'ionicons/icons';
-import { Geolocation, Camera } from '@capacitor/core';
+import { Geolocation } from '@capacitor/geolocation';
+import { Camera } from '@capacitor/camera';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useSignalementsStore } from '@/store/modules/signalements';
@@ -198,12 +208,41 @@ const form = ref({
 const loadingLocation = ref(false);
 const submitting = ref(false);
 const error = ref('');
+const surfaceError = ref('');
+const budgetError = ref('');
 
 const formValid = computed(() => {
   return form.value.description && 
+         form.value.surface && 
+         form.value.budget &&
          form.value.location && 
-         form.value.location.coordinates;
+         form.value.location.coordinates &&
+         !surfaceError.value && 
+         !budgetError.value;
 });
+
+// Méthodes de validation
+const validateSurface = () => {
+  const surface = parseFloat(form.value.surface);
+  if (!surface || surface <= 0) {
+    surfaceError.value = 'La surface doit être supérieure à 0';
+  } else if (surface > 100000) {
+    surfaceError.value = 'La surface semble trop grande';
+  } else {
+    surfaceError.value = '';
+  }
+};
+
+const validateBudget = () => {
+  const budget = parseFloat(form.value.budget);
+  if (!budget || budget <= 0) {
+    budgetError.value = 'Le budget doit être supérieur à 0';
+  } else if (budget < 1000) {
+    budgetError.value = 'Le budget minimum est de 1000 Ar';
+  } else {
+    budgetError.value = '';
+  }
+};
 
 // Initialiser la carte
 const initMap = () => {
@@ -388,8 +427,12 @@ const saveDraft = async () => {
 };
 
 const handleSubmit = async () => {
+  // Validation finale
+  validateSurface();
+  validateBudget();
+  
   if (!formValid.value) {
-    error.value = 'Veuillez remplir tous les champs obligatoires';
+    error.value = 'Veuillez corriger les erreurs dans le formulaire';
     return;
   }
   
@@ -397,19 +440,25 @@ const handleSubmit = async () => {
   error.value = '';
   
   try {
+    // Préparer les données pour l'API selon la spécification
     const signalementData = {
       description: form.value.description,
-      adresse: form.value.adresse,
-      surface: form.value.surface ? parseFloat(form.value.surface) : null,
-      budget: form.value.budget ? parseInt(form.value.budget) : null,
-      localisation: form.value.location
+      surface: parseFloat(form.value.surface),
+      budget: parseFloat(form.value.budget),
+      adresse: form.value.adresse || undefined,
+      localisation: {
+        type: 'Point',
+        coordinates: form.value.location.coordinates
+      }
     };
+    
+    console.log('Données du signalement:', signalementData);
     
     const result = await signalementsStore.createSignalement(signalementData);
     
     if (result.success) {
       const toast = await toastController.create({
-        message: 'Signalement envoyé avec succès !',
+        message: 'Signalement créé avec succès !',
         duration: 3000,
         color: 'success',
         icon: checkmarkCircle
@@ -419,10 +468,11 @@ const handleSubmit = async () => {
       // Rediriger vers la carte
       router.push('/map');
     } else {
-      error.value = result.error || 'Erreur lors de l\'envoi';
+      error.value = result.error || 'Erreur lors de la création du signalement';
     }
   } catch (err) {
-    error.value = err.message || 'Erreur lors de l\'envoi';
+    console.error('Erreur création signalement:', err);
+    error.value = 'Une erreur est survenue. Veuillez réessayer.';
   } finally {
     submitting.value = false;
   }

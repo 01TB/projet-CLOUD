@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import signalementService from '@/services/signalements';
 import api from '@/services/api';
 
 export const useSignalementsStore = defineStore('signalements', {
@@ -66,84 +67,11 @@ export const useSignalementsStore = defineStore('signalements', {
         },
         date_creation: "2024-01-05T08:45:00Z",
         date_modification: "2024-01-18T16:30:00Z",
-        id_utilisateur_createur: 1,
-        avancement_signalements: [
-          {
-            id: 3,
-            statut_avancement: {
-              id: 3,
-              nom: "Terminé"
-            },
-            date_creation: "2024-01-18T16:30:00Z",
-            commentaire: "Travaux terminés avec succès"
-          }
-        ]
-      },
-      {
-        id: 4,
-        description: "Signalisation routière défectueuse",
-        surface: 5.0,
-        budget: 500000,
-        adresse: "Carrefour de l'Aéroport",
-        localisation: {
-          type: "Point",
-          coordinates: [47.4979, -18.8792]
-        },
-        date_creation: "2024-01-20T11:00:00Z",
-        date_modification: "2024-01-20T11:00:00Z",
-        id_utilisateur_createur: 3,
-        avancement_signalements: [
-          {
-            id: 4,
-            statut_avancement: {
-              id: 1,
-              nom: "Nouveau"
-            },
-            date_creation: "2024-01-20T11:00:00Z",
-            commentaire: "Signalisation à remplacer"
-          }
-        ]
-      },
-      {
-        id: 5,
-        description: "Érosion de la chaussée après intempéries",
-        surface: 30.0,
-        budget: 4500000,
-        adresse: "Route de Mahamasina",
-        localisation: {
-          type: "Point",
-          coordinates: [47.4879, -18.8892]
-        },
-        date_creation: "2024-01-18T07:30:00Z",
-        date_modification: "2024-01-19T14:20:00Z",
-        id_utilisateur_createur: 2,
-        avancement_signalements: [
-          {
-            id: 5,
-            statut_avancement: {
-              id: 2,
-              nom: "En cours"
-            },
-            date_creation: "2024-01-19T14:20:00Z",
-            commentaire: "Réparation en cours"
-          }
-        ]
       }
     ],
-    statuts: [
-      {
-        id: 1,
-        nom: "Nouveau"
-      },
-      {
-        id: 2,
-        nom: "En cours"
-      },
-      {
-        id: 3,
-        nom: "Terminé"
-      }
-    ],
+    currentSignalement: null,
+    mySignalements: [],
+    statuts: [],
     stats: {
       total_signalements: 5,
       total_surface: 115.5,
@@ -164,38 +92,24 @@ export const useSignalementsStore = defineStore('signalements', {
         }
       ]
     },
+    pagination: null,
     loading: false,
-    error: null
+    error: null,
+    filter: 'all'
   }),
 
   actions: {
-    async fetchSignalements() {
+    async fetchSignalements(page = 1, limit = 20, filters = {}) {
       this.loading = true;
-      this.error = null;
-      
       try {
-        const response = await api.get('/signalements');
-        this.signalements = response.data;
+        const result = await signalementService.getSignalementsPaginated(page, limit, filters);
+        if (result.success) {
+          this.signalements = result.data;
+          this.pagination = result.pagination;
+        }
       } catch (error) {
-        this.error = error.message || 'Erreur lors du chargement des signalements';
         console.error('Error fetching signalements:', error);
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    async fetchSignalementById(id) {
-      this.loading = true;
-      this.error = null;
-      
-      try {
-        const response = await api.get(`/signalements/${id}`);
-        this.currentSignalement = response.data;
-        return response.data;
-      } catch (error) {
-        this.error = error.message || 'Erreur lors du chargement du signalement';
-        console.error('Error fetching signalement:', error);
-        throw error;
+        this.error = 'Erreur lors du chargement des signalements';
       } finally {
         this.loading = false;
       }
@@ -203,16 +117,17 @@ export const useSignalementsStore = defineStore('signalements', {
 
     async createSignalement(signalementData) {
       this.loading = true;
-      this.error = null;
-      
       try {
-        const response = await api.post('/signalements', signalementData);
-        this.signalements.unshift(response.data);
-        return response.data;
+        const result = await signalementService.createSignalement(signalementData);
+        if (result.success) {
+          this.signalements.unshift(result.data);
+          return { success: true, data: result.data };
+        }
+        return { success: false, error: result.error?.message || 'Erreur lors de la création' };
       } catch (error) {
-        this.error = error.message || 'Erreur lors de la création du signalement';
         console.error('Error creating signalement:', error);
-        throw error;
+        this.error = 'Erreur lors de la création du signalement';
+        return { success: false, error: this.error };
       } finally {
         this.loading = false;
       }
@@ -220,19 +135,20 @@ export const useSignalementsStore = defineStore('signalements', {
 
     async updateSignalement(id, signalementData) {
       this.loading = true;
-      this.error = null;
-      
       try {
-        const response = await api.put(`/signalements/${id}`, signalementData);
-        const index = this.signalements.findIndex(s => s.id === id);
-        if (index > -1) {
-          this.signalements[index] = response.data;
+        const result = await signalementService.updateSignalement(id, signalementData);
+        if (result.success) {
+          const index = this.signalements.findIndex(s => s.id === id);
+          if (index !== -1) {
+            this.signalements[index] = { ...this.signalements[index], ...result.data };
+          }
+          return { success: true, data: result.data };
         }
-        return response.data;
+        return { success: false, error: result.error?.message || 'Erreur lors de la mise à jour' };
       } catch (error) {
-        this.error = error.message || 'Erreur lors de la mise à jour du signalement';
         console.error('Error updating signalement:', error);
-        throw error;
+        this.error = 'Erreur lors de la mise à jour du signalement';
+        return { success: false, error: this.error };
       } finally {
         this.loading = false;
       }
@@ -240,18 +156,28 @@ export const useSignalementsStore = defineStore('signalements', {
 
     async deleteSignalement(id) {
       this.loading = true;
-      this.error = null;
-      
       try {
-        await api.delete(`/signalements/${id}`);
-        this.signalements = this.signalements.filter(s => s.id !== id);
+        const result = await signalementService.deleteSignalement(id);
+        if (result.success) {
+          this.signalements = this.signalements.filter(s => s.id !== id);
+          return { success: true };
+        }
+        return { success: false, error: result.error?.message || 'Erreur lors de la suppression' };
       } catch (error) {
-        this.error = error.message || 'Erreur lors de la suppression du signalement';
         console.error('Error deleting signalement:', error);
-        throw error;
+        this.error = 'Erreur lors de la suppression du signalement';
+        return { success: false, error: this.error };
       } finally {
         this.loading = false;
       }
+    },
+
+    setFilter(filter) {
+      this.filter = filter;
+    },
+
+    clearError() {
+      this.error = null;
     },
 
     async fetchStatuts() {
@@ -259,77 +185,16 @@ export const useSignalementsStore = defineStore('signalements', {
       this.error = null;
       
       try {
-        const response = await api.get('/statuts');
-        this.statuts = response.data;
+        const result = await signalementService.getStatuts();
+        if (result.success) {
+          this.statuts = result.data;
+        }
       } catch (error) {
-        this.error = error.message || 'Erreur lors du chargement des statuts';
         console.error('Error fetching statuts:', error);
+        this.error = 'Erreur lors du chargement des statuts';
       } finally {
         this.loading = false;
       }
-    },
-
-    async fetchStats() {
-      this.loading = true;
-      this.error = null;
-      
-      try {
-        const response = await api.get('/stats');
-        this.stats = response.data;
-      } catch (error) {
-        this.error = error.message || 'Erreur lors du chargement des statistiques';
-        console.error('Error fetching stats:', error);
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    clearError() {
-      this.error = null;
-    },
-
-    setLoading(loading) {
-      this.loading = loading;
-    }
-  },
-
-  getters: {
-    getSignalementById: (state) => (id) => {
-      return state.signalements.find(s => s.id === id);
-    },
-
-    getSignalementsByStatus: (state) => (status) => {
-      return state.signalements.filter(s => {
-        if (s.avancement_signalements && s.avancement_signalements[0]) {
-          return s.avancement_signalements[0].statut_avancement?.nom === status;
-        }
-        return false;
-      });
-    },
-
-    getSignalementsByUser: (state) => (userId) => {
-      return state.signalements.filter(s => s.id_utilisateur_createur === userId);
-    },
-
-    totalSignalements: (state) => state.signalements.length,
-    
-    totalSurface: (state) => {
-      return state.signalements.reduce((total, s) => total + (s.surface || 0), 0);
-    },
-
-    totalBudget: (state) => {
-      return state.signalements.reduce((total, s) => total + (s.budget || 0), 0);
-    },
-
-    averageProgress: (state) => {
-      if (state.signalements.length === 0) return 0;
-      const completed = state.signalements.filter(s => {
-        if (s.avancement_signalements && s.avancement_signalements[0]) {
-          return s.avancement_signalements[0].statut_avancement?.nom === 'Terminé';
-        }
-        return false;
-      }).length;
-      return Math.round((completed / state.signalements.length) * 100);
     }
   }
 });

@@ -16,17 +16,23 @@ export const useAuthStore = defineStore('auth', {
       this.error = null;
       
       try {
-        const { user, token } = await AuthService.login(credentials);
+        const result = await AuthService.login(credentials);
         
-        this.user = user;
-        this.token = token;
-        this.isAuthenticated = true;
-        
-        // Sauvegarder le token
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
-        
-        return { success: true, user };
+        // Ne s'authentifier que si la connexion a réussi
+        if (result.success) {
+          this.user = result.user;
+          this.token = result.token; // Utiliser le token retourné par le service
+          this.isAuthenticated = true;
+          
+          localStorage.setItem('token', this.token);
+          localStorage.setItem('user', JSON.stringify(result.user));
+          
+          return { success: true, user: result.user };
+        } else {
+          // La connexion a échoué, ne pas s'authentifier
+          this.error = result.error;
+          return { success: false, error: result.error };
+        }
       } catch (error) {
         this.error = error.message;
         return { success: false, error: error.message };
@@ -40,16 +46,23 @@ export const useAuthStore = defineStore('auth', {
       this.error = null;
       
       try {
-        const data = await AuthService.register(userData);
+        const result = await AuthService.register(userData);
         
-        this.user = data.user;
-        this.token = data.token;
-        this.isAuthenticated = true;
-        
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        
-        return { success: true, user: data.user };
+        // Ne s'authentifier que si l'inscription a réussi
+        if (result.success) {
+          this.user = result.user;
+          this.token = result.token; // Utiliser le token retourné par le service
+          this.isAuthenticated = true;
+          
+          localStorage.setItem('token', this.token);
+          localStorage.setItem('user', JSON.stringify(result.user));
+          
+          return { success: true, user: result.user };
+        } else {
+          // L'inscription a échoué, ne pas s'authentifier
+          this.error = result.error;
+          return { success: false, error: result.error };
+        }
       } catch (error) {
         this.error = error.message;
         return { success: false, error: error.message };
@@ -79,10 +92,19 @@ export const useAuthStore = defineStore('auth', {
     async checkAuth() {
       if (this.token) {
         try {
-          const user = await AuthService.getCurrentUser();
-          this.user = user;
-          this.isAuthenticated = true;
-          return true;
+          const isValid = await AuthService.checkAuth();
+          if (isValid) {
+            // Récupérer l'utilisateur depuis localStorage
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+              this.user = JSON.parse(userStr);
+            }
+            this.isAuthenticated = true;
+            return true;
+          } else {
+            this.logout();
+            return false;
+          }
         } catch (error) {
           this.logout();
           return false;
@@ -98,6 +120,7 @@ export const useAuthStore = defineStore('auth', {
   },
 
   getters: {
+    isLoggedIn: (state) => state.isAuthenticated,
     isManager: (state) => state.user?.role === 1,
     isUser: (state) => state.user?.role === 2,
     isVisitor: (state) => !state.isAuthenticated || state.user?.role === 3,
