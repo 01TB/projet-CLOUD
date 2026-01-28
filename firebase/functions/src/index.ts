@@ -22,6 +22,9 @@ export {
 // Statuts
 export { getStatuts } from "./statuts";
 
+// Entreprises
+export { getEntreprises } from "./entreprises";
+
 // Statistiques
 export { getStats } from "./stats";
 

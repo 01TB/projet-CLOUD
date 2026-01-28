@@ -758,7 +758,7 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
 
 ## 📊 Statuts d'avancement
 
-### 11. GET /getStatuts
+### 12. GET /getStatuts
 
 **Description** : Récupérer la liste de tous les statuts d'avancement possibles (accessible à tous).
 
@@ -816,9 +816,54 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
 
 ---
 
+## 🏢 Entreprises
+
+### 11. GET /getEntreprises
+
+**Description** : Récupérer la liste de toutes les entreprises enregistrées dans le système (accessible à tous).
+
+**URL complète** : `https://us-central1-projet-cloud-e2146.cloudfunctions.net/getEntreprises`
+
+**Méthode HTTP** : `GET`
+
+**Réponse succès (200)** :
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "entreprise1",
+      "nom": "Entreprise A",
+      "synchro": true
+    },
+    {
+      "id": "entreprise2",
+      "nom": "Entreprise B",
+      "synchro": true
+    }
+  ]
+}
+```
+
+**Réponses erreur** :
+
+```json
+// 500 - Erreur serveur
+{
+  "success": false,
+  "error": {
+    "code": "INTERNAL_ERROR",
+    "message": "Erreur interne du serveur"
+  }
+}
+```
+
+---
+
 ## 📈 Statistiques
 
-### 12. GET /getStats
+### 13. GET /getStats
 
 **Description** : Récupérer les statistiques globales du système (accessible à tous).
 
@@ -879,7 +924,7 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
 
 ## � Synchronisation
 
-### 13. POST /syncToBackend
+### 14. POST /syncToBackend
 
 **Description** : Synchroniser les données Firestore vers le backend Spring Boot. Récupère toutes les données non synchronisées (synchro = false), les envoie au backend, puis met à jour synchro = true.
 
@@ -1167,6 +1212,9 @@ curl https://us-central1-projet-cloud-e2146.cloudfunctions.net/getSignalements?p
 
 # Get statuts
 curl https://us-central1-projet-cloud-e2146.cloudfunctions.net/getStatuts
+
+# Get entreprises
+curl https://us-central1-projet-cloud-e2146.cloudfunctions.net/getEntreprises
 
 # Get stats
 curl https://us-central1-projet-cloud-e2146.cloudfunctions.net/getStats
