@@ -1,4 +1,4 @@
-package web.backend.project.features.signalements.api.dto;
+package web.backend.project.features.signalements.dto;
 
 public class SignalementResponseDTO {
 

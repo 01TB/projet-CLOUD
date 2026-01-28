@@ -1,8 +1,8 @@
 package web.backend.project.features.signalements.api;
 
 import jakarta.validation.Valid;
-import web.backend.project.features.signalements.api.dto.SignalementDTO;
-import web.backend.project.features.signalements.api.dto.SignalementResponseDTO;
+import web.backend.project.features.signalements.dto.SignalementDTO;
+import web.backend.project.features.signalements.dto.SignalementResponseDTO;
 import web.backend.project.features.signalements.services.SignalementService;
 
 import org.springframework.beans.factory.annotation.Autowired;

@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import web.backend.project.entities.Utilisateur;
-import web.backend.project.features.auth.repositories.AuthRepository;
+import web.backend.project.repositories.AuthRepository;
 import web.backend.project.security.CustomUserDetails;
 import web.backend.project.security.JwtService;
 

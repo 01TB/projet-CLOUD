@@ -31,3 +31,5 @@ yarn.lock
 
 # Docker volumes (backup local)
 postgres-data/
+
+prompt/

@@ -12,10 +12,11 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import web.backend.project.entities.dto.AvancementSignalementDTO;
 
 @Entity
-@Table(name = "avancement_signalement")
-public class AvancementSignalement {
+@Table(name = "avancements_signalement")
+public class AvancementSignalement implements Syncable<AvancementSignalementDTO> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -25,7 +26,7 @@ public class AvancementSignalement {
     private LocalDateTime dateModification;
 
     @Column(name = "synchro", nullable = false)
-    private Boolean synchro;
+    private Boolean synchro = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_utilisateur", nullable = false)
@@ -40,16 +41,30 @@ public class AvancementSignalement {
     private Signalement signalement;
 
     // Constructeurs
-    public AvancementSignalement() {}
+    public AvancementSignalement() {
+    }
 
-    public AvancementSignalement(LocalDateTime dateModification, Boolean synchro, 
-                                Utilisateur utilisateur, StatutAvancement statutAvancement, 
-                                Signalement signalement) {
+    public AvancementSignalement(LocalDateTime dateModification, Boolean synchro,
+            Utilisateur utilisateur, StatutAvancement statutAvancement,
+            Signalement signalement) {
         this.dateModification = dateModification;
         this.synchro = synchro;
         this.utilisateur = utilisateur;
         this.statutAvancement = statutAvancement;
         this.signalement = signalement;
+    }
+
+    @Override
+    public AvancementSignalementDTO toDTO() {
+        AvancementSignalementDTO dto = new AvancementSignalementDTO();
+        dto.setId(this.id);
+        dto.setDateModification(this.dateModification);
+        dto.setSynchro(this.synchro);
+        dto.setUtilisateurId(this.utilisateur.getId());
+        dto.setStatutAvancementId(this.statutAvancement.getId());
+        dto.setSignalementId(this.signalement.getId());
+        dto.setLastModified(this.dateModification);
+        return dto;
     }
 
     // Getters et Setters
@@ -104,8 +119,10 @@ public class AvancementSignalement {
     // Equals et HashCode
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         AvancementSignalement that = (AvancementSignalement) o;
         return Objects.equals(id, that.id);
     }

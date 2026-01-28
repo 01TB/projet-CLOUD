@@ -12,7 +12,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 @Entity
-@Table(name = "entreprise", uniqueConstraints = {
+@Table(name = "entreprises", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"nom"})
 })
 public class Entreprise {
@@ -25,7 +25,7 @@ public class Entreprise {
     private String nom;
 
     @Column(name = "synchro", nullable = false)
-    private Boolean synchro;
+    private Boolean synchro = false;
 
     // Constructeurs
     public Entreprise() {}

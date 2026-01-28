@@ -3,7 +3,7 @@ package web.backend.project.features.auth.api;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import web.backend.project.features.auth.api.dto.LoginCredentialsDto;
+import web.backend.project.features.auth.dto.LoginCredentialsDto;
 import web.backend.project.features.auth.services.AuthService;
 
 import org.springframework.beans.factory.annotation.Autowired;

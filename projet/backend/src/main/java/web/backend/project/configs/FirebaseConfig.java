@@ -1,0 +1,49 @@
+package web.backend.project.configs;
+
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.firestore.Firestore;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
+import com.google.firebase.cloud.FirestoreClient;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.Resource;
+
+import jakarta.annotation.PostConstruct;
+import java.io.IOException;
+
+/**
+ * Configuration Firebase pour la synchronisation avec Firestore
+ */
+@Configuration
+public class FirebaseConfig {
+
+    @Value("${firebase.database.url}")
+    private String databaseUrl;
+
+    @Value("${firebase.config.path}")
+    private Resource firebaseConfigPath;
+
+    @PostConstruct
+    public void initialize() {
+        try {
+            if (FirebaseApp.getApps().isEmpty()) {
+                FirebaseOptions options = FirebaseOptions.builder()
+                        .setCredentials(GoogleCredentials.fromStream(firebaseConfigPath.getInputStream()))
+                        .setDatabaseUrl(databaseUrl)
+                        .build();
+
+                FirebaseApp.initializeApp(options);
+                System.out.println("Firebase initialized successfully");
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to initialize Firebase", e);
+        }
+    }
+
+    @Bean
+    public Firestore firestore() {
+        return FirestoreClient.getFirestore();
+    }
+}

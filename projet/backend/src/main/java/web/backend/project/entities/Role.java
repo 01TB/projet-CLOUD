@@ -11,7 +11,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 @Entity
-@Table(name = "role", uniqueConstraints = {
+@Table(name = "roles", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"nom"})
 })
 public class Role {
@@ -24,7 +24,7 @@ public class Role {
     private String nom;
 
     @Column(name = "synchro", nullable = false)
-    private Boolean synchro;
+    private Boolean synchro = false;
 
     // Constructeurs
     public Role() {}

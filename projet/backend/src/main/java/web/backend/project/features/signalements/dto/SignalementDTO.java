@@ -1,4 +1,4 @@
-package web.backend.project.features.signalements.api.dto;
+package web.backend.project.features.signalements.dto;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;

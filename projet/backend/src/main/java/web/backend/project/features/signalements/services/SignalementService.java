@@ -8,12 +8,12 @@ import web.backend.project.entities.Entreprise;
 import web.backend.project.entities.Signalement;
 import web.backend.project.entities.Utilisateur;
 import web.backend.project.exceptions.ResourceNotFoundException;
-import web.backend.project.features.signalements.api.dto.SignalementDTO;
-import web.backend.project.features.signalements.api.dto.SignalementResponseDTO;
-import web.backend.project.features.signalements.repositories.EntrepriseRepository;
-import web.backend.project.features.signalements.repositories.SignalementRepository;
-import web.backend.project.features.users.UtilisateurRepository;
+import web.backend.project.features.signalements.dto.SignalementDTO;
+import web.backend.project.features.signalements.dto.SignalementResponseDTO;
 import web.backend.project.mappers.SignalementMapper;
+import web.backend.project.repositories.EntrepriseRepository;
+import web.backend.project.repositories.SignalementRepository;
+import web.backend.project.repositories.UtilisateurRepository;
 
 import java.util.List;
 import java.util.stream.Collectors;

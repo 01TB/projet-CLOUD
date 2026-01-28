@@ -1,11 +1,13 @@
 package web.backend.project.entities;
 
 import jakarta.persistence.*;
+import web.backend.project.entities.dto.UtilisateurDTO;
+
 import java.util.Objects;
 
 @Entity
-@Table(name = "utilisateur")
-public class Utilisateur {
+@Table(name = "utilisateurs")
+public class Utilisateur implements Syncable<UtilisateurDTO> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -18,20 +20,32 @@ public class Utilisateur {
     private String password;
 
     @Column(name = "synchro", nullable = false)
-    private Boolean synchro;
+    private Boolean synchro = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_role", nullable = false)
     private Role role;
 
     // Constructeurs
-    public Utilisateur() {}
+    public Utilisateur() {
+    }
 
     public Utilisateur(String email, String password, Boolean synchro, Role role) {
         this.email = email;
         this.password = password;
         this.synchro = synchro;
         this.role = role;
+    }
+
+    @Override
+    public UtilisateurDTO toDTO() {
+        UtilisateurDTO dto = new UtilisateurDTO();
+        dto.setId(this.id);
+        dto.setEmail(this.email);
+        dto.setPassword(this.password);
+        dto.setSynchro(this.synchro);
+        dto.setRoleId(this.role != null ? this.role.getId() : null);
+        return dto;
     }
 
     // Getters et Setters
@@ -78,8 +92,10 @@ public class Utilisateur {
     // Equals et HashCode
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         Utilisateur that = (Utilisateur) o;
         return Objects.equals(id, that.id);
     }

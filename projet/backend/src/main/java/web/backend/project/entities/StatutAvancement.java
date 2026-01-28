@@ -2,14 +2,17 @@ package web.backend.project.entities;
 
 
 import jakarta.persistence.*;
+import web.backend.project.entities.dto.StatutAvancementDTO;
+
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
-@Table(name = "statut_avancement", uniqueConstraints = {
+@Table(name = "statuts_avancement", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"nom"}),
     @UniqueConstraint(columnNames = {"valeur"})
 })
-public class StatutAvancement {
+public class StatutAvancement implements Syncable<StatutAvancementDTO> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -22,7 +25,20 @@ public class StatutAvancement {
     private Integer valeur;
 
     @Column(name = "synchro", nullable = false)
-    private Boolean synchro;
+    private Boolean synchro = false;
+
+
+    @Override
+    public StatutAvancementDTO toDTO() {
+        StatutAvancementDTO dto = new StatutAvancementDTO();
+        dto.setId(this.id);
+        dto.setNom(this.nom);
+        dto.setValeur(this.valeur);
+        dto.setSynchro(this.synchro);
+        dto.setLastModified(LocalDateTime.now());
+        return dto;
+    }
+
 
     // Constructeurs
     public StatutAvancement() {}
@@ -79,4 +95,5 @@ public class StatutAvancement {
     public int hashCode() {
         return Objects.hash(id);
     }
+
 }

@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import java.util.Objects;
 
 @Entity
-@Table(name = "parametre")
+@Table(name = "parametres")
 public class Parametre {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,7 +19,7 @@ public class Parametre {
     private Integer dureeSession;
 
     @Column(name = "synchro", nullable = false)
-    private Boolean synchro;
+    private Boolean synchro = false;
 
     // Constructeurs
     public Parametre() {}

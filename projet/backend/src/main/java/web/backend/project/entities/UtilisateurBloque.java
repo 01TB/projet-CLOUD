@@ -1,13 +1,14 @@
 package web.backend.project.entities;
 
-
 import jakarta.persistence.*;
+import web.backend.project.entities.dto.UtilisateurBloqueDTO;
+
 import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
-@Table(name = "utilisateur_bloque")
-public class UtilisateurBloque {
+@Table(name = "utilisateurs_bloques")
+public class UtilisateurBloque implements Syncable<UtilisateurBloqueDTO> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -17,19 +18,30 @@ public class UtilisateurBloque {
     private LocalDateTime dateBlocage;
 
     @Column(name = "synchro", nullable = false)
-    private Boolean synchro;
+    private Boolean synchro = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_utilisateur", nullable = false)
     private Utilisateur utilisateur;
 
     // Constructeurs
-    public UtilisateurBloque() {}
+    public UtilisateurBloque() {
+    }
 
     public UtilisateurBloque(LocalDateTime dateBlocage, Boolean synchro, Utilisateur utilisateur) {
         this.dateBlocage = dateBlocage;
         this.synchro = synchro;
         this.utilisateur = utilisateur;
+    }
+
+    @Override
+    public UtilisateurBloqueDTO toDTO() {
+        UtilisateurBloqueDTO dto = new UtilisateurBloqueDTO();
+        dto.setId(this.id);
+        dto.setDateBlocage(this.dateBlocage);
+        dto.setSynchro(this.synchro);
+        dto.setUtilisateurId(this.utilisateur != null ? this.utilisateur.getId() : null);
+        return dto;
     }
 
     // Getters et Setters
@@ -68,8 +80,10 @@ public class UtilisateurBloque {
     // Equals et HashCode
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         UtilisateurBloque that = (UtilisateurBloque) o;
         return Objects.equals(id, that.id);
     }
@@ -78,4 +92,5 @@ public class UtilisateurBloque {
     public int hashCode() {
         return Objects.hash(id);
     }
+
 }

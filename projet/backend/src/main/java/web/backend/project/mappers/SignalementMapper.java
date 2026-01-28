@@ -8,8 +8,8 @@ import org.springframework.stereotype.Component;
 import web.backend.project.entities.Entreprise;
 import web.backend.project.entities.Signalement;
 import web.backend.project.entities.Utilisateur;
-import web.backend.project.features.signalements.api.dto.SignalementDTO;
-import web.backend.project.features.signalements.api.dto.SignalementResponseDTO;
+import web.backend.project.features.signalements.dto.SignalementDTO;
+import web.backend.project.features.signalements.dto.SignalementResponseDTO;
 
 @Component
 public class SignalementMapper {
