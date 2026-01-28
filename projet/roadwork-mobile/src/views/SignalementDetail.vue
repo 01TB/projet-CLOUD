@@ -127,7 +127,7 @@
                 </ion-col>
                 <ion-col size="6" v-if="canShare">
                   <ion-button expand="block" fill="outline" @click="shareSignalement">
-                    <ion-icon :icon="share" slot="start"></ion-icon>
+                    <ion-icon :icon="shareSocial" slot="start"></ion-icon>
                     Partager
                   </ion-button>
                 </ion-col>
@@ -152,7 +152,7 @@ import {
   toastController
 } from '@ionic/vue';
 import {
-  create, alertCircle, map, share, resize
+  create, alertCircle, map, shareSocial, resize
 } from 'ionicons/icons';
 import { useAuthStore } from '@/store/modules/auth';
 import { useSignalementsStore } from '@/store/modules/signalements';

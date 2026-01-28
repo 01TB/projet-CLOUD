@@ -28,7 +28,7 @@ const routes = [
     path: '/signalement/create',
     name: 'SignalementCreate',
     component: () => import('@/views/SignalementCreate.vue'),
-    meta: { requiresAuth: true, role: 2 } // Utilisateurs seulement
+    meta: { requiresAuth: true } // Tous les utilisateurs connectés
   },
   {
     path: '/signalements',

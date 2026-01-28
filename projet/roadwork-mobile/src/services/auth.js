@@ -3,7 +3,16 @@ import api from './api';
 class AuthService {
   constructor() {
     this.token = localStorage.getItem('token');
-    this.user = JSON.parse(localStorage.getItem('user') || 'null');
+    
+    // Parser l'utilisateur depuis localStorage avec gestion d'erreur
+    const userStr = localStorage.getItem('user');
+    try {
+      this.user = userStr ? JSON.parse(userStr) : null;
+    } catch (error) {
+      console.error('Error parsing user from localStorage:', error);
+      this.user = null;
+      localStorage.removeItem('user'); // Nettoyer les données corrompues
+    }
   }
 
   async login(credentials) {
@@ -17,16 +26,33 @@ class AuthService {
         localStorage.setItem('token', this.token);
         localStorage.setItem('user', JSON.stringify(this.user));
         
-        return { success: true, user: this.user };
+        return { 
+          success: true, 
+          user: this.user,
+          token: this.token
+        };
       }
       
-      return { success: false, error: response.data.error?.message || 'Erreur de connexion' };
+      return { 
+        success: response.data.success, 
+        error: response.data.error?.message || 'Erreur de connexion' 
+      };
     } catch (error) {
       console.error('Login error:', error);
-      return { 
-        success: false, 
-        error: error.response?.data?.error?.message || 'Erreur de connexion' 
-      };
+      
+      // Afficher plus de détails pour le débogage
+      if (error.response) {
+        console.error('Server response:', error.response.data);
+        console.error('Status:', error.response.status);
+        console.error('Headers:', error.response.headers);
+      }
+      
+      // Extraire le message d'erreur de la réponse si disponible
+      if (error.response?.data?.error?.message) {
+        return { success: false, error: error.response.data.error.message };
+      }
+      
+      return { success: false, error: error.message || 'Erreur de connexion' };
     }
   }
 
@@ -41,15 +67,47 @@ class AuthService {
         localStorage.setItem('token', this.token);
         localStorage.setItem('user', JSON.stringify(this.user));
         
-        return { success: true, user: this.user };
+        return { 
+          success: true, 
+          user: this.user,
+          token: this.token
+        };
       }
       
-      return { success: false, error: response.data.error?.message || 'Erreur d\'inscription' };
+      return { 
+        success: response.data.success, 
+        error: response.data.error?.message || 'Erreur d\'inscription' 
+      };
     } catch (error) {
       console.error('Register error:', error);
+      
+      // Afficher plus de détails pour le débogage
+      if (error.response) {
+        console.error('Server response:', error.response.data);
+        console.error('Status:', error.response.status);
+        console.error('Headers:', error.response.headers);
+      }
+      
+      // Extraire le message d'erreur de la réponse si disponible
+      if (error.response?.data?.error?.message) {
+        return { success: false, error: error.response.data.error.message };
+      }
+      
+      // Pour les erreurs 500, essayer d'extraire plus d'informations
+      if (error.response?.status === 500) {
+        const serverError = error.response.data;
+        if (serverError?.error?.details) {
+          return { success: false, error: `Erreur serveur: ${serverError.error.details}` };
+        }
+        if (serverError?.message) {
+          return { success: false, error: `Erreur serveur: ${serverError.message}` };
+        }
+        return { success: false, error: 'Erreur serveur interne. Veuillez réessayer plus tard.' };
+      }
+      
       return { 
         success: false, 
-        error: error.response?.data?.error?.message || 'Erreur d\'inscription' 
+        error: error.response?.data?.error?.message || error.message || 'Erreur d\'inscription' 
       };
     }
   }

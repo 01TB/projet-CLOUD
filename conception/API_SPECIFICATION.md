@@ -53,7 +53,11 @@ Cette application mobile est une application de signalement de problèmes routie
       "date_creation": "datetime",
       "date_modification": "datetime"
     },
-    "token": "string"
+    "token": "string",
+    "entreprises": {
+      "id": "integer",
+      "nom": "string"
+    }
   }
   ```
 - **Erreurs possibles** :
@@ -88,7 +92,11 @@ Cette application mobile est une application de signalement de problèmes routie
       "date_creation": "datetime",
       "date_modification": "datetime"
     },
-    "token": "string"
+    "token": "string",
+    "entreprises": {
+      "id": "integer",
+      "nom": "string"
+    }
   }
   ```
 - **Erreurs possibles** :

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useAuthStore } from '@/store/modules/auth';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://us-central1-projet-cloud-e2146.cloudfunctions.net';
 
@@ -13,7 +14,19 @@ const api = axios.create({
 // Request interceptor pour ajouter le token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    // Essayer d'abord le localStorage, puis le store
+    let token = localStorage.getItem('token');
+    
+    // Si pas dans localStorage, essayer depuis le store
+    if (!token && typeof window !== 'undefined') {
+      try {
+        const authStore = useAuthStore();
+        token = authStore.token;
+      } catch (error) {
+        console.warn('Impossible d\'accéder au store auth:', error);
+      }
+    }
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
