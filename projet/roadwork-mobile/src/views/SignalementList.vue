@@ -11,7 +11,7 @@
             <ion-icon :icon="filter" slot="icon-only"></ion-icon>
           </ion-button>
           <ion-button @click="refresh">
-            <ion-icon :icon="refreshIcon" slot="icon-only"></ion-icon>
+            <ion-icon :icon="refresh" slot="icon-only"></ion-icon>
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
@@ -158,10 +158,10 @@ import {
   IonNote, IonSpinner, IonChip, IonSegment, IonSegmentButton,
   IonGrid, IonRow, IonCol, IonItemSliding, IonItemOptions,
   IonItemOption, IonFab, IonFabButton,
-  toastController, shareSocial
+  toastController
 } from '@ionic/vue';
 import {
-  filter, refreshIcon, documentText, map, shareSocial,
+  filter, refresh, documentText, map, shareSocial,
   add, alertCircle, checkmarkCircle, time, warning
 } from 'ionicons/icons';
 import { useAuthStore } from '@/store/modules/auth';

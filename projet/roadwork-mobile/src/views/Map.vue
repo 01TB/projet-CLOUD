@@ -336,8 +336,8 @@ const onMapReady = async () => {
 };
 
 const onMapClick = async (event) => {
-  // Vérifier si l'utilisateur est connecté (simple vérification de token)
-  if (!authStore.isAuthenticated || !authStore.token) {
+  // Vérifier si l'utilisateur est connecté (utiliser authStatus)
+  if (!authStatus.value) {
     const alert = await alertController.create({
       header: 'Connexion requise',
       message: 'Vous devez être connecté pour créer un signalement',
@@ -495,6 +495,26 @@ const viewDetails = (id) => {
   router.push({ name: 'SignalementDetail', params: { id } });
 };
 
+const canEditSignalement = (signalement) => {
+  // Vérifier si l'utilisateur est connecté et est le propriétaire du signalement
+  return authStore.user && signalement.id_utilisateur_createur === authStore.user.id;
+};
+
+const editSignalement = (signalement) => {
+  // TODO: Implémenter l'édition de signalement
+  console.log('Edit signalement:', signalement);
+};
+
+const confirmDeleteSignalement = (signalement) => {
+  // TODO: Implémenter la suppression de signalement
+  console.log('Delete signalement:', signalement);
+};
+
+const addProgress = (signalement) => {
+  // TODO: Implémenter l'ajout de progression
+  console.log('Add progress to signalement:', signalement);
+};
+
 const showSignalementDetail = async (signalement) => {
   const alert = await alertController.create({
     header: `Signalement #${signalement.id}`,
@@ -553,8 +573,13 @@ const refreshData = async () => {
 
 // Lifecycle
 onMounted(async () => {
-  // Vérifier l'authentification au montage
-  await authStore.checkAuth();
+  // Initialiser l'authentification depuis localStorage
+  authStore.initializeAuth();
+  
+  // Désactiver temporairement le checkAuth pour éviter les déconnexions
+  // setTimeout(async () => {
+  //   await authStore.checkAuth();
+  // }, 1000);
   
   // Actualiser les données toutes les 5 minutes
   const interval = setInterval(loadInitialData, 5 * 60 * 1000);
@@ -567,35 +592,12 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.map-container {
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-
-/* Statistics improvements */
-.stats-container {
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  margin: 1rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 0.75rem;
-}
-
-.stat-card {
-  text-align: center;
-  padding: 1.25rem;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border-radius: 12px;
+  .map-container {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   transition: all 0.2s ease;
   border: 1px solid rgba(226, 232, 240, 0.8);

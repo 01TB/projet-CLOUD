@@ -2,9 +2,9 @@
   <ion-modal 
     :is-open="isOpen" 
     @did-dismiss="onDismiss"
-    :initial-breakpoint="0.9"
-    :breakpoints="[0.5, 0.8, 0.9]"
-    style="height: 90vh;"
+    :initial-breakpoint="0.95"
+    :breakpoints="[0.5, 0.8, 0.95]"
+    style="height: 95vh;"
   >
     <ion-header>
       <ion-toolbar>
@@ -15,7 +15,7 @@
       </ion-toolbar>
     </ion-header>
 
-    <ion-content class="ion-padding">
+    <ion-content class="ion-padding" style="--padding-bottom: 80px;">
       <form @submit.prevent="handleSubmit">
         <ion-list>
           <!-- Mini-carte -->
@@ -48,9 +48,8 @@
             <ion-input
               v-model="form.surface"
               type="number"
-              min="0.1"
-              step="0.1"
               placeholder="Ex: 150.5"
+              step="0.1"
               required
               @input="validateSurface"
             ></ion-input>
@@ -60,13 +59,13 @@
 
           <!-- Budget -->
           <ion-item>
-            <ion-label position="floating">Budget estimé (Ar) *</ion-label>
+            <ion-label position="floating">Budget (Ar) *</ion-label>
             <ion-input
               v-model="form.budget"
               type="number"
+              placeholder="Ex: 5000000"
               min="1000"
               step="1000"
-              placeholder="Ex: 5000000"
               required
               @input="validateBudget"
             ></ion-input>
@@ -74,15 +73,23 @@
             <ion-note slot="error" v-if="budgetError">{{ budgetError }}</ion-note>
           </ion-item>
 
-          <!-- ID Entreprise -->
+          <!-- Entreprise -->
           <ion-item>
-            <ion-label position="floating">ID Entreprise</ion-label>
-            <ion-input
-              v-model="form.id_entreprise"
-              type="number"
-              placeholder="Ex: 1"
-              min="1"
-            ></ion-input>
+            <ion-label position="floating">Entreprise (optionnel)</ion-label>
+            <ion-select 
+              v-model="form.id_entreprise" 
+              placeholder="Sélectionner une entreprise"
+              interface="alert"
+              :cancelable="false"
+            >
+              <ion-select-option 
+                v-for="entreprise in entreprises" 
+                :key="entreprise.id" 
+                :value="entreprise.id"
+              >
+                {{ entreprise.nom }}
+              </ion-select-option>
+            </ion-select>
           </ion-item>
 
           <!-- Adresse -->
@@ -102,21 +109,20 @@
           </ion-item>
         </ion-list>
       </form>
-    </ion-content>
-
-    <ion-footer>
-      <ion-toolbar>
+      
+      <!-- Bouton de validation dans le content -->
+      <div class="submit-section">
         <ion-button 
           expand="block" 
           @click="handleSubmit"
           :disabled="submitting || !formValid"
-          class="ion-margin"
+          class="ion-margin-horizontal ion-margin-top"
         >
           <ion-spinner v-if="submitting" slot="start"></ion-spinner>
           Envoyer le signalement
         </ion-button>
-      </ion-toolbar>
-    </ion-footer>
+      </div>
+    </ion-content>
   </ion-modal>
 </template>
 
@@ -126,12 +132,14 @@ import {
   IonModal, IonHeader, IonToolbar, IonTitle, IonContent,
   IonButton, IonInput, IonItem, IonLabel, IonList,
   IonIcon, IonText, IonSpinner, IonTextarea, IonChip,
-  IonFooter, IonListHeader, toastController, IonButtons, IonBackButton, IonNote
+  IonFooter, IonListHeader, toastController, IonButtons, IonBackButton, IonNote,
+  IonSelect, IonSelectOption
 } from '@ionic/vue';
 import { pin } from 'ionicons/icons';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useSignalementsStore } from '@/store/modules/signalements';
+import EntrepriseService from '@/services/entreprises';
 
 const props = defineProps({
   isOpen: {
@@ -152,6 +160,10 @@ let miniMarker = null;
 
 const signalementsStore = useSignalementsStore();
 
+// Entreprises data
+const entreprises = ref([]);
+const loadingEntreprises = ref(false);
+
 const form = ref({
   description: '',
   surface: '',
@@ -162,6 +174,35 @@ const form = ref({
 
 const submitting = ref(false);
 const error = ref('');
+const surfaceError = ref('');
+const budgetError = ref('');
+
+// Validation functions
+const validateSurface = (event) => {
+  const value = event.target.value;
+  const surface = parseFloat(value);
+  
+  if (!value || surface <= 0) {
+    surfaceError.value = 'La surface doit être supérieure à 0';
+  } else if (surface > 100000) {
+    surfaceError.value = 'La surface semble trop grande (max: 100000 m²)';
+  } else {
+    surfaceError.value = '';
+  }
+};
+
+const validateBudget = (event) => {
+  const value = event.target.value;
+  const budget = parseFloat(value);
+  
+  if (!value || budget < 1000) {
+    budgetError.value = 'Le budget minimum est de 1000 Ar';
+  } else if (budget > 1000000000) {
+    budgetError.value = 'Le budget semble trop élevé (max: 1 milliard Ar)';
+  } else {
+    budgetError.value = '';
+  }
+};
 
 const validationErrors = computed(() => {
   const errors = [];
@@ -263,7 +304,7 @@ const handleSubmit = async () => {
       surface: parseFloat(form.value.surface),
       budget: parseFloat(form.value.budget),
       adresse: form.value.adresse.trim() || undefined,
-      id_entreprise: form.value.id_entreprise ? parseInt(form.value.id_entreprise) : undefined,
+      id_entreprise: form.value.id_entreprise || undefined,
       localisation: {
         type: 'Point',
         coordinates: [props.coordinates.lng, props.coordinates.lat]
@@ -306,8 +347,27 @@ const onDismiss = () => {
   emit('dismiss');
 };
 
+// Load entreprises from API
+const loadEntreprises = async () => {
+  try {
+    loadingEntreprises.value = true;
+    const response = await EntrepriseService.getAllEntreprises();
+    if (response.success && response.data) {
+      entreprises.value = response.data;
+      console.log('Entreprises loaded:', entreprises.value);
+    }
+  } catch (error) {
+    console.error('Error loading entreprises:', error);
+  } finally {
+    loadingEntreprises.value = false;
+  }
+};
+
 // Lifecycle hooks - must be registered before any async operations
 onMounted(() => {
+  // Charger les entreprises
+  loadEntreprises();
+  
   // Initialiser la mini carte si le modal est déjà ouvert
   if (props.isOpen) {
     setTimeout(() => {

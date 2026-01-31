@@ -176,10 +176,12 @@ import {
 } from 'ionicons/icons';
 import { useAuthStore } from '@/store/modules/auth';
 import { useSignalementsStore } from '@/store/modules/signalements';
+import { useStatsStore } from '@/store/modules/stats';
 
 const router = useRouter();
 const authStore = useAuthStore();
 const signalementsStore = useSignalementsStore();
+const statsStore = useStatsStore();
 
 const loading = ref(true);
 const selectedPeriod = ref('month');

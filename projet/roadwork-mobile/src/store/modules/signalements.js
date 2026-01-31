@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import signalementService from '@/services/signalements';
+import SignalementService from '@/services/signalements';
 import api from '@/services/api';
 
 export const useSignalementsStore = defineStore('signalements', {
@@ -102,7 +102,7 @@ export const useSignalementsStore = defineStore('signalements', {
     async fetchSignalements(page = 1, limit = 20, filters = {}) {
       this.loading = true;
       try {
-        const result = await signalementService.getSignalementsPaginated(page, limit, filters);
+        const result = await SignalementService.getSignalementsPaginated(page, limit, filters);
         if (result.success) {
           this.signalements = result.data;
           this.pagination = result.pagination;
@@ -118,7 +118,7 @@ export const useSignalementsStore = defineStore('signalements', {
     async createSignalement(signalementData) {
       this.loading = true;
       try {
-        const result = await signalementService.createSignalement(signalementData);
+        const result = await SignalementService.createSignalement(signalementData);
         if (result.success) {
           this.signalements.unshift(result.data);
           return { success: true, data: result.data };
@@ -136,7 +136,7 @@ export const useSignalementsStore = defineStore('signalements', {
     async updateSignalement(id, signalementData) {
       this.loading = true;
       try {
-        const result = await signalementService.updateSignalement(id, signalementData);
+        const result = await SignalementService.updateSignalement(id, signalementData);
         if (result.success) {
           const index = this.signalements.findIndex(s => s.id === id);
           if (index !== -1) {
@@ -157,7 +157,7 @@ export const useSignalementsStore = defineStore('signalements', {
     async deleteSignalement(id) {
       this.loading = true;
       try {
-        const result = await signalementService.deleteSignalement(id);
+        const result = await SignalementService.deleteSignalement(id);
         if (result.success) {
           this.signalements = this.signalements.filter(s => s.id !== id);
           return { success: true };
@@ -185,7 +185,7 @@ export const useSignalementsStore = defineStore('signalements', {
       this.error = null;
       
       try {
-        const result = await signalementService.getStatuts();
+        const result = await SignalementService.getStatuts();
         if (result.success) {
           this.statuts = result.data;
         }

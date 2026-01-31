@@ -4,27 +4,49 @@ class AuthService {
   constructor() {
     this.token = localStorage.getItem('token');
     
+    console.log('=== AUTH SERVICE CONSTRUCTOR ===');
+    console.log('Token from localStorage:', this.token);
+    
     // Parser l'utilisateur depuis localStorage avec gestion d'erreur
     const userStr = localStorage.getItem('user');
+    console.log('User string from localStorage:', userStr);
+    
     try {
       this.user = userStr ? JSON.parse(userStr) : null;
+      console.log('Parsed user:', this.user);
     } catch (error) {
       console.error('Error parsing user from localStorage:', error);
       this.user = null;
       localStorage.removeItem('user'); // Nettoyer les données corrompues
     }
+    
+    console.log('=== END AUTH SERVICE CONSTRUCTOR ===');
   }
 
   async login(credentials) {
     try {
+      console.log('=== AUTH SERVICE LOGIN ===');
+      console.log('Sending credentials:', credentials);
+      
       const response = await api.post('/login', credentials);
       
+      console.log('API Response:', response);
+      console.log('Response data:', response.data);
+      console.log('Response data success:', response.data.success);
+      console.log('Response data idToken:', response.data.idToken);
+      console.log('Response data user:', response.data.user);
+      
       if (response.data.success) {
-        this.token = response.data.token;
+        this.token = response.data.idToken;
         this.user = response.data.user;
+        
+        console.log('Set service token:', this.token);
+        console.log('Set service user:', this.user);
         
         localStorage.setItem('token', this.token);
         localStorage.setItem('user', JSON.stringify(this.user));
+        
+        console.log('Token stored in localStorage:', localStorage.getItem('token'));
         
         return { 
           success: true, 
@@ -53,6 +75,8 @@ class AuthService {
       }
       
       return { success: false, error: error.message || 'Erreur de connexion' };
+    } finally {
+      console.log('=== END AUTH SERVICE LOGIN ===');
     }
   }
 
@@ -61,7 +85,7 @@ class AuthService {
       const response = await api.post('/register', userData);
       
       if (response.data.success) {
-        this.token = response.data.token;
+        this.token = response.data.idToken;
         this.user = response.data.user;
         
         localStorage.setItem('token', this.token);
@@ -129,23 +153,32 @@ class AuthService {
 
   async checkAuth() {
     if (!this.token) {
-      return false;
+      console.log('No token found in AuthService');
+      return { success: false, error: 'No token' };
     }
 
+    console.log('Checking auth with token:', this.token.substring(0, 20) + '...');
+    
     try {
       const response = await api.get('/me');
+      console.log('Auth check response:', response);
       
       if (response.data.success) {
         this.user = response.data.user;
         localStorage.setItem('user', JSON.stringify(this.user));
-        return true;
+        console.log('Auth check successful');
+        return response; // Retourner l'objet response complet
       }
     } catch (error) {
       console.error('Auth check error:', error);
-      this.logout();
+      console.error('Error status:', error.response?.status);
+      console.error('Error data:', error.response?.data);
+      
+      // Ne pas faire logout ici, laisser le store gérer
+      throw error; // Lancer l'erreur pour que le store la gère
     }
     
-    return false;
+    return { success: false, error: 'Unknown error' };
   }
 
   async updateProfile(userData) {
