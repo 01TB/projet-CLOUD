@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
-public class SignalementDTO {
+public class SignalementInsertDTO {
 
     @NotNull(message = "La date de création est obligatoire")
     @Size(max = 50, message = "La date de création ne doit pas dépasser 50 caractères")
@@ -30,10 +30,10 @@ public class SignalementDTO {
     private Boolean synchro = false;
 
     // Constructeurs
-    public SignalementDTO() {
+    public SignalementInsertDTO() {
     }
 
-    public SignalementDTO(String dateCreation, Double surface, Integer budget,
+    public SignalementInsertDTO(String dateCreation, Double surface, Integer budget,
             String localisation, Integer idUtilisateurCreateur,
             Integer idEntreprise, Boolean synchro) {
         this.dateCreation = dateCreation;

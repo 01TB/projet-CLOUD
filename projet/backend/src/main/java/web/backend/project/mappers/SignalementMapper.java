@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 import web.backend.project.entities.Entreprise;
 import web.backend.project.entities.Signalement;
 import web.backend.project.entities.Utilisateur;
-import web.backend.project.features.signalements.dto.SignalementDTO;
+import web.backend.project.features.signalements.dto.SignalementInsertDTO;
 import web.backend.project.features.signalements.dto.SignalementResponseDTO;
 
 @Component
@@ -20,7 +20,7 @@ public class SignalementMapper {
     /**
      * Convertit un SignalementDTO en entité Signalement
      */
-    public Signalement toEntity(SignalementDTO dto, Utilisateur utilisateur, Entreprise entreprise) {
+    public Signalement toEntity(SignalementInsertDTO dto, Utilisateur utilisateur, Entreprise entreprise) {
         Signalement signalement = new Signalement();
         signalement.setDateCreation(dto.getDateCreation());
         signalement.setSurface(dto.getSurface());
@@ -44,7 +44,7 @@ public class SignalementMapper {
     /**
      * Met à jour une entité Signalement existante avec les données du DTO
      */
-    public void updateEntity(Signalement signalement, SignalementDTO dto, 
+    public void updateEntity(Signalement signalement, SignalementInsertDTO dto, 
                             Utilisateur utilisateur, Entreprise entreprise) {
         signalement.setDateCreation(dto.getDateCreation());
         signalement.setSurface(dto.getSurface());

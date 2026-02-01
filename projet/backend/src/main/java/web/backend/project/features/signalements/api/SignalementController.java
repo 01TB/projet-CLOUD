@@ -1,7 +1,7 @@
 package web.backend.project.features.signalements.api;
 
 import jakarta.validation.Valid;
-import web.backend.project.features.signalements.dto.SignalementDTO;
+import web.backend.project.features.signalements.dto.SignalementInsertDTO;
 import web.backend.project.features.signalements.dto.SignalementResponseDTO;
 import web.backend.project.features.signalements.services.SignalementService;
 
@@ -28,7 +28,7 @@ public class SignalementController {
      */
     @PostMapping
     public ResponseEntity<SignalementResponseDTO> createSignalement(
-            @Valid @RequestBody SignalementDTO signalementDTO) {
+            @Valid @RequestBody SignalementInsertDTO signalementDTO) {
         SignalementResponseDTO created = signalementService.createSignalement(signalementDTO);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
@@ -60,7 +60,7 @@ public class SignalementController {
     @PutMapping("/{id}")
     public ResponseEntity<SignalementResponseDTO> updateSignalement(
             @PathVariable Integer id,
-            @Valid @RequestBody SignalementDTO signalementDTO) {
+            @Valid @RequestBody SignalementInsertDTO signalementDTO) {
         SignalementResponseDTO updated = signalementService.updateSignalement(id, signalementDTO);
         return ResponseEntity.ok(updated);
     }

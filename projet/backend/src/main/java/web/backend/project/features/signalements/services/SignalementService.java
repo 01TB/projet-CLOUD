@@ -8,7 +8,7 @@ import web.backend.project.entities.Entreprise;
 import web.backend.project.entities.Signalement;
 import web.backend.project.entities.Utilisateur;
 import web.backend.project.exceptions.ResourceNotFoundException;
-import web.backend.project.features.signalements.dto.SignalementDTO;
+import web.backend.project.features.signalements.dto.SignalementInsertDTO;
 import web.backend.project.features.signalements.dto.SignalementResponseDTO;
 import web.backend.project.mappers.SignalementMapper;
 import web.backend.project.repositories.EntrepriseRepository;
@@ -34,7 +34,7 @@ public class SignalementService {
     /**
      * Crée un nouveau signalement
      */
-    public SignalementResponseDTO createSignalement(SignalementDTO signalementDTO) {
+    public SignalementResponseDTO createSignalement(SignalementInsertDTO signalementDTO) {
         // Vérifier que l'utilisateur existe
         Utilisateur utilisateur = utilisateurRepository.findById(signalementDTO.getIdUtilisateurCreateur())
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur", "id",
@@ -79,7 +79,7 @@ public class SignalementService {
     /**
      * Met à jour un signalement
      */
-    public SignalementResponseDTO updateSignalement(Integer id, SignalementDTO signalementDTO) {
+    public SignalementResponseDTO updateSignalement(Integer id, SignalementInsertDTO signalementDTO) {
         // Vérifier que le signalement existe
         Signalement signalement = signalementRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Signalement", "id", id));
