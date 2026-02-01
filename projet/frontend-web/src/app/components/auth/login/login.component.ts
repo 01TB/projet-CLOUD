@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+// src/app/components/auth/login/login.component.ts
+import { Component, OnInit } from '@angular/core';
+import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 
 @Component({
@@ -7,28 +8,41 @@ import { AuthService } from '../../../services/auth.service';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   email = '';
-  password = '';
-  rememberMe = false;
+  selectedRole: 'Manager' | 'Utilisateur' | 'Visiteur' = 'Utilisateur';
+  returnUrl = '';
   errorMessage = '';
 
   constructor(
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {}
 
-  onSubmit() {
-    this.authService.login(this.email, this.password).subscribe({
-      next: (success) => {
-        if (success) {
-          this.router.navigate(['/map']);
-        } else {
-          this.errorMessage = 'Email ou mot de passe incorrect';
-        }
+  ngOnInit(): void {
+    // Rediriger si déjà connecté
+    if (this.authService.currentUserValue) {
+      this.router.navigate(['/']);
+    }
+    
+    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
+  }
+
+  onSubmit(): void {
+    if (!this.email) {
+      this.errorMessage = 'Veuillez entrer votre email';
+      return;
+    }
+
+    this.authService.login(this.email, this.selectedRole).subscribe({
+      next: (user) => {
+        console.log('Connexion réussie:', user);
+        this.router.navigate([this.returnUrl]);
       },
-      error: () => {
-        this.errorMessage = 'Erreur de connexion';
+      error: (error) => {
+        this.errorMessage = 'Erreur lors de la connexion';
+        console.error('Erreur connexion:', error);
       }
     });
   }

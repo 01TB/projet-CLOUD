@@ -1,51 +1,75 @@
+// src/app/services/auth.service.ts
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, of } from 'rxjs';
-import { Utilisateur } from '../models/utilisateur.model';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { Utilisateur, Role } from '../models/signalement.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private currentUserSubject = new BehaviorSubject<Utilisateur | null>(null);
-  public currentUser$ = this.currentUserSubject.asObservable();
-  private isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
-  public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
+  private currentUserSubject: BehaviorSubject<Utilisateur | null>;
+  public currentUser$: Observable<Utilisateur | null>;
+
+  private roles: Role[] = [
+    { id: 1, nom: 'Manager' },
+    { id: 2, nom: 'Utilisateur' },
+    { id: 3, nom: 'Visiteur' }
+  ];
 
   constructor() {
-    // Simuler un utilisateur connecté pour le développement
-    const mockUser: Utilisateur = {
-      id: 1,
-      email: 'admin@example.com',
-      password: '',
-      synchro: true,
-      id_role: 1,
-      role: { id: 1, nom: 'Administrateur', synchro: true }
-    };
-    this.currentUserSubject.next(mockUser);
-    this.isAuthenticatedSubject.next(true);
+    const storedUser = localStorage.getItem('currentUser');
+    this.currentUserSubject = new BehaviorSubject<Utilisateur | null>(
+      storedUser ? JSON.parse(storedUser) : null
+    );
+    this.currentUser$ = this.currentUserSubject.asObservable();
   }
 
-  login(email: string, password: string): Observable<boolean> {
-    // TODO: Intégrer avec l'API Spring Boot
-    return of(true);
-  }
-
-  logout(): void {
-    this.currentUserSubject.next(null);
-    this.isAuthenticatedSubject.next(false);
-  }
-
-  register(userData: any): Observable<boolean> {
-    // TODO: Intégrer avec l'API Spring Boot
-    return of(true);
-  }
-
-  getCurrentUser(): Utilisateur | null {
+  public get currentUserValue(): Utilisateur | null {
     return this.currentUserSubject.value;
   }
 
-  isAdmin(): boolean {
-    const user = this.getCurrentUser();
-    return user?.role?.nom === 'Administrateur';
+  public get isAuthenticated$(): Observable<boolean> {
+    return new BehaviorSubject<boolean>(this.currentUserSubject.value !== null).asObservable();
+  }
+
+  public isManager(): boolean {
+    return this.currentUserValue?.role?.nom === 'Manager';
+  }
+
+  public isUser(): boolean {
+    return this.currentUserValue?.role?.nom === 'Utilisateur';
+  }
+
+  public isVisitor(): boolean {
+    return this.currentUserValue?.role?.nom === 'Visiteur';
+  }
+
+  public canCreateSignalement(): boolean {
+    return this.isManager() || this.isUser();
+  }
+
+  // Connexion simulée
+  login(email: string, roleType: 'Manager' | 'Utilisateur' | 'Visiteur'): Observable<Utilisateur> {
+    const role = this.roles.find(r => r.nom === roleType)!;
+    const user: Utilisateur = {
+      id: Math.floor(Math.random() * 1000),
+      email: email,
+      role: role
+    };
+    
+    localStorage.setItem('currentUser', JSON.stringify(user));
+    this.currentUserSubject.next(user);
+    
+    return new BehaviorSubject<Utilisateur>(user).asObservable();
+  }
+
+  logout(): void {
+    localStorage.removeItem('currentUser');
+    this.currentUserSubject.next(null);
+  }
+
+  // Simulation d'inscription
+  register(email: string): Observable<boolean> {
+    return new BehaviorSubject<boolean>(true).asObservable();
   }
 }

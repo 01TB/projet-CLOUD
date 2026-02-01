@@ -1,1 +1,337 @@
-<p>Hello World</p>
+<!-- src/app/components/admin/user-management/user-management.component.html -->
+<div class="user-management-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h2>👥 Gestion des Utilisateurs</h2>
+      <p class="subtitle">Gérer les comptes et les permissions</p>
+    </div>
+    <button class="btn btn-primary" (click)="openCreateModal()">
+      <span class="btn-icon">➕</span> Nouvel utilisateur
+    </button>
+  </div>
+
+  <!-- Messages -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    ✓ {{ successMessage }}
+  </div>
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    ✗ {{ errorMessage }}
+  </div>
+
+  <!-- Statistiques -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">👥</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ stats.total }}</div>
+        <div class="stat-label">Total utilisateurs</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">👨‍💼</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ stats.managers }}</div>
+        <div class="stat-label">Managers</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">👤</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ stats.utilisateurs }}</div>
+        <div class="stat-label">Utilisateurs</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">👁️</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ stats.visiteurs }}</div>
+        <div class="stat-label">Visiteurs</div>
+      </div>
+    </div>
+
+    <div class="stat-card stat-warning">
+      <div class="stat-icon">🚫</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ stats.bloques }}</div>
+        <div class="stat-label">Bloqués</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="filters-section">
+    <div class="filter-group">
+      <label>🔍 Rechercher</label>
+      <input 
+        type="text" 
+        class="filter-input" 
+        placeholder="Email..." 
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="applyFilters()"
+      />
+    </div>
+
+    <div class="filter-group">
+      <label>Rôle</label>
+      <select 
+        class="filter-select" 
+        [(ngModel)]="selectedRoleFilter"
+        (ngModelChange)="applyFilters()"
+      >
+        <option value="">Tous les rôles</option>
+        <option *ngFor="let role of roles" [value]="role.nom">{{ role.nom }}</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label class="checkbox-filter">
+        <input 
+          type="checkbox" 
+          [(ngModel)]="showBlockedOnly"
+          (ngModelChange)="applyFilters()"
+        />
+        <span>Afficher uniquement les bloqués</span>
+      </label>
+    </div>
+
+    <button class="btn btn-secondary" (click)="resetFilters()">
+      Réinitialiser
+    </button>
+  </div>
+
+  <!-- Loader -->
+  <div class="loader" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Chargement...</p>
+  </div>
+
+  <!-- Table des utilisateurs -->
+  <div class="table-container" *ngIf="!loading">
+    <table class="users-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Email</th>
+          <th>Rôle</th>
+          <th>Date de création</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of filteredUsers" [class.blocked-row]="user.est_bloque">
+          <td class="id-cell">#{{ user.id }}</td>
+          <td class="email-cell">
+            <span class="email-icon">📧</span>
+            {{ user.email }}
+          </td>
+          <td>
+            <span class="badge" [ngClass]="getRoleBadgeClass(user.role.nom)">
+              {{ user.role.nom }}
+            </span>
+          </td>
+          <td class="date-cell">{{ user.date_creation }}</td>
+          <td>
+            <span class="status-badge" [class.status-active]="!user.est_bloque" [class.status-blocked]="user.est_bloque">
+              {{ user.est_bloque ? '🚫 Bloqué' : '✓ Actif' }}
+            </span>
+            <small class="block-date" *ngIf="user.est_bloque && user.date_blocage">
+              Depuis le {{ user.date_blocage }}
+            </small>
+          </td>
+          <td class="actions-cell">
+            <button 
+              class="action-btn btn-edit" 
+              (click)="openEditModal(user)"
+              title="Modifier le rôle"
+            >
+              ✏️
+            </button>
+            <button 
+              class="action-btn" 
+              [class.btn-block]="!user.est_bloque"
+              [class.btn-unblock]="user.est_bloque"
+              (click)="openBlockModal(user)"
+              [title]="user.est_bloque ? 'Débloquer' : 'Bloquer'"
+              [disabled]="user.role.nom === 'Manager'"
+            >
+              {{ user.est_bloque ? '🔓' : '🔒' }}
+            </button>
+            <button 
+              class="action-btn btn-delete" 
+              (click)="openDeleteModal(user)"
+              title="Supprimer"
+              [disabled]="user.role.nom === 'Manager'"
+            >
+              🗑️
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="filteredUsers.length === 0">
+          <td colspan="6" class="empty-state">
+            <div class="empty-icon">🔍</div>
+            <p>Aucun utilisateur trouvé</p>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal de création -->
+  <div class="modal-overlay" *ngIf="showCreateModal" (click)="closeCreateModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>➕ Créer un utilisateur</h3>
+        <button class="modal-close" (click)="closeCreateModal()">✖</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="newEmail">Email *</label>
+          <input 
+            type="email" 
+            id="newEmail"
+            class="form-control" 
+            [(ngModel)]="newUserEmail"
+            placeholder="utilisateur@exemple.com"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="newRole">Rôle *</label>
+          <select 
+            id="newRole"
+            class="form-control" 
+            [(ngModel)]="newUserRoleId"
+          >
+            <option [value]="null" disabled>Sélectionnez un rôle</option>
+            <option *ngFor="let role of roles" [value]="role.id">
+              {{ role.nom }}
+            </option>
+          </select>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-secondary" (click)="closeCreateModal()">
+            Annuler
+          </button>
+          <button class="btn btn-primary" (click)="createUser()">
+            Créer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de modification -->
+  <div class="modal-overlay" *ngIf="showEditModal" (click)="closeEditModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>✏️ Modifier le rôle</h3>
+        <button class="modal-close" (click)="closeEditModal()">✖</button>
+      </div>
+      <div class="modal-body" *ngIf="selectedUser">
+        <div class="user-info">
+          <p><strong>Utilisateur:</strong> {{ selectedUser.email }}</p>
+          <p><strong>Rôle actuel:</strong> 
+            <span class="badge" [ngClass]="getRoleBadgeClass(selectedUser.role.nom)">
+              {{ selectedUser.role.nom }}
+            </span>
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label for="editRole">Nouveau rôle *</label>
+          <select 
+            id="editRole"
+            class="form-control" 
+            [(ngModel)]="editRoleId"
+          >
+            <option *ngFor="let role of roles" [value]="role.id">
+              {{ role.nom }}
+            </option>
+          </select>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-secondary" (click)="closeEditModal()">
+            Annuler
+          </button>
+          <button class="btn btn-primary" (click)="updateUserRole()">
+            Modifier
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de blocage/déblocage -->
+  <div class="modal-overlay" *ngIf="showBlockModal" (click)="closeBlockModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ selectedUser?.est_bloque ? '🔓 Débloquer' : '🔒 Bloquer' }} l'utilisateur</h3>
+        <button class="modal-close" (click)="closeBlockModal()">✖</button>
+      </div>
+      <div class="modal-body" *ngIf="selectedUser">
+        <div class="confirmation-message">
+          <p *ngIf="!selectedUser.est_bloque">
+            Êtes-vous sûr de vouloir <strong>bloquer</strong> l'utilisateur <strong>{{ selectedUser.email }}</strong> ?
+          </p>
+          <p *ngIf="selectedUser.est_bloque">
+            Êtes-vous sûr de vouloir <strong>débloquer</strong> l'utilisateur <strong>{{ selectedUser.email }}</strong> ?
+          </p>
+          <div class="warning-box" *ngIf="!selectedUser.est_bloque">
+            ⚠️ Cet utilisateur ne pourra plus se connecter à l'application.
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-secondary" (click)="closeBlockModal()">
+            Annuler
+          </button>
+          <button 
+            class="btn" 
+            [class.btn-danger]="!selectedUser.est_bloque"
+            [class.btn-success]="selectedUser.est_bloque"
+            (click)="toggleBlockUser()"
+          >
+            {{ selectedUser.est_bloque ? 'Débloquer' : 'Bloquer' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de suppression -->
+  <div class="modal-overlay" *ngIf="showDeleteModal" (click)="closeDeleteModal()">
+    <div class="modal-content modal-danger" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>🗑️ Supprimer l'utilisateur</h3>
+        <button class="modal-close" (click)="closeDeleteModal()">✖</button>
+      </div>
+      <div class="modal-body" *ngIf="selectedUser">
+        <div class="confirmation-message">
+          <p>
+            Êtes-vous sûr de vouloir <strong>supprimer définitivement</strong> l'utilisateur 
+            <strong>{{ selectedUser.email }}</strong> ?
+          </p>
+          <div class="danger-box">
+            ⚠️ Cette action est irréversible !
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-secondary" (click)="closeDeleteModal()">
+            Annuler
+          </button>
+          <button class="btn btn-danger" (click)="deleteUser()">
+            Supprimer définitivement
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

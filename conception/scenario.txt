@@ -1,0 +1,15 @@
+- scenario 1:
+    - affichage map dans front web;
+    - affichage map dans mobile
+
+- scenario 2:
+    - front-office:
+        -login mobile utilisateurs
+        - creation signalement
+        - envoi donnees de signalements dans firebase
+    - back-office:
+        - synchronisation firebase - backend web:
+            - recuperation datas firebase dans backend
+            - persistence des donnees
+        - login admin web
+        - affichage des signalements (verification de la synchronisation)
