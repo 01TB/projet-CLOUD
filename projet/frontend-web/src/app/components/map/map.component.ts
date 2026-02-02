@@ -49,20 +49,14 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private loadData(): void {
-    const sigSub = this.signalementService.getAllSignalements().subscribe({
-      next: (signalements) => {
-        this.signalements = signalements;
-        if (this.map) {
-          this.addSignalementMarkers();
-        }
-      },
-      error: (error) => {
-        console.error('Erreur lors du chargement des signalements:', error);
-      }
-    });
+    // Initialiser les statuts localement (ceux-ci peuvent venir d'un endpoint ultérieurement)
+    this.statuts = [
+      { id: 1, nom: 'NOUVEAU', valeur: 0 },
+      { id: 2, nom: 'EN_COURS', valeur: 1 },
+      { id: 3, nom: 'TERMINE', valeur: 2 }
+    ];
 
-    // TODO: Implémenter les endpoints pour les statistiques et statuts
-    // Pour l'instant, on initialise avec des valeurs par défaut
+    // Valeurs par défaut pour le récap
     this.statistiques = {
       nb_signalements: 0,
       surface_totale: 0,
@@ -70,13 +64,63 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
       avancement_pct: 0
     };
 
-    this.statuts = [
-      { id: 1, nom: 'NOUVEAU', valeur: 0 },
-      { id: 2, nom: 'EN_COURS', valeur: 1 },
-      { id: 3, nom: 'TERMINE', valeur: 2 }
-    ];
+    const sigSub = this.signalementService.getAllSignalements().subscribe({
+      next: (signalements) => {
+        this.signalements = signalements;
+        // Mettre à jour les marqueurs
+        if (this.map) {
+          this.addSignalementMarkers();
+        }
+
+        // Calculer les statistiques à partir des signalements chargés
+        this.computeStatistics();
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement des signalements:', error);
+      }
+    });
 
     this.subscriptions.add(sigSub);
+  }
+
+  /**
+   * Calcule les statistiques récapitulatives à partir des signalements chargés
+   */
+  private computeStatistics(): void {
+    if (!this.signalements || this.signalements.length === 0) {
+      this.statistiques = {
+        nb_signalements: 0,
+        surface_totale: 0,
+        budget_total: 0,
+        avancement_pct: 0
+      };
+      return;
+    }
+
+    const nb = this.signalements.length;
+    const surfaceTot = this.signalements.reduce((acc, s) => acc + (s.surface || 0), 0);
+    const budgetTot = this.signalements.reduce((acc, s) => acc + (s.budget || 0), 0);
+
+    // Déterminer la valeur maximale de statut connue (pour normaliser en pourcentage)
+    const maxStatVal = this.statuts && this.statuts.length > 0
+      ? Math.max(...this.statuts.map(st => st.valeur))
+      : 1;
+
+    // Calculer pourcentage moyen d'avancement en normalisant chaque statut
+    const totalPct = this.signalements.reduce((acc, s) => {
+      const val = s.statut_actuel?.valeur ?? 0;
+      const pct = maxStatVal > 0 ? (val / maxStatVal) * 100 : 0;
+      return acc + pct;
+    }, 0);
+
+    const avancementPct = Math.round(totalPct / nb);
+
+    this.statistiques = {
+      nb_signalements: nb,
+      surface_totale: surfaceTot,
+      budget_total: budgetTot,
+      avancement_pct: avancementPct
+    };
   }
 
   private initMap(): void {
