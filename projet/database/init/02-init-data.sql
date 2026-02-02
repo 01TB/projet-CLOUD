@@ -4,17 +4,15 @@
 
 -- Insertion des rôles
 INSERT INTO roles (nom, synchro) VALUES 
-    ('ADMIN', false),
-    ('UTILISATEUR', false),
-    ('SUPERVISEUR', false)
+    ('MANAGER', false),
+    ('UTILISATEUR', false)
 ON CONFLICT (nom) DO NOTHING;
 
 -- Insertion des statuts d'avancement
 INSERT INTO statuts_avancement (nom, valeur, synchro) VALUES 
-    ('EN_ATTENTE', 0, false),
+    ('NOUVEAU', 0, false),
     ('EN_COURS', 1, false),
-    ('TERMINE', 2, false),
-    ('ANNULE', 3, false)
+    ('TERMINE', 2, false)
 ON CONFLICT (nom) DO NOTHING;
 
 -- Insertion des entreprises de test
@@ -32,11 +30,9 @@ WHERE NOT EXISTS (SELECT 1 FROM parametres LIMIT 1);
 -- Note: Vous devriez remplacer ces passwords par des hashs BCrypt réels
 INSERT INTO utilisateurs (email, password, synchro, id_role) VALUES 
     ('admin@signalisation.mg', 'password123', false, 
-     (SELECT id FROM roles WHERE nom = 'ADMIN')),
+     (SELECT id FROM roles WHERE nom = 'MANAGER')),
     ('user@signalisation.mg', 'password123', false, 
-     (SELECT id FROM roles WHERE nom = 'UTILISATEUR')),
-    ('superviseur@signalisation.mg', 'password123', false, 
-     (SELECT id FROM roles WHERE nom = 'SUPERVISEUR'))
+     (SELECT id FROM roles WHERE nom = 'UTILISATEUR'))
 ON CONFLICT (email) DO NOTHING;
 
 -- Insertion d'un signalements de test pour Antananarivo

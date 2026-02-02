@@ -69,11 +69,24 @@
   transition: all 0.3s ease;
   font-weight: 500;
   background: rgba(255, 255, 255, 0.1);
+  border: none;
+  cursor: pointer;
+  font-size: inherit;
+  font-family: inherit;
+}
+
+.nav-btn {
+  border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
 .nav-link:hover {
   background: rgba(255, 255, 255, 0.2);
   transform: translateY(-2px);
+}
+
+.nav-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .nav-link.nav-active {

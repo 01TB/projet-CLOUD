@@ -1,5 +1,7 @@
 package web.backend.project.features.signalements.dto;
 
+import java.util.List;
+
 public class SignalementResponseDTO {
 
     private Integer id;
@@ -12,6 +14,7 @@ public class SignalementResponseDTO {
     private String emailUtilisateurCreateur;
     private Integer idEntreprise;
     private String nomEntreprise;
+    private List<AvancementResponseDTO> avancements; // Liste des avancements du signalement
 
     // Constructeurs
     public SignalementResponseDTO() {
@@ -20,7 +23,7 @@ public class SignalementResponseDTO {
     public SignalementResponseDTO(Integer id, String dateCreation, Double surface,
             Integer budget, String localisation, Boolean synchro,
             Integer idUtilisateurCreateur, String emailUtilisateurCreateur,
-            Integer idEntreprise, String nomEntreprise) {
+            Integer idEntreprise, String nomEntreprise, List<AvancementResponseDTO> avancements) {
         this.id = id;
         this.dateCreation = dateCreation;
         this.surface = surface;
@@ -31,6 +34,7 @@ public class SignalementResponseDTO {
         this.emailUtilisateurCreateur = emailUtilisateurCreateur;
         this.idEntreprise = idEntreprise;
         this.nomEntreprise = nomEntreprise;
+        this.avancements = avancements;
     }
 
     // Getters et Setters
@@ -112,5 +116,13 @@ public class SignalementResponseDTO {
 
     public void setNomEntreprise(String nomEntreprise) {
         this.nomEntreprise = nomEntreprise;
+    }
+
+    public List<AvancementResponseDTO> getAvancements() {
+        return avancements;
+    }
+
+    public void setAvancements(List<AvancementResponseDTO> avancements) {
+        this.avancements = avancements;
     }
 }

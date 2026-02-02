@@ -10,9 +10,10 @@ import { AuthService } from '../../../services/auth.service';
 })
 export class LoginComponent implements OnInit {
   email = '';
-  selectedRole: 'Manager' | 'Utilisateur' | 'Visiteur' = 'Utilisateur';
+  password = '';
   returnUrl = '';
   errorMessage = '';
+  isLoading = false;
 
   constructor(
     private authService: AuthService,
@@ -35,13 +36,23 @@ export class LoginComponent implements OnInit {
       return;
     }
 
-    this.authService.login(this.email, this.selectedRole).subscribe({
+    if (!this.password) {
+      this.errorMessage = 'Veuillez entrer votre mot de passe';
+      return;
+    }
+
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    this.authService.login(this.email, this.password).subscribe({
       next: (user) => {
         console.log('Connexion réussie:', user);
+        this.isLoading = false;
         this.router.navigate([this.returnUrl]);
       },
       error: (error) => {
-        this.errorMessage = 'Erreur lors de la connexion';
+        this.isLoading = false;
+        this.errorMessage = 'Email ou mot de passe incorrect';
         console.error('Erreur connexion:', error);
       }
     });

@@ -1,7 +1,8 @@
 // src/app/components/map/map.component.ts
 import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import * as L from 'leaflet';
-import { MockDataService } from '../../services/mock-data.service';
+import { SignalementService } from '../../services/signalement.service';
+import { SyncService } from '../../services/sync.service';
 import { AuthService } from '../../services/auth.service';
 import { Signalement, StatistiquesRecap, StatutAvancement } from '../../models/signalement.model';
 import { Subscription } from 'rxjs';
@@ -25,12 +26,14 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
   selectedSignalement: Signalement | null = null;
   showStatusModal = false;
   newStatusId: number | null = null;
+  editForm: any = null;
   
   isManager = false;
   showRecapModal = false;
 
   constructor(
-    private mockDataService: MockDataService,
+    private signalementService: SignalementService,
+    private syncService: SyncService,
     private authService: AuthService
   ) {}
 
@@ -46,24 +49,34 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private loadData(): void {
-    const sigSub = this.mockDataService.getSignalements().subscribe(signalements => {
-      this.signalements = signalements;
-      if (this.map) {
-        this.addSignalementMarkers();
+    const sigSub = this.signalementService.getAllSignalements().subscribe({
+      next: (signalements) => {
+        this.signalements = signalements;
+        if (this.map) {
+          this.addSignalementMarkers();
+        }
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement des signalements:', error);
       }
     });
 
-    const statsSub = this.mockDataService.getStatistiques().subscribe(stats => {
-      this.statistiques = stats;
-    });
+    // TODO: Implémenter les endpoints pour les statistiques et statuts
+    // Pour l'instant, on initialise avec des valeurs par défaut
+    this.statistiques = {
+      nb_signalements: 0,
+      surface_totale: 0,
+      budget_total: 0,
+      avancement_pct: 0
+    };
 
-    const statutsSub = this.mockDataService.getStatuts().subscribe(statuts => {
-      this.statuts = statuts;
-    });
+    this.statuts = [
+      { id: 1, nom: 'NOUVEAU', valeur: 0 },
+      { id: 2, nom: 'EN_COURS', valeur: 1 },
+      { id: 3, nom: 'TERMINE', valeur: 2 }
+    ];
 
     this.subscriptions.add(sigSub);
-    this.subscriptions.add(statsSub);
-    this.subscriptions.add(statutsSub);
   }
 
   private initMap(): void {
@@ -121,9 +134,9 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private getStatusIcon(statusValue: number): L.Icon {
     const iconMap: { [key: number]: string } = {
-      1: 'red',      // Nouveau
-      2: 'orange',   // En cours
-      3: 'green',    // Terminé
+      0: 'red',      // Nouveau
+      1: 'orange',   // En cours
+      2: 'green',    // Terminé
     };
     
     const color = iconMap[statusValue] || 'blue';
@@ -180,8 +193,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
     const classMap: { [key: number]: string } = {
       1: 'badge-danger',   // Nouveau - rouge
       2: 'badge-warning',  // En cours - orange
-      3: 'badge-success',  // Terminé - vert
-      4: 'badge-secondary' // Annulé - gris
+      3: 'badge-success'   // Terminé - vert
     };
     return classMap[statusValue] || 'badge-primary';
   }
@@ -190,6 +202,19 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.isManager) {
       this.selectedSignalement = signalement;
       this.newStatusId = signalement.statut_actuel.id;
+      
+      // Initialiser le formulaire de modification avec les valeurs actuelles
+      this.editForm = {
+        dateCreation: signalement.date_creation,
+        surface: signalement.surface,
+        budget: signalement.budget,
+        localisation: this.signalementService.locationToWkt(signalement.localisation),
+        idUtilisateurCreateur: signalement.id_utilisateur_createur,
+        idEntreprise: signalement.entreprise.id,
+        synchro: false,
+        idNouveauStatut: null // Pas de changement de statut par défaut
+      };
+      
       this.showStatusModal = true;
     }
   }
@@ -214,29 +239,105 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
     this.showStatusModal = false;
     this.selectedSignalement = null;
     this.newStatusId = null;
+    this.editForm = null;
   }
 
-  public updateStatus(): void {
-    if (this.selectedSignalement && this.newStatusId) {
-      this.mockDataService.updateSignalementStatut(
-        this.selectedSignalement.id,
-        this.newStatusId
-      ).subscribe({
-        next: (updated) => {
-          console.log('Statut mis à jour:', updated);
-          this.loadData();
+  public updateSignalement(): void {
+    if (this.selectedSignalement && this.editForm) {
+      // Validation basique
+      if (!this.editForm.surface || this.editForm.surface <= 0) {
+        alert('La surface doit être supérieure à 0');
+        return;
+      }
+      if (!this.editForm.budget || this.editForm.budget <= 0) {
+        alert('Le budget doit être supérieur à 0');
+        return;
+      }
+
+      // Appeler l'API pour mettre à jour le signalement
+      this.signalementService.updateSignalement(this.selectedSignalement.id, this.editForm).subscribe({
+        next: (updatedSignalement) => {
+          console.log('Signalement mis à jour avec succès:', updatedSignalement);
+          
+          // Afficher un message de confirmation
+          if (this.editForm.idNouveauStatut && this.editForm.idNouveauStatut !== this.selectedSignalement?.statut_actuel.id) {
+            alert('Signalement mis à jour et nouveau statut créé avec succès !');
+          } else {
+            alert('Signalement mis à jour avec succès !');
+          }
+          
+          // Recharger les données pour afficher les changements
           this.closeStatusModal();
+          this.loadData();
         },
         error: (error) => {
-          console.error('Erreur mise à jour statut:', error);
+          console.error('Erreur lors de la mise à jour du signalement:', error);
+          alert('Erreur lors de la mise à jour du signalement. Veuillez réessayer.');
         }
       });
     }
   }
 
+  public updateStatus(): void {
+    // Cette méthode est maintenant obsolète, on utilise updateSignalement
+    this.updateSignalement();
+  }
+
   public onSync(): void {
-    console.log('Synchronisation lancée...');
-    alert('Fonction de synchronisation à implémenter plus tard');
+    if (!this.isManager) {
+      alert('Seuls les managers peuvent effectuer la synchronisation');
+      return;
+    }
+
+    const confirmation = confirm(
+      'Voulez-vous synchroniser les données avec Firebase?\n\n' +
+      'Cela va :\n' +
+      '- Envoyer les modifications locales vers Firebase (PUSH)\n' +
+      '- Récupérer les nouvelles données depuis Firebase (PULL)\n' +
+      '\nContinuer ?'
+    );
+
+    if (!confirmation) {
+      return;
+    }
+
+    console.log('Synchronisation bidirectionnelle lancée...');
+    
+    // Afficher un indicateur de chargement (vous pouvez ajouter un spinner dans le HTML)
+    const syncEntities = ['Signalement', 'StatutAvancement', 'AvancementSignalement'];
+    
+    this.syncService.synchronizeBidirectional(syncEntities, false).subscribe({
+      next: (response) => {
+        console.log('Synchronisation terminée:', response);
+        
+        if (response.success) {
+          alert(
+            '✅ Synchronisation réussie !\n\n' +
+            response.message +
+            (response.details ? '\n\nDétails:\n' + JSON.stringify(response.details, null, 2) : '')
+          );
+          
+          // Recharger les signalements pour afficher les nouvelles données
+          this.loadData();
+        } else {
+          alert(
+            '❌ Erreur de synchronisation\n\n' +
+            response.message +
+            (response.errors && response.errors.length > 0 
+              ? '\n\nErreurs:\n' + response.errors.join('\n') 
+              : '')
+          );
+        }
+      },
+      error: (error) => {
+        console.error('Erreur lors de la synchronisation:', error);
+        alert(
+          '❌ Erreur de synchronisation\n\n' +
+          (error.error?.message || error.message || 'Erreur inconnue') +
+          '\n\nVeuillez vérifier la connexion au serveur.'
+        );
+      }
+    });
   }
 
   ngOnDestroy(): void {

@@ -1,21 +1,33 @@
 package web.backend.project.mappers;
 
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
 import org.locationtech.jts.io.WKTWriter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import web.backend.project.entities.AvancementSignalement;
 import web.backend.project.entities.Entreprise;
 import web.backend.project.entities.Signalement;
 import web.backend.project.entities.Utilisateur;
+import web.backend.project.features.signalements.dto.AvancementResponseDTO;
 import web.backend.project.features.signalements.dto.SignalementDTO;
 import web.backend.project.features.signalements.dto.SignalementResponseDTO;
+import web.backend.project.repositories.AvancementSignalementRepo;
 
 @Component
 public class SignalementMapper {
     
     private final WKTReader wktReader = new WKTReader();
     private final WKTWriter wktWriter = new WKTWriter();
+    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    
+    @Autowired
+    private AvancementSignalementRepo avancementSignalementRepo;
 
     /**
      * Convertit un SignalementDTO en entité Signalement
@@ -90,6 +102,32 @@ public class SignalementMapper {
             dto.setIdEntreprise(signalement.getEntreprise().getId());
             dto.setNomEntreprise(signalement.getEntreprise().getNom());
         }
+        
+        // Récupérer et convertir les avancements
+        List<AvancementSignalement> avancements = avancementSignalementRepo
+            .findBySignalement_IdOrderByDateModificationDesc(signalement.getId());
+        
+        List<AvancementResponseDTO> avancementDTOs = new ArrayList<>();
+        for (AvancementSignalement avancement : avancements) {
+            AvancementResponseDTO avancementDTO = new AvancementResponseDTO();
+            avancementDTO.setId(avancement.getId());
+            avancementDTO.setDateModification(avancement.getDateModification().format(dateFormatter));
+            
+            if (avancement.getUtilisateur() != null) {
+                avancementDTO.setIdUtilisateur(avancement.getUtilisateur().getId());
+                avancementDTO.setEmailUtilisateur(avancement.getUtilisateur().getEmail());
+            }
+            
+            if (avancement.getStatutAvancement() != null) {
+                avancementDTO.setIdStatutAvancement(avancement.getStatutAvancement().getId());
+                avancementDTO.setNomStatutAvancement(avancement.getStatutAvancement().getNom());
+                avancementDTO.setValeurStatutAvancement(avancement.getStatutAvancement().getValeur());
+            }
+            
+            avancementDTOs.add(avancementDTO);
+        }
+        
+        dto.setAvancements(avancementDTOs);
         
         return dto;
     }
