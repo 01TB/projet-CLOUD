@@ -2,11 +2,13 @@ package web.backend.project.entities.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * DTO pour la synchronisation de AvancementSignalement
  */
-public class AvancementSignalementDTO implements SyncableDTO {
+public class AvancementSignalementDTO implements FirebaseSerializable {
 
     @JsonProperty("id")
     private Integer id;
@@ -32,6 +34,33 @@ public class AvancementSignalementDTO implements SyncableDTO {
     // Constructeurs
     public AvancementSignalementDTO() {
         this.lastModified = LocalDateTime.now();
+    }
+
+    // ========== FirebaseSerializable Implementation ==========
+
+    @Override
+    public FirebaseSerializable fromFirebaseMap(Map<String, Object> data) {
+        this.id = FirebaseSerializable.extractInteger(data, "id");
+        this.dateModification = FirebaseSerializable.extractLocalDateTime(data, "dateModification");
+        this.synchro = FirebaseSerializable.extractBoolean(data, "synchro");
+        this.utilisateurId = FirebaseSerializable.extractInteger(data, "utilisateurId");
+        this.statutAvancementId = FirebaseSerializable.extractInteger(data, "statutAvancementId");
+        this.signalementId = FirebaseSerializable.extractInteger(data, "signalementId");
+        this.lastModified = FirebaseSerializable.extractLocalDateTime(data, "lastModified");
+        return this;
+    }
+
+    @Override
+    public Map<String, Object> toFirebaseMap() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", id);
+        map.put("dateModification", dateModification != null ? dateModification.toString() : null);
+        map.put("synchro", synchro);
+        map.put("utilisateurId", utilisateurId);
+        map.put("statutAvancementId", statutAvancementId);
+        map.put("signalementId", signalementId);
+        map.put("lastModified", lastModified != null ? lastModified.toString() : null);
+        return map;
     }
 
     // Getters et Setters

@@ -11,7 +11,7 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "signalements")
-public class Signalement implements Syncable<SignalementDTO> {
+public class Signalement implements SyncableEntity<SignalementDTO> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -65,10 +65,29 @@ public class Signalement implements Syncable<SignalementDTO> {
         s.setBudget(this.budget);
         s.setLocalisationWkt(GeometryUtils.geometryToWKT(this.localisation));
         s.setSynchro(this.synchro);
-        s.setUtilisateurCreateurId(this.utilisateurCreateur.getId());
-        s.setEntrepriseId(this.getEntreprise().getId());
+        s.setUtilisateurCreateurId(this.utilisateurCreateur != null ? this.utilisateurCreateur.getId() : null);
+        s.setEntrepriseId(this.entreprise != null ? this.entreprise.getId() : null);
         s.setLastModified(LocalDateTime.now());
         return s;
+    }
+
+    @Override
+    public void updateFromDTO(SignalementDTO dto) {
+        if (dto == null)
+            return;
+
+        this.dateCreation = dto.getDateCreation();
+        this.surface = dto.getSurface();
+        this.budget = dto.getBudget();
+        this.synchro = dto.getSynchro();
+
+        // Conversion WKT → Geometry
+        if (dto.getLocalisationWkt() != null) {
+            this.localisation = GeometryUtils.wktToGeometry(dto.getLocalisationWkt());
+        }
+
+        // Note: Les relations (utilisateurCreateur, entreprise) sont résolues
+        // séparément via RelationResolver
     }
 
     // Getters et Setters

@@ -8,7 +8,7 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "utilisateurs_bloques")
-public class UtilisateurBloque implements Syncable<UtilisateurBloqueDTO> {
+public class UtilisateurBloque implements SyncableEntity<UtilisateurBloqueDTO> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -91,6 +91,17 @@ public class UtilisateurBloque implements Syncable<UtilisateurBloqueDTO> {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    @Override
+    public void updateFromDTO(UtilisateurBloqueDTO dto) {
+        if (dto == null) {
+            return;
+        } else if (dto.getId() != null) {
+            this.id = dto.getId();
+        }
+        this.synchro = dto.getSynchro();
+        this.dateBlocage = dto.getDateBlocage();
     }
 
 }

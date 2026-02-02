@@ -83,15 +83,15 @@ public class SyncController {
             return ResponseEntity.badRequest().body(errorResponse);
         }
 
-        // Vérification que les repositories sont enregistrés
-        List<String> missingRepositories = request.getEntityTypes().stream()
-                .filter(type -> !syncService.isRepositoryRegistered(type))
+        // Vérification que les handlers sont enregistrés
+        List<String> missingHandlers = request.getEntityTypes().stream()
+                .filter(type -> !syncService.isEntityTypeRegistered(type))
                 .collect(Collectors.toList());
 
-        if (!missingRepositories.isEmpty()) {
-            logger.error("Missing repositories for entity types: {}", missingRepositories);
+        if (!missingHandlers.isEmpty()) {
+            logger.error("Missing handlers for entity types: {}", missingHandlers);
             SyncResponse errorResponse = new SyncResponse(false,
-                    "Repositories not registered for: " + String.join(", ", missingRepositories));
+                    "Handlers not registered for: " + String.join(", ", missingHandlers));
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(errorResponse);
         }
 
@@ -181,9 +181,9 @@ public class SyncController {
                     .body("Unsupported entity type: " + entityType);
         }
 
-        if (!syncService.isRepositoryRegistered(entityType)) {
+        if (!syncService.isEntityTypeRegistered(entityType)) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body("Repository not registered for entity type: " + entityType);
+                    .body("Handler not registered for entity type: " + entityType);
         }
 
         return ResponseEntity.ok()
@@ -232,7 +232,7 @@ public class SyncController {
      */
     private List<String> getRegisteredRepositories() {
         return SUPPORTED_ENTITY_TYPES.stream()
-                .filter(syncService::isRepositoryRegistered)
+                .filter(syncService::isEntityTypeRegistered)
                 .collect(Collectors.toList());
     }
 
