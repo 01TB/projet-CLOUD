@@ -6,8 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import web.backend.project.entities.Syncable;
-import web.backend.project.entities.dto.SyncableDTO;
+import web.backend.project.entities.SyncableEntity;
+import web.backend.project.entities.dto.FirebaseSerializable;
 import web.backend.project.features.sync.dto.SyncRequest;
 import web.backend.project.features.sync.dto.SyncResponse;
 import web.backend.project.features.sync.dto.SyncResponse.EntitySyncResult;
@@ -18,7 +18,7 @@ import java.util.Map;
 
 /**
  * Service principal d'orchestration de la synchronisation
- * Amélioration: Meilleure gestion des types génériques
+ * Utilise EntitySyncRegistry pour une gestion générique des entités
  */
 @Service
 public class SyncService {
@@ -27,17 +27,22 @@ public class SyncService {
 
     private final FirebaseSyncService firebaseSyncService;
     private final EntitySyncHandler entitySyncHandler;
+    private final EntitySyncRegistry syncRegistry;
+
+    // Ancien système pour rétro-compatibilité
     private final Map<String, JpaRepository<?, Integer>> repositories;
 
     public SyncService(FirebaseSyncService firebaseSyncService,
-            EntitySyncHandler entitySyncHandler) {
+            EntitySyncHandler entitySyncHandler,
+            EntitySyncRegistry syncRegistry) {
         this.firebaseSyncService = firebaseSyncService;
         this.entitySyncHandler = entitySyncHandler;
+        this.syncRegistry = syncRegistry;
         this.repositories = new HashMap<>();
     }
 
     /**
-     * Enregistre un repository pour un type d'entité
+     * Enregistre un repository pour un type d'entité (rétro-compatibilité)
      */
     public void registerRepository(String entityType, JpaRepository<?, Integer> repository) {
         repositories.put(entityType, repository);
@@ -87,42 +92,41 @@ public class SyncService {
 
     /**
      * Effectue un push Backend → Firebase
-     * Amélioration: Meilleure gestion des types génériques avec Syncable
+     * Utilise le système générique via EntitySyncRegistry
      */
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    private EntitySyncResult performPush(String entityType, Boolean forceSync) {
+    @SuppressWarnings("unchecked")
+    private <E extends SyncableEntity<D>, D extends FirebaseSerializable> EntitySyncResult performPush(
+            String entityType, Boolean forceSync) {
         EntitySyncResult result = new EntitySyncResult();
 
         try {
-            // Cast vers JpaRepository avec contrainte Syncable
-            JpaRepository<? extends Syncable<?>, Integer> repository = (JpaRepository<? extends Syncable<?>, Integer>) repositories
-                    .get(entityType);
-
-            if (repository == null) {
-                logger.warn("No repository found for entity type: {}", entityType);
+            // Vérifie si le handler est enregistré
+            if (!syncRegistry.isRegistered(entityType)) {
+                logger.warn("No handler registered for entity type: {}", entityType);
                 result.incrementFailed();
                 return result;
             }
 
-            // Récupère les entités non synchronisées
-            List<? extends Syncable<?>> unsyncedEntities = entitySyncHandler.getUnsyncedEntities(
-                    (JpaRepository) repository);
+            // Récupère les entités non synchronisées via le nouveau système
+            List<E> unsyncedEntities = entitySyncHandler.getUnsyncedEntities(entityType);
 
             if (unsyncedEntities.isEmpty()) {
                 logger.info("No unsynced entities found for {}", entityType);
                 return result;
             }
 
-            // AMÉLIORATION MAJEURE: Conversion directe sans passer entityType
-            // Utilise la méthode toDTO() de l'interface Syncable
-            List<SyncableDTO> dtos = entitySyncHandler.convertEntitiesToSyncableDTOs(unsyncedEntities);
+            // Conversion directe via l'interface SyncableEntity
+            List<D> dtos = entitySyncHandler.convertEntitiesToDTOs(unsyncedEntities);
+
+            // Convertit en FirebaseSerializable pour Firebase
+            List<FirebaseSerializable> syncableDTOs = (List<FirebaseSerializable>) (List<?>) dtos;
 
             // Pousse vers Firebase
             String collectionName = entityType.toLowerCase();
-            int pushed = firebaseSyncService.pushToFirebase(collectionName, dtos);
+            int pushed = firebaseSyncService.pushToFirebase(collectionName, syncableDTOs);
 
-            // Marque comme synchronisé
-            entitySyncHandler.markAsSynced((List) unsyncedEntities, (JpaRepository) repository);
+            // Marque comme synchronisé via le nouveau système
+            entitySyncHandler.markAsSynced(entityType, unsyncedEntities);
 
             result.setPushed(pushed);
             logger.info("Pushed {} entities of type {} to Firebase", pushed, entityType);
@@ -137,16 +141,15 @@ public class SyncService {
 
     /**
      * Effectue un pull Firebase → Backend
+     * Utilise le système générique via EntitySyncRegistry
      */
-    @SuppressWarnings("unchecked")
     private EntitySyncResult performPull(String entityType) {
         SyncResponse.EntitySyncResult result = new SyncResponse.EntitySyncResult();
 
         try {
-            JpaRepository<Object, Integer> repository = (JpaRepository<Object, Integer>) repositories.get(entityType);
-
-            if (repository == null) {
-                logger.warn("No repository found for entity type: {}", entityType);
+            // Vérifie si le handler est enregistré
+            if (!syncRegistry.isRegistered(entityType)) {
+                logger.warn("No handler registered for entity type: {}", entityType);
                 result.incrementFailed();
                 return result;
             }
@@ -160,13 +163,13 @@ public class SyncService {
                 return result;
             }
 
-            // Met à jour ou crée les entités
+            // Met à jour ou crée les entités via le système générique
             for (Map<String, Object> data : firebaseData) {
                 try {
-                    entitySyncHandler.updateOrCreateEntity(data, repository, entityType);
+                    entitySyncHandler.updateOrCreateFromFirebase(entityType, data);
                     result.incrementPulled();
                 } catch (Exception e) {
-                    logger.error("Failed to pull entity", e);
+                    logger.error("Failed to pull entity of type {}: {}", entityType, e.getMessage());
                     result.incrementFailed();
                 }
             }
@@ -198,9 +201,16 @@ public class SyncService {
     }
 
     /**
-     * Vérifie si un repository est enregistré
+     * Vérifie si un type d'entité est enregistré
      */
-    public boolean isRepositoryRegistered(String entityType) {
-        return repositories.containsKey(entityType);
+    public boolean isEntityTypeRegistered(String entityType) {
+        return syncRegistry.isRegistered(entityType);
+    }
+
+    /**
+     * Liste tous les types d'entités enregistrés
+     */
+    public List<String> getRegisteredEntityTypes() {
+        return syncRegistry.getRegisteredTypes();
     }
 }

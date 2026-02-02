@@ -1,10 +1,11 @@
 package web.backend.project.entities.dto;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class UtilisateurDTO implements SyncableDTO {
+public class UtilisateurDTO implements FirebaseSerializable {
 
     @JsonProperty("id")
     Integer id;
@@ -75,6 +76,29 @@ public class UtilisateurDTO implements SyncableDTO {
 
     public void setLastModified(LocalDateTime lastModified) {
         this.lastModified = lastModified;
+    }
+
+    @Override
+    public FirebaseSerializable fromFirebaseMap(Map<String, Object> data) {
+        this.id = FirebaseSerializable.extractInteger(data, "id");
+        this.email = FirebaseSerializable.extractString(data, "email");
+        this.password = FirebaseSerializable.extractString(data, "password");
+        this.synchro = FirebaseSerializable.extractBoolean(data, "synchro");
+        this.roleId = FirebaseSerializable.extractInteger(data, "roleId");
+        this.lastModified = FirebaseSerializable.extractLocalDateTime(data, "lastModified");
+        return this;
+    }
+
+    @Override
+    public Map<String, Object> toFirebaseMap() {
+        Map<String, Object> map = new java.util.HashMap<>();
+        map.put("id", id);
+        map.put("email", email);
+        map.put("password", password);
+        map.put("synchro", synchro);
+        map.put("roleId", roleId);
+        map.put("lastModified", lastModified != null ? lastModified.toString() : null);
+        return map;
     }
 
 }

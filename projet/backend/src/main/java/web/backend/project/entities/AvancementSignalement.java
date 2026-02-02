@@ -16,7 +16,7 @@ import web.backend.project.entities.dto.AvancementSignalementDTO;
 
 @Entity
 @Table(name = "avancements_signalement")
-public class AvancementSignalement implements Syncable<AvancementSignalementDTO> {
+public class AvancementSignalement implements SyncableEntity<AvancementSignalementDTO> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -60,11 +60,23 @@ public class AvancementSignalement implements Syncable<AvancementSignalementDTO>
         dto.setId(this.id);
         dto.setDateModification(this.dateModification);
         dto.setSynchro(this.synchro);
-        dto.setUtilisateurId(this.utilisateur.getId());
-        dto.setStatutAvancementId(this.statutAvancement.getId());
-        dto.setSignalementId(this.signalement.getId());
+        dto.setUtilisateurId(this.utilisateur != null ? this.utilisateur.getId() : null);
+        dto.setStatutAvancementId(this.statutAvancement != null ? this.statutAvancement.getId() : null);
+        dto.setSignalementId(this.signalement != null ? this.signalement.getId() : null);
         dto.setLastModified(this.dateModification);
         return dto;
+    }
+
+    @Override
+    public void updateFromDTO(AvancementSignalementDTO dto) {
+        if (dto == null)
+            return;
+
+        this.dateModification = dto.getDateModification();
+        this.synchro = dto.getSynchro();
+
+        // Note: Les relations (utilisateur, statutAvancement, signalement) sont
+        // résolues séparément via RelationResolver
     }
 
     // Getters et Setters

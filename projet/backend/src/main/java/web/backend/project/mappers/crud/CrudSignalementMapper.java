@@ -1,4 +1,4 @@
-package web.backend.project.mappers;
+package web.backend.project.mappers.crud;
 
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.ParseException;
@@ -12,7 +12,7 @@ import web.backend.project.features.signalements.dto.SignalementDTO;
 import web.backend.project.features.signalements.dto.SignalementResponseDTO;
 
 @Component
-public class SignalementMapper {
+public class CrudSignalementMapper {
     
     private final WKTReader wktReader = new WKTReader();
     private final WKTWriter wktWriter = new WKTWriter();

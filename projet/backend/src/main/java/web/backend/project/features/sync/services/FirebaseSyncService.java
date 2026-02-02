@@ -2,7 +2,7 @@ package web.backend.project.features.sync.services;
 
 import com.google.cloud.firestore.*;
 
-import web.backend.project.entities.dto.SyncableDTO;
+import web.backend.project.entities.dto.FirebaseSerializable;
 
 import com.google.api.core.ApiFuture;
 import org.springframework.stereotype.Service;
@@ -27,7 +27,7 @@ public class FirebaseSyncService {
     /**
      * Pousse une liste de DTOs vers Firebase
      */
-    public <T extends SyncableDTO> int pushToFirebase(String collectionName, List<T> dtos) {
+    public <T extends FirebaseSerializable> int pushToFirebase(String collectionName, List<T> dtos) {
         int pushed = 0;
         CollectionReference collection = firestore.collection(collectionName);
 
@@ -56,7 +56,7 @@ public class FirebaseSyncService {
     /**
      * Récupère les données depuis Firebase
      */
-    public <T extends SyncableDTO> List<Map<String, Object>> pullFromFirebase(String collectionName) {
+    public <T extends FirebaseSerializable> List<Map<String, Object>> pullFromFirebase(String collectionName) {
         List<Map<String, Object>> results = new ArrayList<>();
         CollectionReference collection = firestore.collection(collectionName);
 
@@ -112,7 +112,7 @@ public class FirebaseSyncService {
     /**
      * Convertit un DTO en Map pour Firebase
      */
-    private <T extends SyncableDTO> Map<String, Object> convertDtoToMap(T dto) {
+    private <T extends FirebaseSerializable> Map<String, Object> convertDtoToMap(T dto) {
         Map<String, Object> map = new HashMap<>();
 
         // Utilise reflection pour extraire tous les champs

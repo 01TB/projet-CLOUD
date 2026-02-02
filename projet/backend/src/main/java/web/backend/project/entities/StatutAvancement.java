@@ -1,6 +1,5 @@
 package web.backend.project.entities;
 
-
 import jakarta.persistence.*;
 import web.backend.project.entities.dto.StatutAvancementDTO;
 
@@ -9,10 +8,10 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "statuts_avancement", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"nom"}),
-    @UniqueConstraint(columnNames = {"valeur"})
+        @UniqueConstraint(columnNames = { "nom" }),
+        @UniqueConstraint(columnNames = { "valeur" })
 })
-public class StatutAvancement implements Syncable<StatutAvancementDTO> {
+public class StatutAvancement implements SyncableEntity<StatutAvancementDTO> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -27,7 +26,6 @@ public class StatutAvancement implements Syncable<StatutAvancementDTO> {
     @Column(name = "synchro", nullable = false)
     private Boolean synchro = false;
 
-
     @Override
     public StatutAvancementDTO toDTO() {
         StatutAvancementDTO dto = new StatutAvancementDTO();
@@ -39,9 +37,19 @@ public class StatutAvancement implements Syncable<StatutAvancementDTO> {
         return dto;
     }
 
+    @Override
+    public void updateFromDTO(StatutAvancementDTO dto) {
+        if (dto == null)
+            return;
+
+        this.nom = dto.getNom();
+        this.valeur = dto.getValeur();
+        this.synchro = dto.getSynchro();
+    }
 
     // Constructeurs
-    public StatutAvancement() {}
+    public StatutAvancement() {
+    }
 
     public StatutAvancement(String nom, Integer valeur, Boolean synchro) {
         this.nom = nom;
@@ -85,8 +93,10 @@ public class StatutAvancement implements Syncable<StatutAvancementDTO> {
     // Equals et HashCode
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         StatutAvancement that = (StatutAvancement) o;
         return Objects.equals(id, that.id);
     }

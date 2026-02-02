@@ -2,11 +2,13 @@ package web.backend.project.entities.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * DTO pour la synchronisation de StatutAvancement
  */
-public class StatutAvancementDTO implements SyncableDTO {
+public class StatutAvancementDTO implements FirebaseSerializable {
 
     @JsonProperty("id")
     private Integer id;
@@ -26,6 +28,29 @@ public class StatutAvancementDTO implements SyncableDTO {
     // Constructeurs
     public StatutAvancementDTO() {
         this.lastModified = LocalDateTime.now();
+    }
+
+    // ========== FirebaseSerializable Implementation ==========
+
+    @Override
+    public FirebaseSerializable fromFirebaseMap(Map<String, Object> data) {
+        this.id = FirebaseSerializable.extractInteger(data, "id");
+        this.nom = FirebaseSerializable.extractString(data, "nom");
+        this.valeur = FirebaseSerializable.extractInteger(data, "valeur");
+        this.synchro = FirebaseSerializable.extractBoolean(data, "synchro");
+        this.lastModified = FirebaseSerializable.extractLocalDateTime(data, "lastModified");
+        return this;
+    }
+
+    @Override
+    public Map<String, Object> toFirebaseMap() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", id);
+        map.put("nom", nom);
+        map.put("valeur", valeur);
+        map.put("synchro", synchro);
+        map.put("lastModified", lastModified != null ? lastModified.toString() : null);
+        return map;
     }
 
     // Getters et Setters
