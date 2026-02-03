@@ -112,7 +112,7 @@
 
         <h3>Aucun signalement</h3>
 
-        <p>Aucun signalement ne correspond aux filtres</p>
+        <p>Aucun signalement "Nouveau" ne correspond aux filtres</p>
 
         <ion-button fill="outline" @click="router.push('/signalement/create')" v-if="isAuthenticated">
 
@@ -134,7 +134,7 @@
 
         >
 
-          <ion-item @click="viewDetails(signalement.id)">
+          <ion-item @click="toggleSignalementExpansion(signalement.id)" button>
 
             <ion-avatar slot="start">
 
@@ -184,6 +184,71 @@
 
             </ion-note>
 
+          </ion-item>
+
+          <!-- Section développée avec détails -->
+          <ion-item v-if="expandedSignalements.includes(signalement.id)" class="expanded-details">
+            <ion-label class="ion-padding">
+              <div class="details-container">
+                <h4>Détails complets</h4>
+                
+                <div class="detail-row">
+                  <strong>Description:</strong>
+                  <p>{{ signalement.description || 'Non spécifiée' }}</p>
+                </div>
+                
+                <div class="detail-row">
+                  <strong>Surface:</strong>
+                  <p>{{ signalement.surface ? signalement.surface + ' m²' : 'Non spécifiée' }}</p>
+                </div>
+                
+                <div class="detail-row">
+                  <strong>Budget:</strong>
+                  <p>{{ formatBudget(signalement.budget) }}</p>
+                </div>
+                
+                <div class="detail-row">
+                  <strong>Adresse:</strong>
+                  <p>{{ signalement.adresse || 'Non spécifiée' }}</p>
+                </div>
+                
+                <div class="detail-row">
+                  <strong>Date de création:</strong>
+                  <p>{{ formatDate(signalement.date_creation) }}</p>
+                </div>
+                
+                <div class="detail-row">
+                  <strong>Statut:</strong>
+                  <p>
+                    <ion-badge :color="getStatusColor(getCurrentStatus(signalement))">
+                      {{ getCurrentStatus(signalement) }}
+                    </ion-badge>
+                  </p>
+                </div>
+                
+                <div class="detail-actions">
+                  <ion-button 
+                    size="small" 
+                    fill="outline" 
+                    @click="viewOnMap(signalement)"
+                    class="ion-margin-end"
+                  >
+                    <ion-icon :icon="map" slot="start"></ion-icon>
+                    Voir sur carte
+                  </ion-button>
+                  
+                  <ion-button 
+                    size="small" 
+                    fill="outline" 
+                    @click="shareSignalement(signalement)"
+                    v-if="canShare"
+                  >
+                    <ion-icon :icon="share" slot="start"></ion-icon>
+                    Partager
+                  </ion-button>
+                </div>
+              </div>
+            </ion-label>
           </ion-item>
 
 
@@ -298,7 +363,9 @@ const loading = ref(true);
 
 const showFilters = ref(true);
 
-const selectedStatus = ref([]); // Vide pour montrer tous les signalements par défaut
+const selectedStatus = ref(['Nouveau']); // "Nouveau" sélectionné par défaut
+
+const expandedSignalements = ref([]); // IDs des signalements développés
 
 const page = ref(1);
 
@@ -528,6 +595,40 @@ const viewDetails = (id) => {
 
 };
 
+const toggleSignalementExpansion = (signalementId) => {
+
+  const index = expandedSignalements.value.indexOf(signalementId);
+
+  if (index > -1) {
+
+    expandedSignalements.value.splice(index, 1);
+
+  } else {
+
+    expandedSignalements.value.push(signalementId);
+
+  }
+
+};
+
+const formatBudget = (budget) => {
+
+  if (!budget) return 'Non spécifié';
+
+  return new Intl.NumberFormat('fr-MG', {
+
+    style: 'currency',
+
+    currency: 'MGA',
+
+    minimumFractionDigits: 0,
+
+    maximumFractionDigits: 0
+
+  }).format(budget);
+
+};
+
 
 
 const viewOnMap = async (signalement) => {
@@ -658,25 +759,77 @@ onMounted(async () => {
 
   margin-bottom: 1rem;
 
-}
-
-
-
-.load-more {
-
-  padding: 1rem;
-
   text-align: center;
 
 }
-
-
 
 ion-chip {
 
   margin: 2px;
 
   cursor: pointer;
+
+}
+
+.expanded-details {
+
+  --background: rgba(49, 130, 206, 0.05);
+
+  border-left: 4px solid var(--ion-color-primary);
+
+}
+
+.details-container {
+
+  padding: 1rem;
+
+}
+
+.details-container h4 {
+
+  color: var(--ion-color-primary);
+
+  margin-bottom: 1rem;
+
+  font-weight: 600;
+
+}
+
+.detail-row {
+
+  margin-bottom: 1rem;
+
+}
+
+.detail-row strong {
+
+  color: var(--ion-color-dark);
+
+  display: block;
+
+  margin-bottom: 0.25rem;
+
+  font-size: 0.9rem;
+
+}
+
+.detail-row p {
+
+  color: var(--ion-color-medium);
+
+  margin: 0;
+
+  line-height: 1.4;
+
+}
+
+.detail-actions {
+
+  margin-top: 1.5rem;
+
+  padding-top: 1rem;
+
+  border-top: 1px solid var(--ion-color-light);
 
 }
 

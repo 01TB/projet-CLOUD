@@ -63,15 +63,10 @@
             >
               Créer un compte
             </ion-button>
-
-            <div class="offline-mode ion-margin-top" v-if="!isOnline">
-              <ion-icon :icon="warning" color="warning"></ion-icon>
-              <small>Mode hors ligne - Connexion locale seulement</small>
-            </div>
           </ion-list>
         </form>
 
-        <div class="guest-section ion-margin-top">
+        <div class="guest-section ion-margin-bottom">
           <ion-text color="medium">
             <small>Ou continuer en tant que</small>
           </ion-text>
@@ -79,7 +74,7 @@
             expand="block"
             fill="outline"
             @click="continueAsGuest"
-            class="ion-margin-top"
+            class="ion-margin-bottom"
           >
             Visiteur
           </ion-button>

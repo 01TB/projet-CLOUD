@@ -5,7 +5,7 @@
         <ion-buttons slot="start">
           <ion-menu-button></ion-menu-button>
         </ion-buttons>
-        <ion-title>Carte des Signalements</ion-title>
+        <ion-title>Carte</ion-title>
         <ion-buttons slot="end">
           <ion-button @click="refreshData">
             <ion-icon :icon="refresh" slot="icon-only"></ion-icon>
@@ -16,7 +16,7 @@
           <ion-button @click="toggleMySignalements" v-if="authStatus" :color="filters.mesSignalements ? 'primary' : 'medium'">
             <ion-icon :icon="person" slot="icon-only"></ion-icon>
           </ion-button>
-          <ion-button @click="toggleFilter" v-if="authStatus">
+          <ion-button @click="toggleFilter">
             <ion-icon :icon="filter" slot="icon-only"></ion-icon>
           </ion-button>
         </ion-buttons>
@@ -46,7 +46,6 @@
             v-for="signalement in filteredSignalements"
             :key="signalement.id"
             :lat-lng="getLatLng(signalement)"
-            @click="showSignalementDetail(signalement)"
           >
             <l-icon
               :icon-url="getMarkerIcon(signalement)"
@@ -56,14 +55,14 @@
             <l-popup>
               <div class="signalement-popup">
                 <h3>{{ signalement.description }}</h3>
-                <p><strong>Statut:</strong> {{ getCurrentStatus(signalement) }}</p>
                 <p><strong>Surface:</strong> {{ signalement.surface }} m²</p>
+                <p><strong>Statut:</strong> {{ getCurrentStatus(signalement) }}</p>
                 <p><strong>Budget:</strong> {{ formatBudget(signalement.budget) }}</p>
                 <p><strong>Date:</strong> {{ formatDate(signalement.date_creation) }}</p>
                 
                 <!-- Actions CRUD pour utilisateur connecté -->
                 <div v-if="authStatus" class="popup-actions">
-                  <!-- Actions pour le propriétaire du signalement -->
+                  <!-- Actions pour le propriétaire du signalement
                   <template v-if="canEditSignalement(signalement)">
                     <ion-button 
                       size="small" 
@@ -87,18 +86,9 @@
                       Supprimer
                     </ion-button>
                   </template>
+                   -->
                   
                   <!-- Actions pour tous les utilisateurs connectés -->
-                  <ion-button 
-                    size="small" 
-                    expand="block" 
-                    fill="outline"
-                    @click="addProgress(signalement)"
-                    class="action-button"
-                  >
-                    <ion-icon :icon="chatbubble" slot="start"></ion-icon>
-                    Ajouter un commentaire
-                  </ion-button>
                   
                   <ion-button 
                     size="small" 
@@ -205,7 +195,7 @@
               <ion-checkbox
                 slot="start"
                 :checked="filters.mesSignalements"
-                @ionChange="filters.mesSignalements = !filters.mesSignalements"
+                @ionChange="handleMesSignalementsChange"
               ></ion-checkbox>
               <ion-label>Mes signalements uniquement</ion-label>
             </ion-item>
@@ -404,6 +394,7 @@ const loadInitialData = async () => {
     await signalementsStore.fetchSignalements();
     // fetchStats n'existe plus dans le store, les stats sont déjà dans le state
     await signalementsStore.fetchStatuts();
+    console.log('Statuts loaded:', signalementsStore.statuts);
   } catch (error) {
     console.error('Erreur chargement données:', error);
   }
@@ -531,30 +522,6 @@ const addProgress = (signalement) => {
   console.log('Add progress to signalement:', signalement);
 };
 
-const showSignalementDetail = async (signalement) => {
-  const alert = await alertController.create({
-    header: `Signalement #${signalement.id}`,
-    message: `Statut: ${getCurrentStatus(signalement)}
-Description: ${signalement.description || 'Non spécifiée'}
-Surface: ${signalement.surface || 'Non spécifiée'} m²
-Budget: ${formatBudget(signalement.budget)}
-Adresse: ${signalement.adresse || 'Non spécifiée'}
-Créé le: ${formatDate(signalement.date_creation)}`,
-    buttons: [
-      {
-        text: 'Fermer',
-        role: 'cancel'
-      },
-      {
-        text: 'Voir détails',
-        handler: () => viewDetails(signalement.id)
-      }
-    ]
-  });
-  
-  await alert.present();
-};
-
 const toggleFilter = () => {
   filterModalOpen.value = !filterModalOpen.value;
 };
@@ -585,7 +552,31 @@ const refreshData = async () => {
   await loadInitialData();
 };
 
-const toggleMySignalements = () => {
+const toggleMySignalements = async () => {
+  if (!authStatus) {
+    const alert = await alertController.create({
+      header: 'Connexion requise',
+      message: 'Vous devez être connecté pour filtrer vos signalements',
+      buttons: ['OK']
+    });
+    await alert.present();
+    return;
+  }
+  filters.value.mesSignalements = !filters.value.mesSignalements;
+};
+
+const handleMesSignalementsChange = async () => {
+  if (!authStatus) {
+    const alert = await alertController.create({
+      header: 'Connexion requise',
+      message: 'Vous devez être connecté pour filtrer vos signalements',
+      buttons: ['OK']
+    });
+    await alert.present();
+    // Réinitialiser la checkbox
+    filters.value.mesSignalements = false;
+    return;
+  }
   filters.value.mesSignalements = !filters.value.mesSignalements;
 };
 
@@ -836,15 +827,15 @@ ion-modal {
   }
   
   .signalement-popup h3 {
-    color: #f7fafc;
+    color: #002657;
   }
   
   .signalement-popup p strong {
-    color: #e2e8f0;
+    color: #0d3c7a;
   }
   
   .popup-actions {
-    border-top-color: rgba(74, 85, 104, 0.8);
+    border-top-color: rgba(49, 68, 101, 0.8);
   }
   
   ion-header {

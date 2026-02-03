@@ -100,42 +100,6 @@
           </ion-card-content>
         </ion-card>
 
-        <!-- Graphique des types de problèmes -->
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>Types de problèmes</ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            <div v-if="typeStats.length === 0" class="empty-chart">
-              <ion-icon :icon="documentText" size="large"></ion-icon>
-              <p>Aucune donnée à traiter</p>
-            </div>
-            <div v-else>
-              <!-- Affichage simple des données -->
-              <div class="simple-chart">
-                <div class="chart-bars">
-                  <div 
-                    v-for="type in typeStats.slice(0, 5)" 
-                    :key="type.name"
-                    class="chart-bar"
-                    :style="{ width: (type.count / Math.max(...typeStats.map(t => t.count)) * 100) + '%' }"
-                  >
-                    <span class="bar-label">{{ type.name }}</span>
-                    <span class="bar-value">{{ type.count }}</span>
-                  </div>
-                </div>
-              </div>
-              <ion-list>
-                <ion-item v-for="type in typeStats" :key="type.name">
-                  <ion-icon :icon="getTypeIcon(type.name)" slot="start" :color="getTypeColor(type.name)"></ion-icon>
-                  <ion-label>{{ type.name }}</ion-label>
-                  <ion-note slot="end">{{ type.count }}</ion-note>
-                </ion-item>
-              </ion-list>
-            </div>
-          </ion-card-content>
-        </ion-card>
-
         <!-- Évolution temporelle -->
         <ion-card>
           <ion-card-header>
@@ -222,7 +186,7 @@ import {
 } from '@ionic/vue';
 import {
   refresh, download, shareSocial, alertCircle, checkmarkCircle, time,
-  warning, construct, water, warningOutline, pulse
+  warning
 } from 'ionicons/icons';
 import { useAuthStore } from '@/store/modules/auth';
 import { useSignalementsStore } from '@/store/modules/signalements';
@@ -234,7 +198,6 @@ const signalementsStore = useSignalementsStore();
 const loading = ref(true);
 const selectedPeriod = ref('month');
 const statusChart = ref(null);
-const typeChart = ref(null);
 const timelineChart = ref(null);
 
 const canShare = computed(() => 'share' in navigator);
@@ -291,24 +254,6 @@ const statusStats = computed(() => {
   }));
   
   console.log('Status stats:', result);
-  return result;
-});
-
-const typeStats = computed(() => {
-  const filtered = getFilteredSignalements();
-  const typeCounts = {};
-  
-  filtered.forEach(s => {
-    // Simuler des types de problèmes basés sur la description
-    const type = inferProblemType(s.description);
-    typeCounts[type] = (typeCounts[type] || 0) + 1;
-  });
-  
-  const result = Object.entries(typeCounts)
-    .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => b.count - a.count);
-  
-  console.log('Type stats:', result);
   return result;
 });
 
@@ -369,40 +314,6 @@ const getStatusColor = (status) => {
     'Terminé': 'success'
   };
   return colors[status] || 'medium';
-};
-
-const inferProblemType = (description) => {
-  const desc = (description || '').toLowerCase();
-  
-  if (desc.includes('nids de poule') || desc.includes('trou')) return 'Nids de poule';
-  if (desc.includes('inondation') || desc.includes('eau')) return 'Inondation';
-  if (desc.includes('signalisation') || desc.includes('panneau')) return 'Signalisation';
-  if (desc.includes('éclairage') || desc.includes('lumière')) return 'Éclairage';
-  if (desc.includes('chaussée') || desc.includes('route')) return 'Chaussée';
-  
-  return 'Autre';
-};
-
-const getTypeIcon = (type) => {
-  const icons = {
-    'Nids de poule': construct,
-    'Inondation': water,
-    'Signalisation': warningOutline,
-    'Éclairage': pulse,
-    'Chaussée': construct
-  };
-  return icons[type] || alertCircle;
-};
-
-const getTypeColor = (type) => {
-  const colors = {
-    'Nids de poule': 'warning',
-    'Inondation': 'primary',
-    'Signalisation': 'danger',
-    'Éclairage': 'medium',
-    'Chaussée': 'secondary'
-  };
-  return colors[type] || 'medium';
 };
 
 const getUserById = (userId) => {
