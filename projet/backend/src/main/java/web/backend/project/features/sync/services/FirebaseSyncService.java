@@ -111,30 +111,23 @@ public class FirebaseSyncService {
 
     /**
      * Convertit un DTO en Map pour Firebase
+     * Utilise la méthode toFirebaseMap() du DTO pour respecter les conventions de
+     * nommage
      */
     private <T extends FirebaseSerializable> Map<String, Object> convertDtoToMap(T dto) {
-        Map<String, Object> map = new HashMap<>();
+        Map<String, Object> map = dto.toFirebaseMap();
 
-        // Utilise reflection pour extraire tous les champs
-        // Note: Pour une solution production, utilisez un mapper JSON comme Jackson
-        try {
-            java.lang.reflect.Field[] fields = dto.getClass().getDeclaredFields();
-            for (java.lang.reflect.Field field : fields) {
-                field.setAccessible(true);
-                Object value = field.get(dto);
-
-                // Convertir LocalDateTime en timestamp
-                if (value instanceof LocalDateTime) {
-                    value = Date.from(((LocalDateTime) value).atZone(ZoneId.systemDefault()).toInstant());
-                }
-
-                map.put(field.getName(), value);
+        // Convertir les LocalDateTime en timestamp Firebase
+        Map<String, Object> result = new HashMap<>();
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            Object value = entry.getValue();
+            if (value instanceof LocalDateTime) {
+                value = Date.from(((LocalDateTime) value).atZone(ZoneId.systemDefault()).toInstant());
             }
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException("Failed to convert DTO to Map: " + e.getMessage(), e);
+            result.put(entry.getKey(), value);
         }
 
-        return map;
+        return result;
     }
 
     /**
@@ -146,7 +139,7 @@ public class FirebaseSyncService {
             return false;
         }
 
-        Object lastModifiedObj = firebaseData.get("lastModified");
+        Object lastModifiedObj = firebaseData.get("last_modified");
         if (lastModifiedObj instanceof Date) {
             Date firebaseDate = (Date) lastModifiedObj;
             LocalDateTime firebaseTimestamp = firebaseDate.toInstant()

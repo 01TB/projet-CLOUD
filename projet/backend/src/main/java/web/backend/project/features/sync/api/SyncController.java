@@ -28,12 +28,11 @@ public class SyncController {
 
     // Liste des types d'entités supportés
     private static final List<String> SUPPORTED_ENTITY_TYPES = Arrays.asList(
-            "Signalement",
-            "StatutAvancement",
-            "AvancementSignalement",
-            "Utilisateur",
-            "UtilisateurBloque");
-
+            "signalements",
+            "statuts_avancement",
+            "avancements_signalement",
+            "utilisateurs",
+            "utilisateurs_bloques");
     public SyncController(SyncService syncService) {
         this.syncService = syncService;
     }

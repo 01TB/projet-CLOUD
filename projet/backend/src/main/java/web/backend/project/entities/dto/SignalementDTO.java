@@ -26,7 +26,7 @@ public class SignalementDTO implements FirebaseSerializable {
     private String localisationWkt; // Format WKT pour la géométrie
 
     @JsonProperty("synchro")
-    private Boolean synchro;
+    private Boolean synchro = true;
 
     @JsonProperty("utilisateur_createur_id")
     private Integer utilisateurCreateurId;
@@ -52,8 +52,8 @@ public class SignalementDTO implements FirebaseSerializable {
         this.budget = FirebaseSerializable.extractInteger(data, "budget");
         this.localisationWkt = FirebaseSerializable.extractString(data, "localisation");
         this.synchro = FirebaseSerializable.extractBoolean(data, "synchro");
-        this.utilisateurCreateurId = FirebaseSerializable.extractInteger(data, "utilisateur_createur_id");
-        this.entrepriseId = FirebaseSerializable.extractInteger(data, "entreprise_id");
+        this.utilisateurCreateurId = FirebaseSerializable.extractInteger(data, "id_utilisateur_createur");
+        this.entrepriseId = FirebaseSerializable.extractInteger(data, "id_entreprise");
         this.lastModified = FirebaseSerializable.extractLocalDateTime(data, "last_modified");
         return this;
     }
@@ -67,8 +67,8 @@ public class SignalementDTO implements FirebaseSerializable {
         map.put("budget", budget);
         map.put("localisation", localisationWkt);
         map.put("synchro", synchro);
-        map.put("utilisateur_createur_id", utilisateurCreateurId);
-        map.put("entreprise_id", entrepriseId);
+        map.put("id_utilisateur_createur", utilisateurCreateurId);
+        map.put("id_entreprise", entrepriseId);
         map.put("last_modified", lastModified != null ? lastModified.toString() : null);
         return map;
     }

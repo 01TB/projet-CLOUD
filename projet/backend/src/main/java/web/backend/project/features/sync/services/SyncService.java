@@ -54,6 +54,7 @@ public class SyncService {
      */
     @Transactional
     public SyncResponse synchronize(SyncRequest request) {
+        System.out.println("Starting synchronization with request: " + request);
         SyncResponse response = new SyncResponse(true, "Synchronization completed");
 
         try {
@@ -121,9 +122,8 @@ public class SyncService {
             // Convertit en FirebaseSerializable pour Firebase
             List<FirebaseSerializable> syncableDTOs = (List<FirebaseSerializable>) (List<?>) dtos;
 
-            // Pousse vers Firebase
-            String collectionName = entityType.toLowerCase();
-            int pushed = firebaseSyncService.pushToFirebase(collectionName, syncableDTOs);
+            // Pousse vers Firebase (entityType est déjà en snake_case)
+            int pushed = firebaseSyncService.pushToFirebase(entityType, syncableDTOs);
 
             // Marque comme synchronisé via le nouveau système
             entitySyncHandler.markAsSynced(entityType, unsyncedEntities);
@@ -154,9 +154,8 @@ public class SyncService {
                 return result;
             }
 
-            // Récupère depuis Firebase
-            String collectionName = entityType.toLowerCase();
-            List<Map<String, Object>> firebaseData = firebaseSyncService.pullFromFirebase(collectionName);
+            // Récupère depuis Firebase (entityType est déjà en snake_case)
+            List<Map<String, Object>> firebaseData = firebaseSyncService.pullFromFirebase(entityType);
 
             if (firebaseData.isEmpty()) {
                 logger.info("No data found in Firebase for {}", entityType);

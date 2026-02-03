@@ -20,7 +20,7 @@ public class StatutAvancementDTO implements FirebaseSerializable {
     private Integer valeur;
 
     @JsonProperty("synchro")
-    private Boolean synchro;
+    private Boolean synchro = true;
 
     @JsonProperty("last_modified")
     private LocalDateTime lastModified;
@@ -38,7 +38,7 @@ public class StatutAvancementDTO implements FirebaseSerializable {
         this.nom = FirebaseSerializable.extractString(data, "nom");
         this.valeur = FirebaseSerializable.extractInteger(data, "valeur");
         this.synchro = FirebaseSerializable.extractBoolean(data, "synchro");
-        this.lastModified = FirebaseSerializable.extractLocalDateTime(data, "lastModified");
+        this.lastModified = FirebaseSerializable.extractLocalDateTime(data, "last_modified");
         return this;
     }
 
@@ -49,7 +49,7 @@ public class StatutAvancementDTO implements FirebaseSerializable {
         map.put("nom", nom);
         map.put("valeur", valeur);
         map.put("synchro", synchro);
-        map.put("lastModified", lastModified != null ? lastModified.toString() : null);
+        map.put("last_modified", lastModified != null ? lastModified.toString() : null);
         return map;
     }
 

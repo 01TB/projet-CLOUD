@@ -17,9 +17,9 @@ public class UtilisateurDTO implements FirebaseSerializable {
     String password;
 
     @JsonProperty("synchro")
-    Boolean synchro;
+    Boolean synchro = true;
 
-    @JsonProperty("role_id")
+    @JsonProperty("id_role")
     Integer roleId;
 
     @JsonProperty("last_modified")
@@ -84,8 +84,8 @@ public class UtilisateurDTO implements FirebaseSerializable {
         this.email = FirebaseSerializable.extractString(data, "email");
         this.password = FirebaseSerializable.extractString(data, "password");
         this.synchro = FirebaseSerializable.extractBoolean(data, "synchro");
-        this.roleId = FirebaseSerializable.extractInteger(data, "roleId");
-        this.lastModified = FirebaseSerializable.extractLocalDateTime(data, "lastModified");
+        this.roleId = FirebaseSerializable.extractInteger(data, "id_role");
+        this.lastModified = FirebaseSerializable.extractLocalDateTime(data, "last_modified");
         return this;
     }
 
@@ -96,8 +96,8 @@ public class UtilisateurDTO implements FirebaseSerializable {
         map.put("email", email);
         map.put("password", password);
         map.put("synchro", synchro);
-        map.put("roleId", roleId);
-        map.put("lastModified", lastModified != null ? lastModified.toString() : null);
+        map.put("id_role", roleId);
+        map.put("last_modified", lastModified != null ? lastModified.toString() : null);
         return map;
     }
 

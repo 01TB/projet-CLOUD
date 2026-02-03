@@ -1,4 +1,4 @@
-package web.backend.project.mappers.crud;
+package web.backend.project.mappers;
 
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.ParseException;
