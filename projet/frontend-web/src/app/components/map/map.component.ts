@@ -4,6 +4,7 @@ import * as L from 'leaflet';
 import { SignalementService } from '../../services/signalement.service';
 import { SyncService } from '../../services/sync.service';
 import { AuthService } from '../../services/auth.service';
+import { FilterService } from '../../services/filter.service';
 import { Signalement, StatistiquesRecap, StatutAvancement } from '../../models/signalement.model';
 import { Subscription } from 'rxjs';
 
@@ -21,6 +22,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
   private subscriptions = new Subscription();
   
   signalements: Signalement[] = [];
+  filteredSignalements: Signalement[] = [];
   statistiques: StatistiquesRecap | null = null;
   statuts: StatutAvancement[] = [];
   selectedSignalement: Signalement | null = null;
@@ -34,12 +36,14 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
   constructor(
     private signalementService: SignalementService,
     private syncService: SyncService,
-    private authService: AuthService
+    private authService: AuthService,
+    private filterService: FilterService
   ) {}
 
   ngOnInit(): void {
     this.isManager = this.authService.isManager();
     this.loadData();
+    this.setupFilters();
   }
 
   ngAfterViewInit(): void {
@@ -67,6 +71,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
     const sigSub = this.signalementService.getAllSignalements().subscribe({
       next: (signalements) => {
         this.signalements = signalements;
+        this.filteredSignalements = signalements;
         // Mettre à jour les marqueurs
         if (this.map) {
           this.addSignalementMarkers();
@@ -83,11 +88,22 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
     this.subscriptions.add(sigSub);
   }
 
+  private setupFilters(): void {
+    const filterSub = this.filterService.filters$.subscribe(filters => {
+      this.filteredSignalements = this.filterService.applyFilters(this.signalements, filters);
+      if (this.map) {
+        this.addSignalementMarkers();
+      }
+      this.computeStatistics();
+    });
+    this.subscriptions.add(filterSub);
+  }
+
   /**
    * Calcule les statistiques récapitulatives à partir des signalements chargés
    */
   private computeStatistics(): void {
-    if (!this.signalements || this.signalements.length === 0) {
+    if (!this.filteredSignalements || this.filteredSignalements.length === 0) {
       this.statistiques = {
         nb_signalements: 0,
         surface_totale: 0,
@@ -97,9 +113,9 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
-    const nb = this.signalements.length;
-    const surfaceTot = this.signalements.reduce((acc, s) => acc + (s.surface || 0), 0);
-    const budgetTot = this.signalements.reduce((acc, s) => acc + (s.budget || 0), 0);
+    const nb = this.filteredSignalements.length;
+    const surfaceTot = this.filteredSignalements.reduce((acc, s) => acc + (s.surface || 0), 0);
+    const budgetTot = this.filteredSignalements.reduce((acc, s) => acc + (s.budget || 0), 0);
 
     // Déterminer la valeur maximale de statut connue (pour normaliser en pourcentage)
     const maxStatVal = this.statuts && this.statuts.length > 0
@@ -107,7 +123,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
       : 1;
 
     // Calculer pourcentage moyen d'avancement en normalisant chaque statut
-    const totalPct = this.signalements.reduce((acc, s) => {
+    const totalPct = this.filteredSignalements.reduce((acc, s) => {
       const val = s.statut_actuel?.valeur ?? 0;
       const pct = maxStatVal > 0 ? (val / maxStatVal) * 100 : 0;
       return acc + pct;
@@ -150,7 +166,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
   private addSignalementMarkers(): void {
     this.clearMarkers();
 
-    this.signalements.forEach(signalement => {
+    this.filteredSignalements.forEach(signalement => {
       const marker = L.marker(
         [signalement.localisation.lat, signalement.localisation.lng],
         { icon: this.getStatusIcon(signalement.statut_actuel.valeur) }
