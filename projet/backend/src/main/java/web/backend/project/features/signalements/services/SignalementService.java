@@ -58,7 +58,7 @@ public class SignalementService {
                         signalementDTO.getIdEntreprise()));
 
         // Convertir DTO vers entité
-        Signalement signalement = signalementMapper.toEntity(signalementDTO, utilisateur, entreprise);
+        Signalement signalement = crudSignalementMapper.toEntity(signalementDTO, utilisateur, entreprise);
 
         // Sauvegarder
         Signalement savedSignalement = signalementRepository.save(signalement);
@@ -125,7 +125,7 @@ public class SignalementService {
         }
 
         // Mettre à jour l'entité
-        signalementMapper.updateEntity(signalement, signalementDTO, utilisateur, entreprise);
+        crudSignalementMapper.updateEntity(signalement, signalementDTO, utilisateur, entreprise);
 
         // Sauvegarder
         Signalement updatedSignalement = signalementRepository.save(signalement);
