@@ -6,6 +6,9 @@ import org.springframework.stereotype.Component;
 import web.backend.project.entities.SyncableEntity;
 import web.backend.project.entities.dto.FirebaseSerializable;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +25,9 @@ public class EntitySyncRegistry {
     private static final Logger logger = LoggerFactory.getLogger(EntitySyncRegistry.class);
 
     private final Map<String, EntityTypeHandler<?, ?>> handlers = new HashMap<>();
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     /**
      * Enregistre un handler pour un type d'entité
@@ -104,6 +110,7 @@ public class EntitySyncRegistry {
 
     /**
      * Met à jour ou crée une entité depuis les données Firebase
+     * Clears the persistence context on failure to prevent dirty session state
      */
     @SuppressWarnings("unchecked")
     public <E extends SyncableEntity<D>, D extends FirebaseSerializable> E updateOrCreateFromFirebase(
@@ -113,6 +120,13 @@ public class EntitySyncRegistry {
             throw new IllegalArgumentException("No handler registered for: " + entityType);
         }
 
-        return handler.updateOrCreate(firebaseData);
+        try {
+            return handler.updateOrCreate(firebaseData, entityManager);
+        } catch (Exception e) {
+            // Clear the persistence context to prevent dirty session state
+            // This ensures subsequent operations aren't affected by this failure
+            entityManager.clear();
+            throw e;
+        }
     }
 }
