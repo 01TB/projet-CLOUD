@@ -14,7 +14,7 @@ public class UtilisateurBloqueDTO implements FirebaseSerializable {
     LocalDateTime dateBlocage;
 
     @JsonProperty("synchro")
-    Boolean synchro = true;
+    Boolean synchro;
 
     @JsonProperty("id_utilisateur")
     Integer utilisateurId;
@@ -74,7 +74,8 @@ public class UtilisateurBloqueDTO implements FirebaseSerializable {
         Map<String, Object> map = new java.util.HashMap<>();
         map.put("id", id);
         map.put("date_blocage", dateBlocage != null ? dateBlocage.toString() : null);
-        map.put("synchro", synchro);
+        // Lors du push vers Firebase, synchro est toujours true (donnée synchronisée)
+        map.put("synchro", true);
         map.put("id_utilisateur", utilisateurId);
         return map;
     }

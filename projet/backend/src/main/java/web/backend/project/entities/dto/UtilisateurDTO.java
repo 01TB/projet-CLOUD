@@ -17,14 +17,14 @@ public class UtilisateurDTO implements FirebaseSerializable {
     String password;
 
     @JsonProperty("synchro")
-    Boolean synchro = true;
+    Boolean synchro;
 
     @JsonProperty("id_role")
     Integer roleId;
 
     @JsonProperty("last_modified")
-    LocalDateTime lastModified = LocalDateTime.now();
-
+    LocalDateTime lastModified;
+    
     @Override
     public Integer getId() {
         return id;
@@ -95,7 +95,8 @@ public class UtilisateurDTO implements FirebaseSerializable {
         map.put("id", id);
         map.put("email", email);
         map.put("password", password);
-        map.put("synchro", synchro);
+        // Lors du push vers Firebase, synchro est toujours true (donnée synchronisée)
+        map.put("synchro", true);
         map.put("id_role", roleId);
         map.put("last_modified", lastModified != null ? lastModified.toString() : null);
         return map;

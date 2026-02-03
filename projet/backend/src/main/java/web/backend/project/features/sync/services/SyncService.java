@@ -2,6 +2,9 @@ package web.backend.project.features.sync.services;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +27,8 @@ import java.util.Map;
 public class SyncService {
 
     private static final Logger logger = LoggerFactory.getLogger(SyncService.class);
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
+            .enable(SerializationFeature.INDENT_OUTPUT);
 
     private final FirebaseSyncService firebaseSyncService;
     private final EntitySyncHandler entitySyncHandler;
@@ -157,6 +162,18 @@ public class SyncService {
             // Récupère depuis Firebase (entityType est déjà en snake_case)
             List<Map<String, Object>> firebaseData = firebaseSyncService.pullFromFirebase(entityType);
 
+            // Log détaillé de la réponse Firebase (JSON prettifié) pour debug
+            if (logger.isDebugEnabled()) {
+                try {
+                    String pretty = OBJECT_MAPPER.writeValueAsString(firebaseData);
+                    logger.debug("Full Firebase response for {} ({} items):\n{}", entityType, firebaseData.size(),
+                            pretty);
+                } catch (JsonProcessingException e) {
+                    logger.debug("Firebase response for {}: size={} data={}", entityType, firebaseData.size(),
+                            firebaseData);
+                }
+            }
+
             if (firebaseData.isEmpty()) {
                 logger.info("No data found in Firebase for {}", entityType);
                 return result;
@@ -168,7 +185,8 @@ public class SyncService {
                     entitySyncHandler.updateOrCreateFromFirebase(entityType, data);
                     result.incrementPulled();
                 } catch (Exception e) {
-                    logger.error("Failed to pull entity of type {}: {}", entityType, e.getMessage());
+                    logger.error("Failed to pull entity of type {} for data {}: {}", entityType, data, e.getMessage());
+                    logger.debug("Stacktrace for failed entity update:", e);
                     result.incrementFailed();
                 }
             }

@@ -20,7 +20,7 @@ public class StatutAvancementDTO implements FirebaseSerializable {
     private Integer valeur;
 
     @JsonProperty("synchro")
-    private Boolean synchro = true;
+    private Boolean synchro;
 
     @JsonProperty("last_modified")
     private LocalDateTime lastModified;
@@ -48,7 +48,8 @@ public class StatutAvancementDTO implements FirebaseSerializable {
         map.put("id", id);
         map.put("nom", nom);
         map.put("valeur", valeur);
-        map.put("synchro", synchro);
+        // Lors du push vers Firebase, synchro est toujours true (donnée synchronisée)
+        map.put("synchro", true);
         map.put("last_modified", lastModified != null ? lastModified.toString() : null);
         return map;
     }
