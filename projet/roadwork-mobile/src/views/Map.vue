@@ -13,6 +13,9 @@
           <ion-button @click="centerOnLocation" v-if="hasGeolocation">
             <ion-icon :icon="locate" slot="icon-only"></ion-icon>
           </ion-button>
+          <ion-button @click="toggleMySignalements" v-if="authStatus" :color="filters.mesSignalements ? 'primary' : 'medium'">
+            <ion-icon :icon="person" slot="icon-only"></ion-icon>
+          </ion-button>
           <ion-button @click="toggleFilter" v-if="authStatus">
             <ion-icon :icon="filter" slot="icon-only"></ion-icon>
           </ion-button>
@@ -239,12 +242,13 @@ import {
 } from '@ionic/vue';
 import {
   refresh, locate, filter, add, alertCircle,
-  square, cash, trendingUp, create, trash, chatbubble, eye
+  square, cash, trendingUp, create, trash, chatbubble, eye, person
 } from 'ionicons/icons';
 import { LMap, LTileLayer, LMarker, LIcon, LPopup } from '@vue-leaflet/vue-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Geolocation } from '@capacitor/geolocation';
 import { useAuthStore } from '@/store/modules/auth';
+
 import { useSignalementsStore } from '@/store/modules/signalements';
 import { useAuthCheck } from '@/composables/useAuthCheck';
 import SignalementModal from '@/components/SignalementModal.vue';
@@ -289,11 +293,7 @@ const statuts = computed(() => signalementsStore.statuts || []);
 const stats = computed(() => signalementsStore.stats || {});
 
 const authStatus = computed(() => {
-  console.log('Auth status check:', {
-    isLoggedIn: authStore.isLoggedIn,
-    token: authStore.token,
-    user: authStore.user
-  });
+  
   return authStore.isLoggedIn && authStore.token;
 });
 
@@ -323,6 +323,16 @@ const filteredSignalements = computed(() => {
       sig.id_utilisateur_createur === authStore.user.id
     );
   }
+  
+  // Filtrer les signalements avec des coordonnées valides
+  signalements = signalements.filter(sig => {
+    return sig.localisation && 
+           sig.localisation.coordinates && 
+           Array.isArray(sig.localisation.coordinates) && 
+           sig.localisation.coordinates.length >= 2 &&
+           sig.localisation.coordinates[0] != null && 
+           sig.localisation.coordinates[1] != null;
+  });
   
   return signalements;
 });
@@ -361,10 +371,10 @@ const onMapClick = async (event) => {
   // Confirmer la création d'un signalement à cet endroit
   const alert = await alertController.create({
     header: 'Créer un signalement',
-    message: `Voulez-vous créer un signalement à cette position ?<br><br>
-      <strong>Coordonnées:</strong><br>
-      Latitude: ${lat.toFixed(6)}<br>
-      Longitude: ${lng.toFixed(6)}`,
+    message: `Voulez-vous créer un signalement à cette position ?
+    Latitude: ${lat.toFixed(6)}
+    Longitude: ${lng.toFixed(6)}
+    Un formulaire s'ouvrira pour compléter les détails`,
     buttons: [
       {
         text: 'Annuler',
@@ -437,13 +447,19 @@ const zoomUpdated = (newZoom) => {
 };
 
 const getLatLng = (signalement) => {
-  if (signalement.localisation && signalement.localisation.coordinates) {
+  if (signalement.localisation && 
+      signalement.localisation.coordinates && 
+      Array.isArray(signalement.localisation.coordinates) && 
+      signalement.localisation.coordinates.length >= 2 &&
+      signalement.localisation.coordinates[0] != null && 
+      signalement.localisation.coordinates[1] != null) {
     return [
       signalement.localisation.coordinates[1],
       signalement.localisation.coordinates[0]
     ];
   }
-  return [0, 0];
+  // Retourner null si les coordonnées sont invalides pour ne pas afficher le marqueur
+  return null;
 };
 
 const getMarkerIcon = (signalement) => {
@@ -495,17 +511,35 @@ const viewDetails = (id) => {
   router.push({ name: 'SignalementDetail', params: { id } });
 };
 
+const canEditSignalement = (signalement) => {
+  // Vérifier si l'utilisateur est connecté et est le propriétaire du signalement
+  return authStore.user && signalement.id_utilisateur_createur === authStore.user.id;
+};
+
+const editSignalement = (signalement) => {
+  // TODO: Implémenter l'édition de signalement
+  console.log('Edit signalement:', signalement);
+};
+
+const confirmDeleteSignalement = (signalement) => {
+  // TODO: Implémenter la suppression de signalement
+  console.log('Delete signalement:', signalement);
+};
+
+const addProgress = (signalement) => {
+  // TODO: Implémenter l'ajout de progression
+  console.log('Add progress to signalement:', signalement);
+};
+
 const showSignalementDetail = async (signalement) => {
   const alert = await alertController.create({
     header: `Signalement #${signalement.id}`,
-    message: `
-      <p><strong>Statut:</strong> ${getCurrentStatus(signalement)}</p>
-      <p><strong>Description:</strong> ${signalement.description || 'Non spécifiée'}</p>
-      <p><strong>Surface:</strong> ${signalement.surface || 'Non spécifiée'} m²</p>
-      <p><strong>Budget:</strong> ${formatBudget(signalement.budget)}</p>
-      <p><strong>Adresse:</strong> ${signalement.adresse || 'Non spécifiée'}</p>
-      <p><strong>Créé le:</strong> ${formatDate(signalement.date_creation)}</p>
-    `,
+    message: `Statut: ${getCurrentStatus(signalement)}
+Description: ${signalement.description || 'Non spécifiée'}
+Surface: ${signalement.surface || 'Non spécifiée'} m²
+Budget: ${formatBudget(signalement.budget)}
+Adresse: ${signalement.adresse || 'Non spécifiée'}
+Créé le: ${formatDate(signalement.date_creation)}`,
     buttons: [
       {
         text: 'Fermer',
@@ -551,17 +585,24 @@ const refreshData = async () => {
   await loadInitialData();
 };
 
+const toggleMySignalements = () => {
+  filters.value.mesSignalements = !filters.value.mesSignalements;
+};
+
 // Lifecycle
 onMounted(async () => {
-  // Vérifier l'authentification au montage
-  await authStore.checkAuth();
-  
-  // Actualiser les données toutes les 5 minutes
+  // Enregistrer le cleanup avant les await
   const interval = setInterval(loadInitialData, 5 * 60 * 1000);
   
   onUnmounted(() => {
     clearInterval(interval);
   });
+  
+  // Initialiser l'authentification depuis localStorage
+  authStore.initializeAuth();
+  
+  // Vérifier l'authentification au montage
+  await authStore.checkAuth();
 });
 
 </script>

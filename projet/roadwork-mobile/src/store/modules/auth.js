@@ -2,13 +2,23 @@ import { defineStore } from 'pinia';
 import AuthService from '@/services/auth';
 
 export const useAuthStore = defineStore('auth', {
-  state: () => ({
-    user: null,
-    token: localStorage.getItem('token') || null,
-    isAuthenticated: false,
-    loading: false,
-    error: null
-  }),
+  state: () => {
+    const idToken = localStorage.getItem('idToken');
+    const token = localStorage.getItem('token');
+    
+    // Ne stocker que les tokens valides (non "undefined" et non null)
+    const validIdToken = (idToken && idToken !== 'undefined') ? idToken : null;
+    const validToken = (token && token !== 'undefined') ? token : null;
+    
+    return {
+      user: null,
+      token: validIdToken || validToken || null,
+      idToken: validIdToken || null,
+      isAuthenticated: false,
+      loading: false,
+      error: null
+    };
+  },
 
   actions: {
     async login(credentials) {
@@ -21,10 +31,12 @@ export const useAuthStore = defineStore('auth', {
         // Ne s'authentifier que si la connexion a réussi
         if (result.success) {
           this.user = result.user;
-          this.token = result.token; // Utiliser le token retourné par le service
+          this.token = result.token || result.idToken; // Utiliser le token retourné par le service
+          this.idToken = result.idToken || result.token;
           this.isAuthenticated = true;
           
           localStorage.setItem('token', this.token);
+          localStorage.setItem('idToken', this.idToken);
           localStorage.setItem('user', JSON.stringify(result.user));
           
           return { success: true, user: result.user };
@@ -51,10 +63,12 @@ export const useAuthStore = defineStore('auth', {
         // Ne s'authentifier que si l'inscription a réussi
         if (result.success) {
           this.user = result.user;
-          this.token = result.token; // Utiliser le token retourné par le service
+          this.token = result.token || result.idToken;
+          this.idToken = result.idToken || result.token;
           this.isAuthenticated = true;
           
           localStorage.setItem('token', this.token);
+          localStorage.setItem('idToken', this.idToken);
           localStorage.setItem('user', JSON.stringify(result.user));
           
           return { success: true, user: result.user };
@@ -81,11 +95,13 @@ export const useAuthStore = defineStore('auth', {
       // Nettoyer le store
       this.user = null;
       this.token = null;
+      this.idToken = null;
       this.isAuthenticated = false;
       this.error = null;
       
       // Nettoyer le localStorage
       localStorage.removeItem('token');
+      localStorage.removeItem('idToken');
       localStorage.removeItem('user');
     },
 
@@ -116,6 +132,41 @@ export const useAuthStore = defineStore('auth', {
     setUser(user) {
       this.user = user;
       this.isAuthenticated = true;
+    },
+
+    // Initialiser l'authentification depuis localStorage
+    initializeAuth() {
+      const idToken = localStorage.getItem('idToken');
+      const token = localStorage.getItem('token');
+      const userStr = localStorage.getItem('user');
+      
+      // Nettoyer les tokens invalides
+      if (idToken === 'undefined') localStorage.removeItem('idToken');
+      if (token === 'undefined') localStorage.removeItem('token');
+      
+      const validToken = (idToken && idToken !== 'undefined') ? idToken : 
+                        (token && token !== 'undefined') ? token : null;
+      
+      if (validToken && userStr) {
+        try {
+          this.user = JSON.parse(userStr);
+          this.token = validToken;
+          this.idToken = (idToken && idToken !== 'undefined') ? idToken : null;
+          this.isAuthenticated = true;
+          console.log('Auth initialized from localStorage:', {
+            user: this.user,
+            hasToken: !!this.token,
+            hasIdToken: !!this.idToken,
+            tokenValue: this.token
+          });
+        } catch (error) {
+          console.error('Error parsing user from localStorage:', error);
+          this.logout();
+        }
+      } else {
+        // Nettoyer les données invalides
+        this.logout();
+      }
     }
   },
 

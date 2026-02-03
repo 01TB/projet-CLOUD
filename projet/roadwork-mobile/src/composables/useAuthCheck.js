@@ -10,13 +10,13 @@ export function useAuthCheck() {
   const user = computed(() => authStore.user);
 
   const checkAuthAndRedirect = () => {
-    // Si personne n'est connecté et qu'on n'est pas déjà sur la page login/register
-    if (!isAuthenticated.value && !authStore.token) {
+    // Si personne n'est connecté, rediriger vers login
+    if (!isAuthenticated.value) {
       const currentRoute = router.currentRoute.value;
       const publicRoutes = ['/login', '/register', '/'];
       
       if (!publicRoutes.includes(currentRoute.path)) {
-        console.log('Aucun utilisateur connecté, redirection vers login');
+        console.log('Utilisateur non connecté, redirection vers login');
         router.push('/login');
         return false;
       }

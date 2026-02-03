@@ -14,14 +14,23 @@ const api = axios.create({
 // Request interceptor pour ajouter le token
 api.interceptors.request.use(
   (config) => {
-    // Essayer d'abord le localStorage, puis le store
-    let token = localStorage.getItem('token');
+    // Nettoyer les tokens invalides au démarrage
+    if (typeof window !== 'undefined') {
+      const idToken = localStorage.getItem('idToken');
+      const token = localStorage.getItem('token');
+      
+      if (idToken === 'undefined') localStorage.removeItem('idToken');
+      if (token === 'undefined') localStorage.removeItem('token');
+    }
+    
+    // Essayer d'abord le localStorage avec idToken, puis token, puis le store
+    let token = localStorage.getItem('idToken') || localStorage.getItem('token');
     
     // Si pas dans localStorage, essayer depuis le store
     if (!token && typeof window !== 'undefined') {
       try {
         const authStore = useAuthStore();
-        token = authStore.token;
+        token = authStore.token || authStore.idToken;
       } catch (error) {
         console.warn('Impossible d\'accéder au store auth:', error);
       }
@@ -44,6 +53,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       // Token expiré ou invalide
       localStorage.removeItem('token');
+      localStorage.removeItem('idToken');
       localStorage.removeItem('user');
       window.location.href = '/login';
     }

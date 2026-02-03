@@ -25,16 +25,10 @@ const routes = [
     meta: { requiresAuth: false } // Accessible aux visiteurs
   },
   {
-    path: '/signalement/create',
-    name: 'SignalementCreate',
-    component: () => import('@/views/SignalementCreate.vue'),
-    meta: { requiresAuth: true } // Tous les utilisateurs connectés
-  },
-  {
     path: '/signalements',
     name: 'SignalementList',
     component: () => import('@/views/SignalementList.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: false } // Accessible aux visiteurs
   },
   {
     path: '/signalement/:id',

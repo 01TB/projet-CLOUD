@@ -2,9 +2,9 @@
   <ion-modal 
     :is-open="isOpen" 
     @did-dismiss="onDismiss"
-    :initial-breakpoint="0.9"
-    :breakpoints="[0.5, 0.8, 0.9]"
-    style="height: 90vh;"
+    :initial-breakpoint="0.95"
+    :breakpoints="[0.5, 0.8, 0.95]"
+    style="height: 95vh;"
   >
     <ion-header>
       <ion-toolbar>
@@ -34,7 +34,7 @@
             <ion-label position="floating">Description *</ion-label>
             <ion-textarea
               v-model="form.description"
-              placeholder="Décrivez le problème routier..."
+              placeholder="Décrivez en détail le problème (nid de poule, fissure, chaussée dégradée, etc.)..."
               rows="3"
               required
               :counter="true"
@@ -64,9 +64,9 @@
             <ion-input
               v-model="form.budget"
               type="number"
+              placeholder="Budget estimé en Ariary (ex: 2500000)"
               min="1000"
               step="1000"
-              placeholder="Ex: 5000000"
               required
               @input="validateBudget"
             ></ion-input>
@@ -76,13 +76,21 @@
 
           <!-- ID Entreprise -->
           <ion-item>
-            <ion-label position="floating">ID Entreprise</ion-label>
-            <ion-input
-              v-model="form.id_entreprise"
-              type="number"
-              placeholder="Ex: 1"
-              min="1"
-            ></ion-input>
+            <ion-label position="floating">Entreprise (optionnel)</ion-label>
+            <ion-select 
+              v-model="form.id_entreprise" 
+              placeholder="Choisir une entreprise si applicable"
+              interface="alert"
+              :cancelable="false"
+            >
+              <ion-select-option 
+                v-for="entreprise in entreprises" 
+                :key="entreprise.id" 
+                :value="entreprise.id"
+              >
+                {{ entreprise.nom }}
+              </ion-select-option>
+            </ion-select>
           </ion-item>
 
           <!-- Adresse -->
@@ -90,7 +98,7 @@
             <ion-label position="floating">Adresse</ion-label>
             <ion-input
               v-model="form.adresse"
-              placeholder="Ex: Route Ambohijatovo, Antananarivo"
+              placeholder="Adresse précise ou point de repère (ex: près du marché Analakely)"
             ></ion-input>
           </ion-item>
 
@@ -102,10 +110,8 @@
           </ion-item>
         </ion-list>
       </form>
-    </ion-content>
-
-    <ion-footer>
-      <ion-toolbar>
+      
+      <div class="submit-section">
         <ion-button 
           expand="block" 
           @click="handleSubmit"
@@ -115,8 +121,21 @@
           <ion-spinner v-if="submitting" slot="start"></ion-spinner>
           Envoyer le signalement
         </ion-button>
-      </ion-toolbar>
-    </ion-footer>
+      </div>
+
+      <!-- Bouton de retour-->
+      <div class="cancel-section">
+        <ion-button 
+          expand="block" 
+          fill="outline"
+          color="medium"
+          @click="onDismiss"
+          class="ion-margin-horizontal ion-margin-top ion-margin-bottom"
+        >
+          Annuler
+        </ion-button>
+      </div>
+    </ion-content>
   </ion-modal>
 </template>
 
@@ -126,12 +145,14 @@ import {
   IonModal, IonHeader, IonToolbar, IonTitle, IonContent,
   IonButton, IonInput, IonItem, IonLabel, IonList,
   IonIcon, IonText, IonSpinner, IonTextarea, IonChip,
-  IonFooter, IonListHeader, toastController, IonButtons, IonBackButton, IonNote
+  IonFooter, IonListHeader, toastController, IonButtons, IonBackButton, IonNote,
+  IonSelect, IonSelectOption
 } from '@ionic/vue';
 import { pin } from 'ionicons/icons';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useSignalementsStore } from '@/store/modules/signalements';
+import { useEntreprisesStore } from '@/store/modules/entreprises';
 
 const props = defineProps({
   isOpen: {
@@ -151,6 +172,7 @@ let miniMap = null;
 let miniMarker = null;
 
 const signalementsStore = useSignalementsStore();
+const entreprisesStore = useEntreprisesStore();
 
 const form = ref({
   description: '',
@@ -186,6 +208,8 @@ const validationErrors = computed(() => {
 const formValid = computed(() => {
   return validationErrors.value.length === 0;
 });
+
+const entreprises = computed(() => entreprisesStore.entreprises || []);
 
 // Initialiser la mini carte
 const initMiniMap = () => {
@@ -306,8 +330,20 @@ const onDismiss = () => {
   emit('dismiss');
 };
 
+// Charger les entreprises
+const loadEntreprises = async () => {
+  try {
+    await entreprisesStore.fetchEntreprises();
+  } catch (error) {
+    console.error('Error loading entreprises:', error);
+  }
+};
+
 // Lifecycle hooks - must be registered before any async operations
 onMounted(() => {
+  // Charger les entreprises
+  loadEntreprises();
+  
   // Initialiser la mini carte si le modal est déjà ouvert
   if (props.isOpen) {
     setTimeout(() => {
@@ -316,20 +352,24 @@ onMounted(() => {
   }
 });
 
-onUnmounted(() => {
+// Nettoyer la carte quand le composant est détruit
+const cleanupMap = () => {
   if (miniMap) {
     miniMap.remove();
     miniMap = null;
   }
-});
+};
 
-// Watch pour les changements de isOpen
+// Appeler le nettoyage manuellement quand nécessaire
 watch(() => props.isOpen, (newValue) => {
   if (newValue) {
     // Initialiser la mini carte quand le modal s'ouvre
     setTimeout(() => {
       initMiniMap();
     }, 100);
+  } else {
+    // Nettoyer la carte quand le modal se ferme
+    cleanupMap();
   }
 }, { deep: true });
 

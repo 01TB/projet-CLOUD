@@ -27,7 +27,7 @@
           
           <ion-item button @click="navigateTo('/signalements')" class="menu-item">
             <ion-icon :icon="list" slot="start" class="menu-icon"></ion-icon>
-            <ion-note slot="end" color="medium">Liste complète</ion-note>
+            <ion-note slot="end" color="medium">Signalements</ion-note>
           </ion-item>
           
           <ion-item button @click="navigateTo('/stats')" class="menu-item">

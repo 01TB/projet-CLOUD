@@ -70,16 +70,33 @@
             <ion-card-title>Répartition par statut</ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            <div class="chart-container">
-              <canvas ref="statusChart" width="400" height="200"></canvas>
+            <div v-if="statusStats.length === 0" class="empty-chart">
+              <ion-icon :icon="documentText" size="large"></ion-icon>
+              <p>Aucune donnée à traiter</p>
             </div>
-            <ion-list>
-              <ion-item v-for="status in statusStats" :key="status.name">
-                <ion-badge :color="getStatusColor(status.name)" slot="start"></ion-badge>
-                <ion-label>{{ status.name }}</ion-label>
-                <ion-note slot="end">{{ status.count }} ({{ status.percentage }}%)</ion-note>
-              </ion-item>
-            </ion-list>
+            <div v-else>
+              <!-- Affichage simple des données -->
+              <div class="simple-chart">
+                <div class="chart-bars">
+                  <div 
+                    v-for="status in statusStats" 
+                    :key="status.name"
+                    class="chart-bar"
+                    :style="{ width: status.percentage + '%' }"
+                  >
+                    <span class="bar-label">{{ status.name }}</span>
+                    <span class="bar-value">{{ status.count }} ({{ status.percentage }}%)</span>
+                  </div>
+                </div>
+              </div>
+              <ion-list>
+                <ion-item v-for="status in statusStats" :key="status.name">
+                  <ion-badge :color="getStatusColor(status.name)" slot="start"></ion-badge>
+                  <ion-label>{{ status.name }}</ion-label>
+                  <ion-note slot="end">{{ status.count }} ({{ status.percentage }}%)</ion-note>
+                </ion-item>
+              </ion-list>
+            </div>
           </ion-card-content>
         </ion-card>
 
@@ -89,16 +106,33 @@
             <ion-card-title>Types de problèmes</ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            <div class="chart-container">
-              <canvas ref="typeChart" width="400" height="200"></canvas>
+            <div v-if="typeStats.length === 0" class="empty-chart">
+              <ion-icon :icon="documentText" size="large"></ion-icon>
+              <p>Aucune donnée à traiter</p>
             </div>
-            <ion-list>
-              <ion-item v-for="type in typeStats" :key="type.name">
-                <ion-icon :icon="getTypeIcon(type.name)" slot="start" :color="getTypeColor(type.name)"></ion-icon>
-                <ion-label>{{ type.name }}</ion-label>
-                <ion-note slot="end">{{ type.count }}</ion-note>
-              </ion-item>
-            </ion-list>
+            <div v-else>
+              <!-- Affichage simple des données -->
+              <div class="simple-chart">
+                <div class="chart-bars">
+                  <div 
+                    v-for="type in typeStats.slice(0, 5)" 
+                    :key="type.name"
+                    class="chart-bar"
+                    :style="{ width: (type.count / Math.max(...typeStats.map(t => t.count)) * 100) + '%' }"
+                  >
+                    <span class="bar-label">{{ type.name }}</span>
+                    <span class="bar-value">{{ type.count }}</span>
+                  </div>
+                </div>
+              </div>
+              <ion-list>
+                <ion-item v-for="type in typeStats" :key="type.name">
+                  <ion-icon :icon="getTypeIcon(type.name)" slot="start" :color="getTypeColor(type.name)"></ion-icon>
+                  <ion-label>{{ type.name }}</ion-label>
+                  <ion-note slot="end">{{ type.count }}</ion-note>
+                </ion-item>
+              </ion-list>
+            </div>
           </ion-card-content>
         </ion-card>
 
@@ -108,8 +142,24 @@
             <ion-card-title>Évolution temporelle</ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            <div class="chart-container">
-              <canvas ref="timelineChart" width="400" height="200"></canvas>
+            <div v-if="getTimelineData().length === 0" class="empty-chart">
+              <ion-icon :icon="documentText" size="large"></ion-icon>
+              <p>Aucune donnée à traiter</p>
+            </div>
+            <div v-else>
+              <!-- Affichage simple de l'évolution -->
+              <div class="simple-timeline">
+                <div class="timeline-item" v-for="(period, index) in getTimelineData()" :key="index">
+                  <div class="timeline-date">{{ period.date }}</div>
+                  <div class="timeline-bar">
+                    <div class="timeline-fill" :style="{ width: period.percentage + '%' }"></div>
+                    <span class="timeline-count">{{ period.count }}</span>
+                  </div>
+                </div>
+              </div>
+              <p class="timeline-note">
+                Évolution du nombre de signalements par {{ getPeriodLabel() }}
+              </p>
             </div>
           </ion-card-content>
         </ion-card>
@@ -234,11 +284,14 @@ const statusStats = computed(() => {
   });
   
   const total = filtered.length;
-  return Object.entries(statusCounts).map(([name, count]) => ({
+  const result = Object.entries(statusCounts).map(([name, count]) => ({
     name,
     count,
     percentage: total > 0 ? Math.round((count / total) * 100) : 0
   }));
+  
+  console.log('Status stats:', result);
+  return result;
 });
 
 const typeStats = computed(() => {
@@ -251,9 +304,12 @@ const typeStats = computed(() => {
     typeCounts[type] = (typeCounts[type] || 0) + 1;
   });
   
-  return Object.entries(typeCounts)
+  const result = Object.entries(typeCounts)
     .map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count);
+  
+  console.log('Type stats:', result);
+  return result;
 });
 
 const topContributors = computed(() => {
@@ -410,9 +466,70 @@ const showToast = async (message) => {
   await toast.present();
 };
 
+const getTimelineData = () => {
+  const filtered = getFilteredSignalements();
+  const timelineData = [];
+  
+  if (selectedPeriod.value === 'all') {
+    // Group by month for "all" period
+    const monthGroups = {};
+    filtered.forEach(s => {
+      const date = new Date(s.date_creation);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      monthGroups[monthKey] = (monthGroups[monthKey] || 0) + 1;
+    });
+    
+    const sortedMonths = Object.keys(monthGroups).sort();
+    const maxCount = Math.max(...Object.values(monthGroups));
+    
+    return sortedMonths.map(month => ({
+      date: formatDateMonth(month),
+      count: monthGroups[month],
+      percentage: maxCount > 0 ? Math.round((monthGroups[month] / maxCount) * 100) : 0
+    }));
+  } else {
+    // For other periods, show daily data
+    const dayGroups = {};
+    filtered.forEach(s => {
+      const date = new Date(s.date_creation);
+      const dayKey = date.toISOString().split('T')[0];
+      dayGroups[dayKey] = (dayGroups[dayKey] || 0) + 1;
+    });
+    
+    const sortedDays = Object.keys(dayGroups).sort().slice(-7); // Last 7 days
+    const maxCount = Math.max(...Object.values(dayGroups));
+    
+    return sortedDays.map(day => ({
+      date: formatDateDay(day),
+      count: dayGroups[day],
+      percentage: maxCount > 0 ? Math.round((dayGroups[day] / maxCount) * 100) : 0
+    }));
+  }
+};
+
+const getPeriodLabel = () => {
+  switch (selectedPeriod.value) {
+    case 'week': return 'jour';
+    case 'month': return 'jour';
+    case 'year': return 'mois';
+    default: return 'mois';
+  }
+};
+
+const formatDateMonth = (monthStr) => {
+  const [year, month] = monthStr.split('-');
+  const date = new Date(year, month - 1);
+  return date.toLocaleDateString('fr-MG', { month: 'short', year: 'numeric' });
+};
+
+const formatDateDay = (dayStr) => {
+  const date = new Date(dayStr);
+  return date.toLocaleDateString('fr-MG', { day: 'numeric', month: 'short' });
+};
+
 const initCharts = () => {
-  // TODO: Initialiser les graphiques avec Chart.js ou une autre librairie
-  console.log('Charts would be initialized here');
+  // Les graphiques sont maintenant remplacés par des visualisations simples
+  console.log('Simple charts initialized');
 };
 
 const loadStats = async () => {
@@ -421,7 +538,12 @@ const loadStats = async () => {
     await signalementsStore.fetchSignalements();
     await signalementsStore.fetchStatuts();
     
+    console.log('Signalements loaded:', signalementsStore.signalements?.length);
+    console.log('General stats:', generalStats.value);
+    
     await nextTick();
+    
+    // Remplacer les graphiques vides par des affichages simples
     initCharts();
   } catch (error) {
     console.error('Error loading stats:', error);
@@ -480,6 +602,111 @@ onMounted(() => {
   background: var(--ion-color-light);
   border-radius: 8px;
   margin-bottom: 1rem;
+  color: var(--ion-color-medium);
+}
+
+/* Styles pour les graphiques simples */
+.simple-chart {
+  margin-bottom: 1rem;
+}
+
+.chart-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.chart-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--ion-color-primary);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  min-height: 2rem;
+}
+
+.bar-label {
+  font-weight: 500;
+}
+
+.bar-value {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+/* Timeline styles */
+.simple-timeline {
+  margin-bottom: 1rem;
+}
+
+.timeline-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.timeline-date {
+  font-size: 0.85rem;
+  color: var(--ion-color-medium);
+  font-weight: 500;
+}
+
+.timeline-bar {
+  display: flex;
+  align-items: center;
+  background: var(--ion-color-light);
+  border-radius: 4px;
+  height: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.timeline-fill {
+  height: 100%;
+  background: var(--ion-color-primary);
+  transition: width 0.3s ease;
+}
+
+.timeline-count {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: white;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.timeline-note {
+  text-align: center;
+  color: var(--ion-color-medium);
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  font-style: italic;
+}
+
+/* Styles pour l'état vide des graphiques */
+.empty-chart {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  text-align: center;
+  color: var(--ion-color-medium);
+}
+
+.empty-chart ion-icon {
+  color: var(--ion-color-medium);
+  margin-bottom: 1rem;
+}
+
+.empty-chart p {
+  margin: 0;
+  font-size: 1rem;
   color: var(--ion-color-medium);
 }
 

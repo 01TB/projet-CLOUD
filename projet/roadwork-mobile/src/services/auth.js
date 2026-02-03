@@ -2,7 +2,8 @@ import api from './api';
 
 class AuthService {
   constructor() {
-    this.token = localStorage.getItem('token');
+    // Essayer d'abord idToken, puis token pour la compatibilité
+    this.token = localStorage.getItem('idToken') || localStorage.getItem('token');
     
     // Parser l'utilisateur depuis localStorage avec gestion d'erreur
     const userStr = localStorage.getItem('user');
@@ -20,16 +21,20 @@ class AuthService {
       const response = await api.post('/login', credentials);
       
       if (response.data.success) {
-        this.token = response.data.token;
+        // Utiliser idToken en priorité, puis token pour compatibilité
+        this.token = response.data.idToken || response.data.token;
         this.user = response.data.user;
         
+        // Stocker les deux tokens pour compatibilité
         localStorage.setItem('token', this.token);
+        localStorage.setItem('idToken', this.token);
         localStorage.setItem('user', JSON.stringify(this.user));
         
         return { 
           success: true, 
           user: this.user,
-          token: this.token
+          token: this.token,
+          idToken: this.token
         };
       }
       
@@ -61,16 +66,19 @@ class AuthService {
       const response = await api.post('/register', userData);
       
       if (response.data.success) {
-        this.token = response.data.token;
+        // Utiliser idToken en priorité, puis token pour compatibilité
+        this.token = response.data.idToken || response.data.token;
         this.user = response.data.user;
         
         localStorage.setItem('token', this.token);
+        localStorage.setItem('idToken', this.token);
         localStorage.setItem('user', JSON.stringify(this.user));
         
         return { 
           success: true, 
           user: this.user,
-          token: this.token
+          token: this.token,
+          idToken: this.token
         };
       }
       
@@ -107,84 +115,52 @@ class AuthService {
       
       return { 
         success: false, 
-        error: error.response?.data?.error?.message || error.message || 'Erreur d\'inscription' 
+        error: error.message || 'Erreur d\'inscription' 
       };
     }
   }
 
   async logout() {
     try {
-      if (this.token) {
-        await api.post('/logout');
-      }
+      await api.post('/logout');
     } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      this.token = null;
-      this.user = null;
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      console.warn('Logout error:', error);
     }
+    
+    // Nettoyer le service
+    this.token = null;
+    this.user = null;
+    
+    // Nettoyer localStorage
+    localStorage.removeItem('token');
+    localStorage.removeItem('idToken');
+    localStorage.removeItem('user');
   }
 
   async checkAuth() {
     if (!this.token) {
       return false;
     }
-
+    
     try {
       const response = await api.get('/me');
-      
-      if (response.data.success) {
-        this.user = response.data.user;
-        localStorage.setItem('user', JSON.stringify(this.user));
-        return true;
-      }
+      return response.data.success;
     } catch (error) {
-      console.error('Auth check error:', error);
-      this.logout();
-    }
-    
-    return false;
-  }
-
-  async updateProfile(userData) {
-    try {
-      const response = await api.put('/update', userData);
-      
-      if (response.data.success) {
-        this.user = response.data.user;
-        localStorage.setItem('user', JSON.stringify(this.user));
-        return { success: true, user: this.user };
-      }
-      
-      return { success: false, error: response.data.error?.message || 'Erreur de mise à jour' };
-    } catch (error) {
-      console.error('Update profile error:', error);
-      return { 
-        success: false, 
-        error: error.response?.data?.error?.message || 'Erreur de mise à jour' 
-      };
+      console.warn('Auth check failed:', error);
+      return false;
     }
   }
 
-  isAuthenticated() {
-    return !!this.token;
+  // Getters
+  get isAuthenticated() {
+    return !!this.token && !!this.user;
   }
 
-  isUser() {
-    return this.user?.role === 2; // Utilisateur
-  }
-
-  isManager() {
-    return this.user?.role === 1; // Manager
-  }
-
-  getUser() {
+  get currentUser() {
     return this.user;
   }
 
-  getToken() {
+  get currentToken() {
     return this.token;
   }
 }
