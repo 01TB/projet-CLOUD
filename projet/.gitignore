@@ -1,0 +1,35 @@
+# Fichiers d'environnement sensibles
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# Base de données locale
+database/backup/*.sql
+database/backup/*.dump
+
+# IDE
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Build
+target/
+build/
+dist/
+*.jar
+*.war
+
+# Node modules (pour Angular)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Docker volumes (backup local)
+postgres-data/
+
+prompt/

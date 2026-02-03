@@ -1,0 +1,14 @@
+{
+  "options": {
+    "paths": {
+      "root": "/data"
+    },
+    "serveStaticMaps": true,
+    "cors": true
+  },
+  "data": {
+    "antananarivo": {
+      "mbtiles": "antananarivo.mbtiles"
+    }
+  }
+}

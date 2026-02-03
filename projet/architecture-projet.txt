@@ -1,0 +1,82 @@
+signalisation-routiere/
+│
+├── docker-compose.yml              # Orchestration principale
+├── .env                            # Variables d'environnement
+├── init-project.sh                 # Script d'initialisation
+├── README.md                       # Documentation
+│
+├── backend/                        # Module Spring Boot (Web + Auth)
+│   ├── Dockerfile
+│   ├── src/
+│   │   ├── main/
+│   │   │   ├── java/com/signalisation/
+│   │   │   │   ├── Application.java
+│   │   │   │   ├── config/
+│   │   │   │   ├── controller/
+│   │   │   │   ├── model/
+│   │   │   │   ├── repository/
+│   │   │   │   └── service/
+│   │   │   └── resources/
+│   │   │       ├── application.yml
+│   │   │       └── application-docker.yml
+│   │   └── test/
+│   ├── pom.xml
+│   └── docker-healthcheck.sh
+│
+├── frontend-web/                   # Application Angular
+│   ├── Dockerfile
+│   ├── nginx.conf
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── components/
+│   │   │   │   ├── map/
+│   │   │   │   ├── signalisation/
+│   │   │   │   └── auth/
+│   │   │   ├── services/
+│   │   │   └── models/
+│   │   ├── assets/
+│   │   │   └── config/
+│   │   │       └── map-config.json
+│   │   └── environments/
+│   ├── package.json
+│   └── angular.json
+│
+├── tileserver/                     # Serveur de carte offline
+│   ├── Dockerfile
+│   ├── config.json
+│   ├── entrypoint.sh
+│   ├── download-map.sh
+│   └── data/                       # Contiendra antananarivo.mbtiles
+│       └── README.md
+│
+├── mobile-api/                     # API Firebase/Node.js pour mobile
+│   ├── Dockerfile
+│   ├── src/
+│   │   ├── index.js
+│   │   ├── firebase-admin.js
+│   │   └── routes/
+│   │       ├── notifications.js
+│   │       └── signalisations.js
+│   ├── package.json
+│   ├── firebase-config.json        # Configuration Firebase
+│   └── firebase-service-account.json
+│
+├── postgres/                       # Base de données
+│   ├── init.sql
+│   └── migrations/
+│       └── 001_initial_schema.sql
+│
+├── nginx/                          # Reverse proxy
+│   ├── nginx.conf
+│   ├── ssl/
+│   │   ├── nginx.crt
+│   │   └── nginx.key
+│   └── conf.d/
+│       ├── frontend.conf
+│       ├── backend.conf
+│       └── tileserver.conf
+│
+└── scripts/                        # Scripts utilitaires
+    ├── setup-map.sh
+    ├── backup-database.sh
+    └── deploy-prod.sh

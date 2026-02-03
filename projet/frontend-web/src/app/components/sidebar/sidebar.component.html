@@ -1,0 +1,118 @@
+<!-- src/app/components/sidebar/sidebar.component.html -->
+<div class="sidebar-filters">
+  <div class="filters-header">
+    <h3>🔍 Filtres</h3>
+    <button class="btn-reset" (click)="resetFilters()">Réinitialiser</button>
+  </div>
+
+  <!-- Filtre par statut -->
+  <div class="filter-section">
+    <h4>Statut</h4>
+    <div class="filter-options">
+      <label *ngFor="let statut of statuts" class="checkbox-label">
+        <input 
+          type="checkbox" 
+          [checked]="isStatutChecked(statut.id)"
+          (change)="onStatutChange(statut.id, $event)"
+        />
+        <span class="checkbox-custom"></span>
+        <span class="checkbox-text">{{ statut.nom }}</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Filtre par entreprise -->
+  <div class="filter-section">
+    <h4>Entreprise</h4>
+    <div class="filter-options">
+      <label *ngFor="let entreprise of entreprises" class="checkbox-label">
+        <input 
+          type="checkbox" 
+          [checked]="isEntrepriseChecked(entreprise.id)"
+          (change)="onEntrepriseChange(entreprise.id, $event)"
+        />
+        <span class="checkbox-custom"></span>
+        <span class="checkbox-text">{{ entreprise.nom }}</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Filtre par date -->
+  <div class="filter-section">
+    <h4>Période</h4>
+    <div class="date-range">
+      <div class="form-group">
+        <label>Date début</label>
+        <input 
+          type="date" 
+          class="form-control" 
+          [(ngModel)]="filters.dateDebut"
+          (change)="onFilterChange()"
+        />
+      </div>
+      <div class="form-group">
+        <label>Date fin</label>
+        <input 
+          type="date" 
+          class="form-control" 
+          [(ngModel)]="filters.dateFin"
+          (change)="onFilterChange()"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtre par surface -->
+  <div class="filter-section">
+    <h4>Surface (m²)</h4>
+    <div class="range-inputs">
+      <div class="form-group">
+        <label>Min</label>
+        <input 
+          type="number" 
+          class="form-control" 
+          placeholder="0"
+          [(ngModel)]="filters.surfaceMin"
+          (change)="onFilterChange()"
+        />
+      </div>
+      <div class="form-group">
+        <label>Max</label>
+        <input 
+          type="number" 
+          class="form-control" 
+          placeholder="∞"
+          [(ngModel)]="filters.surfaceMax"
+          (change)="onFilterChange()"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtre par budget -->
+  <div class="filter-section">
+    <h4>Budget (MGA)</h4>
+    <div class="range-inputs">
+      <div class="form-group">
+        <label>Min</label>
+        <input 
+          type="number" 
+          class="form-control" 
+          placeholder="0"
+          [(ngModel)]="filters.budgetMin"
+          (change)="onFilterChange()"
+        />
+      </div>
+      <div class="form-group">
+        <label>Max</label>
+        <input 
+          type="number" 
+          class="form-control" 
+          placeholder="∞"
+          [(ngModel)]="filters.budgetMax"
+          (change)="onFilterChange()"
+        />
+      </div>
+    </div>
+  </div>
+</div>

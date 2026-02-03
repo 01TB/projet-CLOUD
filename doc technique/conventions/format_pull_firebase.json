@@ -1,0 +1,269 @@
+{
+  "roles": [
+    {
+      "id": "role_id_1",
+      "nom": "Administrateur",
+      "synchro": true
+    },
+    {
+      "id": "role_id_2",
+      "nom": "Utilisateur",
+      "synchro": true
+    },
+    {
+      "id": "role_id_3",
+      "nom": "Entreprise",
+      "synchro": true
+    }
+  ],
+  "entreprises": [
+    {
+      "id": "entreprise_id_1",
+      "nom": "BTP Rénovation",
+      "synchro": true
+    },
+    {
+      "id": "entreprise_id_2",
+      "nom": "Eco-Construction",
+      "synchro": true
+    },
+    {
+      "id": "entreprise_id_3",
+      "nom": "Travaux Express",
+      "synchro": true
+    }
+  ],
+  "statuts_avancement": [
+    {
+      "id": "statut_id_1",
+      "nom": "Nouveau",
+      "valeur": 0,
+      "synchro": true
+    },
+    {
+      "id": "statut_id_2",
+      "nom": "En cours d'analyse",
+      "valeur": 25,
+      "synchro": true
+    },
+    {
+      "id": "statut_id_3",
+      "nom": "Travaux commencés",
+      "valeur": 50,
+      "synchro": true
+    },
+    {
+      "id": "statut_id_4",
+      "nom": "Travaux terminés",
+      "valeur": 100,
+      "synchro": true
+    },
+    {
+      "id": "statut_id_5",
+      "nom": "Rejeté",
+      "valeur": -1,
+      "synchro": true
+    }
+  ],
+  "parametres": [
+    {
+      "id": "param_id_1",
+      "nb_tentatives_connexion": 5,
+      "duree_session": 3600,
+      "synchro": true
+    }
+  ],
+  "utilisateurs": [
+    {
+      "id": "firebase_auth_uid_admin",
+      "email": "admin@signalement.com",
+      "password": "hashed_password_admin",
+      "id_role": "role_id_1",
+      "synchro": true,
+      "_note": "Le document ID correspond à l'UID Firebase Auth"
+    },
+    {
+      "id": "firebase_auth_uid_user1",
+      "email": "jean.dupont@email.com",
+      "password": "hashed_password_user1",
+      "id_role": "role_id_2",
+      "synchro": true
+    },
+    {
+      "id": "firebase_auth_uid_user2",
+      "email": "marie.curie@email.com",
+      "password": "hashed_password_user2",
+      "id_role": "role_id_2",
+      "synchro": true
+    },
+    {
+      "id": "firebase_auth_uid_entreprise",
+      "email": "contact@btp-renovation.com",
+      "password": "hashed_password_entreprise",
+      "id_role": "role_id_3",
+      "synchro": true
+    },
+    {
+      "id": "firebase_auth_uid_spammeur",
+      "email": "spammeur@bad.com",
+      "password": "hashed_password_user3",
+      "id_role": "role_id_2",
+      "synchro": true,
+      "_note": "Utilisateur bloqué"
+    }
+  ],
+  "utilisateurs_bloques": [
+    {
+      "id": "blocage_id_1",
+      "id_utilisateur": "firebase_auth_uid_spammeur",
+      "date_blocage": {
+        "_seconds": 1698242400,
+        "_nanoseconds": 0,
+        "_iso": "2023-10-25T14:00:00.000Z"
+      },
+      "synchro": true
+    }
+  ],
+  "signalements": [
+    {
+      "id": "signalement_id_1",
+      "date_creation": {
+        "_seconds": 1698831000,
+        "_nanoseconds": 0,
+        "_iso": "2023-11-01T09:30:00.000Z"
+      },
+      "surface": 45.5,
+      "budget": 15000,
+      "localisation": {
+        "_latitude": 18.9,
+        "_longitude": 47.5
+      },
+      "id_utilisateur_createur": "firebase_auth_uid_user1",
+      "id_entreprise": "entreprise_id_1",
+      "synchro": true
+    },
+    {
+      "id": "signalement_id_2",
+      "date_creation": {
+        "_seconds": 1698920100,
+        "_nanoseconds": 0,
+        "_iso": "2023-11-02T10:15:00.000Z"
+      },
+      "surface": 120.0,
+      "budget": 50000,
+      "localisation": {
+        "_latitude": -12.28,
+        "_longitude": 49.29
+      },
+      "id_utilisateur_createur": "firebase_auth_uid_user2",
+      "id_entreprise": "entreprise_id_2",
+      "synchro": true
+    },
+    {
+      "id": "signalement_id_3",
+      "date_creation": {
+        "_seconds": 1699027200,
+        "_nanoseconds": 0,
+        "_iso": "2023-11-03T16:00:00.000Z"
+      },
+      "surface": 15.0,
+      "budget": 2000,
+      "localisation": {
+        "_latitude": 18.92,
+        "_longitude": 47.52
+      },
+      "id_utilisateur_createur": "firebase_auth_uid_user1",
+      "id_entreprise": "entreprise_id_3",
+      "synchro": true
+    }
+  ],
+  "avancements_signalement": [
+    {
+      "id": "avancement_id_1",
+      "id_signalement": "signalement_id_1",
+      "id_utilisateur": "firebase_auth_uid_user1",
+      "id_statut_avancement": "statut_id_1",
+      "date_modification": {
+        "_seconds": 1738454400,
+        "_nanoseconds": 0,
+        "_iso": "2025-02-01T00:00:00.000Z",
+        "_note": "Date calculée: maintenant - 3 jours"
+      },
+      "synchro": true
+    },
+    {
+      "id": "avancement_id_2",
+      "id_signalement": "signalement_id_1",
+      "id_utilisateur": "firebase_auth_uid_admin",
+      "id_statut_avancement": "statut_id_2",
+      "date_modification": {
+        "_seconds": 1738540800,
+        "_nanoseconds": 0,
+        "_iso": "2025-02-02T00:00:00.000Z",
+        "_note": "Date calculée: maintenant - 2 jours"
+      },
+      "synchro": true
+    },
+    {
+      "id": "avancement_id_3",
+      "id_signalement": "signalement_id_2",
+      "id_utilisateur": "firebase_auth_uid_user2",
+      "id_statut_avancement": "statut_id_1",
+      "date_modification": {
+        "_seconds": 1738281600,
+        "_nanoseconds": 0,
+        "_iso": "2025-01-30T00:00:00.000Z",
+        "_note": "Date calculée: maintenant - 5 jours"
+      },
+      "synchro": true
+    },
+    {
+      "id": "avancement_id_4",
+      "id_signalement": "signalement_id_2",
+      "id_utilisateur": "firebase_auth_uid_admin",
+      "id_statut_avancement": "statut_id_2",
+      "date_modification": {
+        "_seconds": 1738368000,
+        "_nanoseconds": 0,
+        "_iso": "2025-01-31T00:00:00.000Z",
+        "_note": "Date calculée: maintenant - 4 jours"
+      },
+      "synchro": true
+    },
+    {
+      "id": "avancement_id_5",
+      "id_signalement": "signalement_id_2",
+      "id_utilisateur": "firebase_auth_uid_entreprise",
+      "id_statut_avancement": "statut_id_3",
+      "date_modification": {
+        "_seconds": 1738627200,
+        "_nanoseconds": 0,
+        "_iso": "2025-02-03T00:00:00.000Z",
+        "_note": "Date calculée: maintenant - 1 jour"
+      },
+      "synchro": true
+    }
+  ],
+  "_metadata": {
+    "description": "Exemples de données Firestore extraits de seed-production.js",
+    "date_generation": "2026-02-03",
+    "notes": [
+      "Les champs 'id' représentent les IDs de documents Firestore",
+      "Les champs préfixés par '_' sont des notes explicatives, non présentes dans Firestore",
+      "Les objets Timestamp Firebase sont représentés avec _seconds, _nanoseconds et _iso pour lisibilité",
+      "Les objets GeoPoint Firebase sont représentés avec _latitude et _longitude",
+      "Les mots de passe doivent être hashés en production",
+      "Collection 'utilisateurs': l'ID du document = UID Firebase Authentication"
+    ],
+    "resume": {
+      "total_roles": 3,
+      "total_entreprises": 3,
+      "total_statuts": 5,
+      "total_parametres": 1,
+      "total_utilisateurs": 5,
+      "total_utilisateurs_bloques": 1,
+      "total_signalements": 3,
+      "total_avancements": 5
+    }
+  }
+}

@@ -1,0 +1,2 @@
+admin@signalement.com
+hashed_password_admin
