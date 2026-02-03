@@ -57,4 +57,19 @@ export class LoginComponent implements OnInit {
       }
     });
   }
+
+  onVisitor(): void {
+    this.isLoading = true;
+    this.authService.loginAsVisitor().subscribe({
+      next: (user) => {
+        this.isLoading = false;
+        this.router.navigate([this.returnUrl]);
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.errorMessage = 'Impossible d' + "'" + 'entrer en mode visiteur';
+        console.error('Erreur visiteur:', err);
+      }
+    });
+  }
 }

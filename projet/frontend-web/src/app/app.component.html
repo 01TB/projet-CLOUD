@@ -18,7 +18,7 @@
       <a routerLink="/admin/users" routerLinkActive="nav-active" class="nav-link">
         <span class="nav-icon">👥</span> Utilisateurs
       </a>
-      <button class="nav-link nav-btn" (click)="onSync()" title="Synchroniser avec Firebase">
+      <button class="nav-link nav-btn" (click)="onSync()" title="Synchroniser avec Firebase" [disabled]="isSyncing">
         <span class="nav-icon">🔄</span> Synchroniser
       </button>
     </nav>
@@ -56,6 +56,14 @@
   <footer class="app-footer">
     <span>© 2025 - SIG Signalements Routiers</span>
   </footer>
+</div>
+
+<!-- Overlay de synchronisation -->
+<div *ngIf="isSyncing" class="sync-overlay">
+  <div class="sync-popup">
+    <div class="spinner"></div>
+    <p>Synchronisation en cours… Ceci peut prendre quelques instants.</p>
+  </div>
 </div>
 
 <ng-template #loginView>

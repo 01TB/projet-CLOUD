@@ -281,3 +281,40 @@
     display: none;
   }
 }
+
+/* Overlay synchronisation */
+.sync-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.45);
+  z-index: 20000;
+}
+
+.sync-popup {
+  background: #ffffff;
+  padding: 1.25rem 1.5rem;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  min-width: 260px;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid #2a8eb5;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

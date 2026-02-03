@@ -125,4 +125,22 @@ export class AuthService {
   register(email: string): Observable<boolean> {
     return new BehaviorSubject<boolean>(true).asObservable();
   }
+
+  // Connexion en tant que visiteur (pas d'auth backend requise)
+  loginAsVisitor(): Observable<Utilisateur> {
+    const visitorRole = this.roles.find(r => r.nom === 'VISITEUR')!;
+    const visitor: Utilisateur = {
+      id: 0,
+      email: 'visiteur@local',
+      role: visitorRole
+    };
+
+    // Stocker un marqueur minimal en local
+    localStorage.setItem('currentUser', JSON.stringify(visitor));
+    // Pas de token pour le visiteur, mais on peut stocker une valeur vide
+    localStorage.removeItem('authToken');
+    this.currentUserSubject.next(visitor);
+
+    return new BehaviorSubject<Utilisateur>(visitor).asObservable();
+  }
 }

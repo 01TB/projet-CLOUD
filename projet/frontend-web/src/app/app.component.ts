@@ -31,6 +31,9 @@ export class AppComponent implements OnInit {
     private router: Router
   ) {}
 
+  // Indicateur de synchronisation longue
+  isSyncing = false;
+
   ngOnInit(): void {
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
@@ -56,18 +59,22 @@ export class AppComponent implements OnInit {
     }
 
     const syncEntities = ['Signalement', 'StatutAvancement', 'AvancementSignalement'];
-    
+
+    // Afficher l'overlay de chargement
+    this.isSyncing = true;
+
     this.syncService.synchronizeBidirectional(syncEntities, false).subscribe({
       next: (response) => {
         console.log('Synchronisation terminée:', response);
-        
+        this.isSyncing = false;
+
         if (response.success) {
           alert(
             '✅ Synchronisation réussie !\n\n' +
             response.message +
             '\n\nLa page va se recharger pour afficher les nouvelles données.'
           );
-          
+
           // Recharger la page pour mettre à jour toutes les données
           window.location.reload();
         } else {
@@ -82,6 +89,7 @@ export class AppComponent implements OnInit {
       },
       error: (error) => {
         console.error('Erreur lors de la synchronisation:', error);
+        this.isSyncing = false;
         alert(
           '❌ Erreur de synchronisation\n\n' +
           (error.error?.message || error.message || 'Erreur inconnue') +
