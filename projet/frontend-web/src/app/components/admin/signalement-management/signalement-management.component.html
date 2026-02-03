@@ -1,0 +1,238 @@
+<!-- src/app/components/admin/signalement-management/signalement-management.component.html -->
+<div class="signalement-management-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h2>🚧 Gestion des Signalements</h2>
+      <p class="subtitle">Consulter et gérer les travaux signalés</p>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    ✓ {{ successMessage }}
+  </div>
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    ✗ {{ errorMessage }}
+  </div>
+
+  <!-- Statistiques -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">📋</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ stats.total }}</div>
+        <div class="stat-label">Total signalements</div>
+      </div>
+    </div>
+
+    <div class="stat-card stat-nouveau">
+      <div class="stat-icon">🆕</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ stats.nouveaux }}</div>
+        <div class="stat-label">Nouveaux</div>
+      </div>
+    </div>
+
+    <div class="stat-card stat-encours">
+      <div class="stat-icon">🚧</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ stats.enCours }}</div>
+        <div class="stat-label">En cours</div>
+      </div>
+    </div>
+
+    <div class="stat-card stat-termine">
+      <div class="stat-icon">✅</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ stats.termines }}</div>
+        <div class="stat-label">Terminés</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="filters-section">
+    <div class="filter-group">
+      <label>🔍 Rechercher</label>
+      <input 
+        type="text" 
+        class="filter-input" 
+        placeholder="ID ou entreprise..." 
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="applyFilters()"
+      />
+    </div>
+
+    <div class="filter-group">
+      <label>Statut</label>
+      <select 
+        class="filter-select" 
+        [(ngModel)]="selectedStatutFilter"
+        (ngModelChange)="applyFilters()"
+      >
+        <option value="">Tous les statuts</option>
+        <option value="NOUVEAU">NOUVEAU</option>
+        <option value="EN COURS">EN COURS</option>
+        <option value="TERMINE">TERMINE</option>
+      </select>
+    </div>
+
+    <button class="btn btn-secondary" (click)="resetFilters()">
+      Réinitialiser
+    </button>
+  </div>
+
+  <!-- Loader -->
+  <div class="loader" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Chargement...</p>
+  </div>
+
+  <!-- Table des signalements -->
+  <div class="table-container" *ngIf="!loading">
+    <table class="signalements-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Date création</th>
+          <th>Entreprise</th>
+          <th>Surface</th>
+          <th>Budget</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let signalement of filteredSignalements">
+          <td class="id-cell">#{{ signalement.id }}</td>
+          <td class="date-cell">{{ formatDate(signalement.date_creation) }}</td>
+          <td class="entreprise-cell">
+            <span class="entreprise-icon">🏢</span>
+            {{ signalement.entreprise?.nom || 'Non assigné' }}
+          </td>
+          <td>{{ formatSurface(signalement.surface) }}</td>
+          <td>{{ formatBudget(signalement.budget) }}</td>
+          <td>
+            <span class="badge" [ngClass]="getStatutBadgeClass(signalement.statut_actuel.nom)">
+              {{ getStatutIcon(signalement.statut_actuel.nom) }} {{ signalement.statut_actuel.nom }}
+            </span>
+          </td>
+          <td class="actions-cell">
+            <button 
+              class="action-btn btn-view" 
+              (click)="openDetailsModal(signalement)"
+              title="Voir détails"
+            >
+              👁️
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="filteredSignalements.length === 0">
+          <td colspan="7" class="empty-state">
+            <div class="empty-icon">🔍</div>
+            <p>Aucun signalement trouvé</p>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal de détails -->
+  <div class="modal-overlay" *ngIf="showDetailsModal" (click)="closeDetailsModal()">
+    <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>👁️ Détails du signalement #{{ selectedSignalement?.id }}</h3>
+        <button class="modal-close" (click)="closeDetailsModal()">✖</button>
+      </div>
+      <div class="modal-body" *ngIf="selectedSignalement">
+        <!-- Section Photos -->
+        <div class="details-section">
+          <h4>📷 Photos</h4>
+          <div class="photos-grid">
+            <div class="photo-item">
+              <img [src]="getDefaultPhoto()" alt="Photo du signalement" class="signalement-photo">
+            </div>
+          </div>
+        </div>
+
+        <!-- Section Informations générales -->
+        <div class="details-section">
+          <h4>📋 Informations générales</h4>
+          <div class="details-grid">
+            <div class="detail-item">
+              <span class="detail-label">ID :</span>
+              <span class="detail-value">#{{ selectedSignalement.id }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Date de création :</span>
+              <span class="detail-value">{{ formatDate(selectedSignalement.date_creation) }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Entreprise :</span>
+              <span class="detail-value">
+                <span class="entreprise-icon">🏢</span>
+                {{ selectedSignalement.entreprise?.nom || 'Non assigné' }}
+              </span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Statut :</span>
+              <span class="detail-value">
+                <span class="badge" [ngClass]="getStatutBadgeClass(selectedSignalement.statut_actuel.nom)">
+                  {{ getStatutIcon(selectedSignalement.statut_actuel.nom) }} {{ selectedSignalement.statut_actuel.nom }}
+                </span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section Dimensions et Budget -->
+        <div class="details-section">
+          <h4>💰 Dimensions et Budget</h4>
+          <div class="details-grid">
+            <div class="detail-item">
+              <span class="detail-label">Surface :</span>
+              <span class="detail-value">{{ formatSurface(selectedSignalement.surface) }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Budget :</span>
+              <span class="detail-value budget-value">{{ formatBudget(selectedSignalement.budget) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section Localisation -->
+        <div class="details-section">
+          <h4>📍 Localisation</h4>
+          <div class="details-grid">
+            <div class="detail-item">
+              <span class="detail-label">Latitude :</span>
+              <span class="detail-value">{{ selectedSignalement.localisation.lat }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Longitude :</span>
+              <span class="detail-value">{{ selectedSignalement.localisation.lng }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section Créateur -->
+        <div class="details-section">
+          <h4>👤 Créateur</h4>
+          <div class="details-grid">
+            <div class="detail-item">
+              <span class="detail-label">ID Utilisateur :</span>
+              <span class="detail-value">#{{ selectedSignalement.id_utilisateur_createur }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-secondary" (click)="closeDetailsModal()">
+            Fermer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -12,6 +12,8 @@ import { MapComponent } from './components/map/map.component';
 import { LoginComponent } from './components/auth/login/login.component';
 import { SidebarComponent } from './components/sidebar/sidebar.component';
 import { UserManagementComponent } from './components/admin/user-management/user-management.component';
+import { SignalementManagementComponent } from './components/admin/signalement-management/signalement-management.component';
+import { SignalementDetailComponent } from './components/signalement-detail/signalement-detail.component';
 
 // Services
 import { AuthService } from './services/auth.service';
@@ -30,7 +32,9 @@ import { JwtInterceptor } from './interceptors/jwt.interceptor';
     MapComponent,
     LoginComponent,
     SidebarComponent,
-    UserManagementComponent
+    UserManagementComponent,
+    SignalementManagementComponent,
+    SignalementDetailComponent
   ],
   imports: [
     BrowserModule,
