@@ -35,10 +35,6 @@
         <div class="legend-marker marker-green"></div>
         <span>Terminé</span>
       </div>
-      <div class="legend-item">
-        <div class="legend-marker marker-grey"></div>
-        <span>Annulé</span>
-      </div>
     </div>
   </div>
 
@@ -100,59 +96,86 @@
     </div>
   </div>
 
-  <!-- Modal de modification de statut (Manager uniquement) -->
+  <!-- Modal de modification de signalement (Manager uniquement) -->
   <div class="modal-overlay" *ngIf="showStatusModal && isManager" (click)="closeStatusModal()">
     <div class="modal-content status-modal" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h3>🔄 Modifier le statut</h3>
+        <h3>✏️ Modifier le signalement</h3>
         <button class="modal-close" (click)="closeStatusModal()">✖</button>
       </div>
-      <div class="modal-body" *ngIf="selectedSignalement">
-        <div class="signalement-details">
-          <h4>Signalement #{{ selectedSignalement.id }}</h4>
-          <div class="detail-row">
-            <span class="detail-label">Date:</span>
-            <span>{{ selectedSignalement.date_creation }}</span>
+      <div class="modal-body" *ngIf="selectedSignalement && editForm">
+        <form class="edit-form">
+          <div class="form-group">
+            <label for="editSurface">Surface (m²):</label>
+            <input 
+              type="number" 
+              id="editSurface" 
+              class="form-input" 
+              [(ngModel)]="editForm.surface"
+              [ngModelOptions]="{standalone: true}"
+              min="0"
+              step="0.01"
+              required
+            />
           </div>
-          <div class="detail-row">
-            <span class="detail-label">Surface:</span>
-            <span>{{ selectedSignalement.surface }} m²</span>
+
+          <div class="form-group">
+            <label for="editBudget">Budget (MGA):</label>
+            <input 
+              type="number" 
+              id="editBudget" 
+              class="form-input" 
+              [(ngModel)]="editForm.budget"
+              [ngModelOptions]="{standalone: true}"
+              min="0"
+              required
+            />
           </div>
-          <div class="detail-row">
-            <span class="detail-label">Budget:</span>
-            <span>{{ selectedSignalement.budget.toLocaleString('fr-FR') }} MGA</span>
+
+          <div class="form-group">
+            <label for="editEntreprise">Entreprise:</label>
+            <input 
+              type="text" 
+              id="editEntreprise" 
+              class="form-input" 
+              [value]="selectedSignalement.entreprise.nom"
+              disabled
+            />
           </div>
-          <div class="detail-row">
-            <span class="detail-label">Entreprise:</span>
-            <span>{{ selectedSignalement.entreprise.nom }}</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">Statut actuel:</span>
+
+          <div class="form-group">
+            <label>Statut actuel:</label>
             <span class="badge" [ngClass]="'badge-status-' + selectedSignalement.statut_actuel.valeur">
               {{ selectedSignalement.statut_actuel.nom }}
             </span>
           </div>
-        </div>
 
-        <div class="status-selector">
-          <label for="newStatus">Nouveau statut:</label>
-          <select 
-            id="newStatus" 
-            class="form-select" 
-            [(ngModel)]="newStatusId"
-          >
-            <option *ngFor="let statut of statuts" [value]="statut.id">
-              {{ statut.nom }}
-            </option>
-          </select>
-        </div>
+          <div class="form-group">
+            <label for="editStatut">Nouveau statut (optionnel):</label>
+            <select 
+              id="editStatut" 
+              class="form-select" 
+              [(ngModel)]="editForm.idNouveauStatut"
+              [ngModelOptions]="{standalone: true}"
+            >
+              <option [value]="null">-- Ne pas changer le statut --</option>
+              <option *ngFor="let statut of statuts" [value]="statut.id">
+                {{ statut.nom }}
+              </option>
+            </select>
+          </div>
+
+          <div class="info-message" *ngIf="editForm.idNouveauStatut && editForm.idNouveauStatut !== selectedSignalement.statut_actuel.id">
+            ℹ️ Un nouveau statut d'avancement sera créé pour ce signalement.
+          </div>
+        </form>
 
         <div class="modal-actions">
           <button class="btn btn-secondary" (click)="closeStatusModal()">
             Annuler
           </button>
-          <button class="btn btn-primary" (click)="updateStatus()">
-            Confirmer
+          <button class="btn btn-primary" (click)="updateSignalement()">
+            Enregistrer
           </button>
         </div>
       </div>

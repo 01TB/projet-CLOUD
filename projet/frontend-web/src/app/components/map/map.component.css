@@ -383,6 +383,54 @@
   width: 500px;
 }
 
+.edit-form {
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #2a8eb5;
+  box-shadow: 0 0 0 3px rgba(42, 142, 181, 0.1);
+}
+
+.form-input:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+  color: #666;
+}
+
+.info-message {
+  background: #e3f2fd;
+  border-left: 4px solid #2196F3;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: #1565C0;
+}
+
 .signalement-details {
   background: #f8f9fa;
   border-radius: 12px;
@@ -419,22 +467,22 @@
   font-weight: 600;
 }
 
-.badge-status-1 {
+.badge-status-0 {
   background: #ffebee;
   color: #c62828;
 }
 
-.badge-status-2 {
+.badge-status-1 {
   background: #fff3e0;
   color: #ef6c00;
 }
 
-.badge-status-3 {
+.badge-status-2 {
   background: #e8f5e9;
   color: #2e7d32;
 }
 
-.badge-status-4 {
+.badge-status-3 {
   background: #f5f5f5;
   color: #616161;
 }

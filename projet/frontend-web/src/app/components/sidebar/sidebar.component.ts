@@ -1,7 +1,9 @@
 // src/app/components/sidebar/sidebar.component.ts
 import { Component, OnInit, Output, EventEmitter } from '@angular/core';
-import { MockDataService } from '../../services/mock-data.service';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 import { StatutAvancement, Entreprise } from '../../models/signalement.model';
+import { FilterService } from '../../services/filter.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -25,19 +27,24 @@ export class SidebarComponent implements OnInit {
     budgetMax: null as number | null
   };
 
-  constructor(private mockDataService: MockDataService) {}
+  constructor(
+    private http: HttpClient,
+    private filterService: FilterService
+  ) {}
 
   ngOnInit(): void {
     this.loadFilterOptions();
   }
 
   private loadFilterOptions(): void {
-    this.mockDataService.getStatuts().subscribe(statuts => {
-      this.statuts = statuts;
+    this.http.get<StatutAvancement[]>(`${environment.apiUrl}/statutAvancements`).subscribe({
+      next: statuts => this.statuts = statuts,
+      error: err => console.error('Erreur récupération statuts', err)
     });
 
-    this.mockDataService.getEntreprises().subscribe(entreprises => {
-      this.entreprises = entreprises;
+    this.http.get<Entreprise[]>(`${environment.apiUrl}/entreprises`).subscribe({
+      next: entreprises => this.entreprises = entreprises,
+      error: err => console.error('Erreur récupération entreprises', err)
     });
   }
 
@@ -79,6 +86,7 @@ export class SidebarComponent implements OnInit {
 
   private emitFilters(): void {
     this.filtersChanged.emit(this.filters);
+    this.filterService.updateFilters(this.filters);
   }
 
   isStatutChecked(statutId: number): boolean {

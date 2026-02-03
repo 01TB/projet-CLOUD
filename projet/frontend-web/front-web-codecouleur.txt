@@ -1,0 +1,2 @@
+#23799B
+on va diviser l'ecran en deux : a gauche l'image dans assets/img/login.png et a droite le formulaire login actuel.

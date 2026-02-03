@@ -22,7 +22,8 @@ public class AuthService {
         CustomUserDetails userDetails = new CustomUserDetails(user);
         System.out.println("Generating token for user: " + user.getEmail());
         String token = jwtService.generateToken(userDetails);
-
+        System.out.println("token created for user: "+ user.getEmail());
+        System.out.println("user role is: "+ user.getRole().getNom());
         return token;
     }
 }
