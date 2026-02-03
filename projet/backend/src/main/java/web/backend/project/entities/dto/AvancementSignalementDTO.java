@@ -19,17 +19,17 @@ public class AvancementSignalementDTO implements FirebaseSerializable {
     @JsonProperty("synchro")
     private Boolean synchro;
 
-    @JsonProperty("utilisateur_id")
+    @JsonProperty("id_utilisateur")
     private Integer utilisateurId;
 
-    @JsonProperty("statut_avancement_id")
+    @JsonProperty("id_statut_avancement")
     private Integer statutAvancementId;
 
-    @JsonProperty("signalement_id")
+    @JsonProperty("id_signalement")
     private Integer signalementId;
 
     @JsonProperty("last_modified")
-    private LocalDateTime lastModified;
+    private LocalDateTime lastModified = LocalDateTime.now();
 
     // Constructeurs
     public AvancementSignalementDTO() {
@@ -41,12 +41,12 @@ public class AvancementSignalementDTO implements FirebaseSerializable {
     @Override
     public FirebaseSerializable fromFirebaseMap(Map<String, Object> data) {
         this.id = FirebaseSerializable.extractInteger(data, "id");
-        this.dateModification = FirebaseSerializable.extractLocalDateTime(data, "dateModification");
+        this.dateModification = FirebaseSerializable.extractLocalDateTime(data, "date_modification");
         this.synchro = FirebaseSerializable.extractBoolean(data, "synchro");
-        this.utilisateurId = FirebaseSerializable.extractInteger(data, "utilisateurId");
-        this.statutAvancementId = FirebaseSerializable.extractInteger(data, "statutAvancementId");
-        this.signalementId = FirebaseSerializable.extractInteger(data, "signalementId");
-        this.lastModified = FirebaseSerializable.extractLocalDateTime(data, "lastModified");
+        this.utilisateurId = FirebaseSerializable.extractInteger(data, "id_utilisateur");
+        this.statutAvancementId = FirebaseSerializable.extractInteger(data, "id_statut_avancement");
+        this.signalementId = FirebaseSerializable.extractInteger(data, "id_signalement");
+        this.lastModified = FirebaseSerializable.extractLocalDateTime(data, "last_modified");
         return this;
     }
 
@@ -54,12 +54,13 @@ public class AvancementSignalementDTO implements FirebaseSerializable {
     public Map<String, Object> toFirebaseMap() {
         Map<String, Object> map = new HashMap<>();
         map.put("id", id);
-        map.put("dateModification", dateModification != null ? dateModification.toString() : null);
-        map.put("synchro", synchro);
-        map.put("utilisateurId", utilisateurId);
-        map.put("statutAvancementId", statutAvancementId);
-        map.put("signalementId", signalementId);
-        map.put("lastModified", lastModified != null ? lastModified.toString() : null);
+        map.put("date_modification", dateModification != null ? dateModification.toString() : null);
+        // Lors du push vers Firebase, synchro est toujours true (donnée synchronisée)
+        map.put("synchro", true);
+        map.put("id_utilisateur", utilisateurId);
+        map.put("id_statut_avancement", statutAvancementId);
+        map.put("id_signalement", signalementId);
+        map.put("last_modified", lastModified != null ? lastModified.toString() : null);
         return map;
     }
 

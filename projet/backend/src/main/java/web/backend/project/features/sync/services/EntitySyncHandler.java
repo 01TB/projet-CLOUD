@@ -36,6 +36,7 @@ public class EntitySyncHandler {
     @Transactional
     public <E extends SyncableEntity<D>, D extends FirebaseSerializable> void markAsSynced(
             String entityType, List<E> entities) {
+        System.out.println("Marking entities as synced for type " + entityType + ": " + entities);
         syncRegistry.markAsSynced(entityType, entities);
     }
 
@@ -64,7 +65,13 @@ public class EntitySyncHandler {
     @Transactional
     public <E extends SyncableEntity<D>, D extends FirebaseSerializable> E updateOrCreateFromFirebase(
             String entityType, Map<String, Object> firebaseData) {
-        return syncRegistry.updateOrCreateFromFirebase(entityType, firebaseData);
+            System.out.println("Updating or creating entity of type " + entityType + " from Firebase data: " + firebaseData);
+            try {
+                return syncRegistry.updateOrCreateFromFirebase(entityType, firebaseData);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new RuntimeException("Failed to update or create entity of type " + entityType, e);
+            }
     }
 
     /**

@@ -70,11 +70,11 @@ public class SyncRepositoryConfig {
     public void registerRepositories() {
         // ========== Enregistrement dans l'ancien système (rétro-compatibilité)
         // ==========
-        syncService.registerRepository("Signalement", signalementRepository);
-        syncService.registerRepository("StatutAvancement", statutAvancementRepository);
-        syncService.registerRepository("AvancementSignalement", avancementSignalementRepository);
-        syncService.registerRepository("Utilisateur", utilisateurRepository);
-        syncService.registerRepository("UtilisateurBloque", utilisateurBloqueRepository);
+        syncService.registerRepository("signalements", signalementRepository);
+        syncService.registerRepository("statuts_avancement", statutAvancementRepository);
+        syncService.registerRepository("avancements_signalement", avancementSignalementRepository);
+        syncService.registerRepository("utilisateurs", utilisateurRepository);
+        syncService.registerRepository("utilisateurs_bloques", utilisateurBloqueRepository);
 
         // ========== Enregistrement dans le nouveau registre générique ==========
         registerEntityHandlers();
@@ -89,14 +89,14 @@ public class SyncRepositoryConfig {
 
         // Handler pour StatutAvancement (pas de relations)
         syncRegistry.register(new EntityTypeHandler<>(
-                "StatutAvancement",
+                "statuts_avancement",
                 statutAvancementRepository,
                 StatutAvancement::new,
                 StatutAvancementDTO::new));
 
         // Handler pour Signalement (avec relations)
         syncRegistry.register(new EntityTypeHandler<>(
-                "Signalement",
+                "signalements",
                 signalementRepository,
                 Signalement::new,
                 SignalementDTO::new,
@@ -114,7 +114,7 @@ public class SyncRepositoryConfig {
 
         // Handler pour AvancementSignalement (avec relations)
         syncRegistry.register(new EntityTypeHandler<>(
-                "AvancementSignalement",
+                "avancements_signalement",
                 avancementSignalementRepository,
                 AvancementSignalement::new,
                 AvancementSignalementDTO::new,
@@ -136,7 +136,7 @@ public class SyncRepositoryConfig {
 
         // Handler pour Utilisateur (avec relation Role)
         syncRegistry.register(new EntityTypeHandler<>(
-                "Utilisateur",
+                "utilisateurs",
                 utilisateurRepository,
                 Utilisateur::new,
                 UtilisateurDTO::new,
@@ -150,7 +150,7 @@ public class SyncRepositoryConfig {
 
         // Handler pour UtilisateurBloque (avec relation Utilisateur)
         syncRegistry.register(new EntityTypeHandler<>(
-                "UtilisateurBloque",
+                "utilisateurs_bloques",
                 utilisateurBloqueRepository,
                 UtilisateurBloque::new,
                 UtilisateurBloqueDTO::new,

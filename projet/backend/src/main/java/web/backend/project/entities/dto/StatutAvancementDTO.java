@@ -38,7 +38,7 @@ public class StatutAvancementDTO implements FirebaseSerializable {
         this.nom = FirebaseSerializable.extractString(data, "nom");
         this.valeur = FirebaseSerializable.extractInteger(data, "valeur");
         this.synchro = FirebaseSerializable.extractBoolean(data, "synchro");
-        this.lastModified = FirebaseSerializable.extractLocalDateTime(data, "lastModified");
+        this.lastModified = FirebaseSerializable.extractLocalDateTime(data, "last_modified");
         return this;
     }
 
@@ -48,8 +48,9 @@ public class StatutAvancementDTO implements FirebaseSerializable {
         map.put("id", id);
         map.put("nom", nom);
         map.put("valeur", valeur);
-        map.put("synchro", synchro);
-        map.put("lastModified", lastModified != null ? lastModified.toString() : null);
+        // Lors du push vers Firebase, synchro est toujours true (donnée synchronisée)
+        map.put("synchro", true);
+        map.put("last_modified", lastModified != null ? lastModified.toString() : null);
         return map;
     }
 

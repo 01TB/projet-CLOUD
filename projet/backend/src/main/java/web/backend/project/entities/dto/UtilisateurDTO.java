@@ -19,12 +19,12 @@ public class UtilisateurDTO implements FirebaseSerializable {
     @JsonProperty("synchro")
     Boolean synchro;
 
-    @JsonProperty("role_id")
+    @JsonProperty("id_role")
     Integer roleId;
 
     @JsonProperty("last_modified")
-    LocalDateTime lastModified = LocalDateTime.now();
-
+    LocalDateTime lastModified;
+    
     @Override
     public Integer getId() {
         return id;
@@ -84,8 +84,8 @@ public class UtilisateurDTO implements FirebaseSerializable {
         this.email = FirebaseSerializable.extractString(data, "email");
         this.password = FirebaseSerializable.extractString(data, "password");
         this.synchro = FirebaseSerializable.extractBoolean(data, "synchro");
-        this.roleId = FirebaseSerializable.extractInteger(data, "roleId");
-        this.lastModified = FirebaseSerializable.extractLocalDateTime(data, "lastModified");
+        this.roleId = FirebaseSerializable.extractInteger(data, "id_role");
+        this.lastModified = FirebaseSerializable.extractLocalDateTime(data, "last_modified");
         return this;
     }
 
@@ -95,9 +95,10 @@ public class UtilisateurDTO implements FirebaseSerializable {
         map.put("id", id);
         map.put("email", email);
         map.put("password", password);
-        map.put("synchro", synchro);
-        map.put("roleId", roleId);
-        map.put("lastModified", lastModified != null ? lastModified.toString() : null);
+        // Lors du push vers Firebase, synchro est toujours true (donnée synchronisée)
+        map.put("synchro", true);
+        map.put("id_role", roleId);
+        map.put("last_modified", lastModified != null ? lastModified.toString() : null);
         return map;
     }
 

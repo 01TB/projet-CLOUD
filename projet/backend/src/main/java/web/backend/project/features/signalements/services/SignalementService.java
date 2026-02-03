@@ -10,7 +10,7 @@ import web.backend.project.entities.Utilisateur;
 import web.backend.project.exceptions.ResourceNotFoundException;
 import web.backend.project.features.signalements.dto.SignalementInsertDTO;
 import web.backend.project.features.signalements.dto.SignalementResponseDTO;
-import web.backend.project.mappers.crud.CrudSignalementMapper;
+import web.backend.project.mappers.CrudSignalementMapper;
 import web.backend.project.repositories.EntrepriseRepository;
 import web.backend.project.repositories.SignalementRepository;
 import web.backend.project.repositories.UtilisateurRepository;

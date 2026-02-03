@@ -16,7 +16,7 @@ public class UtilisateurBloqueDTO implements FirebaseSerializable {
     @JsonProperty("synchro")
     Boolean synchro;
 
-    @JsonProperty("utilisateur_id")
+    @JsonProperty("id_utilisateur")
     Integer utilisateurId;
 
     @Override
@@ -63,9 +63,9 @@ public class UtilisateurBloqueDTO implements FirebaseSerializable {
     @Override
     public FirebaseSerializable fromFirebaseMap(Map<String, Object> data) {
         this.id = FirebaseSerializable.extractInteger(data, "id");
-        this.dateBlocage = FirebaseSerializable.extractLocalDateTime(data, "dateBlocage");
+        this.dateBlocage = FirebaseSerializable.extractLocalDateTime(data, "date_blocage");
         this.synchro = FirebaseSerializable.extractBoolean(data, "synchro");
-        this.utilisateurId = FirebaseSerializable.extractInteger(data, "utilisateurId");
+        this.utilisateurId = FirebaseSerializable.extractInteger(data, "id_utilisateur");
         return this;
     }
 
@@ -73,9 +73,10 @@ public class UtilisateurBloqueDTO implements FirebaseSerializable {
     public Map<String, Object> toFirebaseMap() {
         Map<String, Object> map = new java.util.HashMap<>();
         map.put("id", id);
-        map.put("dateBlocage", dateBlocage != null ? dateBlocage.toString() : null);
-        map.put("synchro", synchro);
-        map.put("utilisateurId", utilisateurId);
+        map.put("date_blocage", dateBlocage != null ? dateBlocage.toString() : null);
+        // Lors du push vers Firebase, synchro est toujours true (donnée synchronisée)
+        map.put("synchro", true);
+        map.put("id_utilisateur", utilisateurId);
         return map;
     }
 
