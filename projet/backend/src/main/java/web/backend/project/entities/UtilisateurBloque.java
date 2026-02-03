@@ -97,8 +97,6 @@ public class UtilisateurBloque implements SyncableEntity<UtilisateurBloqueDTO> {
     public void updateFromDTO(UtilisateurBloqueDTO dto) {
         if (dto == null) {
             return;
-        } else if (dto.getId() != null) {
-            this.id = dto.getId();
         }
         this.synchro = dto.getSynchro();
         this.dateBlocage = dto.getDateBlocage();

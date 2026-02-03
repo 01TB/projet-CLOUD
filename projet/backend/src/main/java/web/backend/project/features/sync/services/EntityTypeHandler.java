@@ -1,8 +1,12 @@
 package web.backend.project.features.sync.services;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import web.backend.project.entities.SyncableEntity;
 import web.backend.project.entities.dto.FirebaseSerializable;
+
+import jakarta.persistence.EntityManager;
 
 import java.util.Map;
 import java.util.function.Supplier;
@@ -15,6 +19,8 @@ import java.util.function.Supplier;
  * @param <D> Type du DTO
  */
 public class EntityTypeHandler<E extends SyncableEntity<D>, D extends FirebaseSerializable> {
+
+    private static final Logger logger = LoggerFactory.getLogger(EntityTypeHandler.class);
 
     private final String entityType;
     private final JpaRepository<E, Integer> repository;
@@ -85,28 +91,110 @@ public class EntityTypeHandler<E extends SyncableEntity<D>, D extends FirebaseSe
 
     /**
      * Met à jour ou crée une entité depuis les données Firebase
+     * Uses merge semantics to properly handle detached entities and avoid
+     * StaleObjectStateException
+     * 
+     * Note: For new entities, we let Hibernate generate the ID rather than using
+     * the Firebase ID, as the database uses IDENTITY generation strategy.
      */
-    public E updateOrCreate(Map<String, Object> firebaseData) {
+    public E updateOrCreate(Map<String, Object> firebaseData, EntityManager entityManager) {
         D dto = createDTOFromFirebase(firebaseData);
         Integer id = dto.getId();
 
+        logger.debug("Processing {} with id: {}", entityType, id);
+
         E entity;
-        if (id != null && repository.existsById(id)) {
-            entity = repository.findById(id).orElseThrow();
-        } else {
-            entity = createEntity();
-            if (id != null) {
-                entity.setId(id);
+        boolean isNewEntity = false;
+
+        if (id != null) {
+            // Try to find existing entity using EntityManager for better control
+            E existing = entityManager.find(getEntityClass(), id);
+            if (existing != null) {
+                entity = existing;
+                logger.debug("Found existing entity for id: {}", id);
+            } else {
+                // Entity doesn't exist in database, create new one
+                // Let Hibernate generate the ID (don't use Firebase ID for new entities)
+                entity = createEntity();
+                isNewEntity = true;
+                logger.debug("Creating new entity (Firebase id {} not found, will generate new id)", id);
             }
+        } else {
+            // No ID provided, create new entity (database will generate ID)
+            entity = createEntity();
+            isNewEntity = true;
+            logger.debug("Creating new entity without id");
         }
 
-        // Met à jour les champs simples
+        // Update simple fields from DTO (excluding ID for new entities)
         entity.updateFromDTO(dto);
 
-        // Résout les relations
-        relationResolver.resolveRelations(entity, dto);
+        // Defensive: ensure we never merge an entity with a null ID
+        // (Hibernate can throw "cannot generate an EntityKey when id is null")
+        if (!isNewEntity && entity.getId() == null) {
+            logger.warn("Entity {} resolved as existing but has null id after update; treating as new", entityType);
+            isNewEntity = true;
+        }
 
-        return repository.save(entity);
+        // Mark as synced since it comes from Firebase
+        entity.setSynchro(true);
+
+        // Resolve relations - wrap in try-catch to prevent dirty session state on
+        // failure
+        try {
+            relationResolver.resolveRelations(entity, dto);
+        } catch (Exception e) {
+            // Clear the entity from the persistence context if relation resolution fails
+            if (isNewEntity) {
+                entityManager.detach(entity);
+            }
+            throw new RuntimeException("Failed to resolve relations for " + entityType + ": " + e.getMessage(), e);
+        }
+
+        E savedEntity;
+        try {
+            if (isNewEntity) {
+                // For new entities, use persist and let Hibernate generate the ID
+                entityManager.persist(entity);
+                savedEntity = entity;
+                logger.debug("Persisted new entity, generated id: {}", savedEntity.getId());
+            } else {
+                // For existing entities, use merge
+                savedEntity = entityManager.merge(entity);
+            }
+            // Flush immediately to catch any database errors and get the generated ID
+            entityManager.flush();
+        } catch (Exception e) {
+            // Detach the entity to prevent it from being flushed later
+            if (entity != null && entity.getId() != null) {
+                entityManager.detach(entity);
+            } else {
+                // If id is null, detach would trigger "cannot generate an EntityKey"
+                entityManager.clear();
+            }
+            throw new RuntimeException("Failed to save entity " + entityType + ": " + e.getMessage(), e);
+        }
+
+        logger.debug("Successfully saved entity {} with id: {}", entityType, savedEntity.getId());
+        return savedEntity;
+    }
+
+    /**
+     * Legacy method for backward compatibility - delegates to new method
+     */
+    public E updateOrCreate(Map<String, Object> firebaseData) {
+        throw new UnsupportedOperationException(
+                "updateOrCreate requires EntityManager. Use updateOrCreate(firebaseData, entityManager) instead.");
+    }
+
+    /**
+     * Returns the entity class for EntityManager operations
+     */
+    @SuppressWarnings("unchecked")
+    private Class<E> getEntityClass() {
+        // Create a temporary entity to get its class
+        E temp = entityFactory.get();
+        return (Class<E>) temp.getClass();
     }
 
     /**

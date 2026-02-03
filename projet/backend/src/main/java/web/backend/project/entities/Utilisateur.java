@@ -109,8 +109,6 @@ public class Utilisateur implements SyncableEntity<UtilisateurDTO> {
     public void updateFromDTO(UtilisateurDTO dto) {
         if (dto == null) {
             return;
-        } else if (dto.getId() != null) {
-            this.id = dto.getId();
         }
         this.email = dto.getEmail();
         this.password = dto.getPassword();

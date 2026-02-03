@@ -1,7 +1,6 @@
 package web.backend.project.features.sync.services;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import web.backend.project.entities.SyncableEntity;
 import web.backend.project.entities.dto.FirebaseSerializable;
 
@@ -33,7 +32,6 @@ public class EntitySyncHandler {
     /**
      * Marque les entités comme synchronisées
      */
-    @Transactional
     public <E extends SyncableEntity<D>, D extends FirebaseSerializable> void markAsSynced(
             String entityType, List<E> entities) {
         System.out.println("Marking entities as synced for type " + entityType + ": " + entities);
@@ -61,17 +59,18 @@ public class EntitySyncHandler {
 
     /**
      * Met à jour ou crée une entité depuis les données Firebase (générique)
+     * Note: Transaction is managed by the calling SyncService.synchronize() method
      */
-    @Transactional
     public <E extends SyncableEntity<D>, D extends FirebaseSerializable> E updateOrCreateFromFirebase(
             String entityType, Map<String, Object> firebaseData) {
-            System.out.println("Updating or creating entity of type " + entityType + " from Firebase data: " + firebaseData);
-            try {
-                return syncRegistry.updateOrCreateFromFirebase(entityType, firebaseData);
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw new RuntimeException("Failed to update or create entity of type " + entityType, e);
-            }
+        System.out
+                .println("Updating or creating entity of type " + entityType + " from Firebase data: " + firebaseData);
+        try {
+            return syncRegistry.updateOrCreateFromFirebase(entityType, firebaseData);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Failed to update or create entity of type " + entityType, e);
+        }
     }
 
     /**
