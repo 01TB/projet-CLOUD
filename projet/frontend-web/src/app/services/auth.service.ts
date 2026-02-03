@@ -41,7 +41,9 @@ export class AuthService {
   }
 
   public get isAuthenticated$(): Observable<boolean> {
-    return new BehaviorSubject<boolean>(this.currentUserSubject.value !== null).asObservable();
+    return this.currentUser$.pipe(
+      map(user => user !== null)
+    );
   }
 
   public isManager(): boolean {

@@ -15,6 +15,7 @@ export class AppComponent implements OnInit {
   currentUser$ = this.authService.currentUser$;
   isAuthenticated$ = this.authService.isAuthenticated$;
   showSidebar = false;
+  private currentRoute = '';
 
   // Observables pour les rôles
   isManager$ = this.authService.currentUser$.pipe(
@@ -35,11 +36,29 @@ export class AppComponent implements OnInit {
   isSyncing = false;
 
   ngOnInit(): void {
+    // Écouter les changements de route pour afficher/masquer la sidebar
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event: any) => {
-        this.showSidebar = event.url === '/' || event.url === '/map';
+        this.currentRoute = event.url;
+        this.updateSidebarVisibility();
       });
+
+    // Écouter les changements d'authentification pour mettre à jour la sidebar
+    this.authService.currentUser$.subscribe(() => {
+      this.updateSidebarVisibility();
+    });
+
+    // Initialiser la visibilité de la sidebar selon la route actuelle
+    this.currentRoute = this.router.url;
+    this.updateSidebarVisibility();
+  }
+
+  private updateSidebarVisibility(): void {
+    // Afficher la sidebar uniquement sur les routes / et /map quand l'utilisateur est connecté
+    const isMapRoute = this.currentRoute === '/' || this.currentRoute === '/map' || this.currentRoute.startsWith('/map');
+    const isAuthenticated = this.authService.currentUserValue !== null;
+    this.showSidebar = isMapRoute && isAuthenticated;
   }
 
   logout(): void {

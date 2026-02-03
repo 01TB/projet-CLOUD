@@ -1,55 +1,63 @@
 <!-- src/app/components/auth/login/login.component.html -->
 <div class="login-container">
-  <div class="login-card">
-    <div class="login-header">
-      <div class="login-icon">🗺️</div>
-      <h2>SIG Signalements Routiers</h2>
-      <p class="subtitle">Antananarivo, Madagascar</p>
+  <div class="login-wrapper">
+    <!-- Section gauche : Image -->
+    <div class="login-image-section">
+      <img src="assets/img/login.png" alt="SIG Signalements" class="login-image" />
     </div>
 
-    <form (ngSubmit)="onSubmit()" class="login-form">
-      <div class="form-group">
-        <label for="email">Email</label>
-        <input 
-          type="email" 
-          id="email" 
-          class="form-control" 
-          [(ngModel)]="email" 
-          name="email"
-          placeholder="votre@email.com"
-          required
-        />
+    <!-- Section droite : Formulaire -->
+    <div class="login-form-section">
+      <div class="login-header">
+        <div class="login-icon">🗺️</div>
+        <h2>SIG Signalements Routiers</h2>
+        <p class="subtitle">Antananarivo, Madagascar</p>
       </div>
 
-      <div class="form-group">
-        <label for="password">Mot de passe</label>
-        <input 
-          type="password" 
-          id="password" 
-          class="form-control" 
-          [(ngModel)]="password" 
-          name="password"
-          placeholder="••••••••"
-          required
-        />
+      <form (ngSubmit)="onSubmit()" class="login-form">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input 
+            type="email" 
+            id="email" 
+            class="form-control" 
+            [(ngModel)]="email" 
+            name="email"
+            placeholder="votre@email.com"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="password">Mot de passe</label>
+          <input 
+            type="password" 
+            id="password" 
+            class="form-control" 
+            [(ngModel)]="password" 
+            name="password"
+            placeholder="••••••••"
+            required
+          />
+        </div>
+
+        <div class="alert alert-danger" *ngIf="errorMessage">
+          {{ errorMessage }}
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" [disabled]="isLoading">
+          <span *ngIf="!isLoading">Se connecter</span>
+          <span *ngIf="isLoading">Connexion en cours...</span>
+        </button>
+
+        <button type="button" class="btn btn-secondary btn-block" (click)="onVisitor()" [disabled]="isLoading">
+          Entrer en tant que visiteur
+        </button>
+      </form>
+
+      <div class="login-footer">
+        <p>© 2025 - SIG Signalements Routiers</p>
       </div>
-
-      <div class="alert alert-danger" *ngIf="errorMessage">
-        {{ errorMessage }}
-      </div>
-
-      <button type="submit" class="btn btn-primary btn-block" [disabled]="isLoading">
-        <span *ngIf="!isLoading">Se connecter</span>
-        <span *ngIf="isLoading">Connexion en cours...</span>
-      </button>
-
-      <button type="button" class="btn btn-secondary btn-block" (click)="onVisitor()" [disabled]="isLoading">
-        Entrer en tant que visiteur
-      </button>
-    </form>
-
-    <div class="login-footer">
-      <p>© 2025 - SIG Signalements Routiers</p>
     </div>
   </div>
 </div>
