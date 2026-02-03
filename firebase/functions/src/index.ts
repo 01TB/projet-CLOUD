@@ -10,6 +10,9 @@ admin.initializeApp();
 // Authentification
 export { register, login, logout, me, update } from "./auth";
 
+// Trigger: Synchronisation utilisateur → Firebase Auth
+export { syncUserToAuth } from "./auth/syncUserToAuth";
+
 // Signalements
 export {
   getSignalements,

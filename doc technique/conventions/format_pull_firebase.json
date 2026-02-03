@@ -243,5 +243,27 @@
       },
       "synchro": true
     }
-  ]
+  ],
+  "_metadata": {
+    "description": "Exemples de données Firestore extraits de seed-production.js",
+    "date_generation": "2026-02-03",
+    "notes": [
+      "Les champs 'id' représentent les IDs de documents Firestore",
+      "Les champs préfixés par '_' sont des notes explicatives, non présentes dans Firestore",
+      "Les objets Timestamp Firebase sont représentés avec _seconds, _nanoseconds et _iso pour lisibilité",
+      "Les objets GeoPoint Firebase sont représentés avec _latitude et _longitude",
+      "Les mots de passe doivent être hashés en production",
+      "Collection 'utilisateurs': l'ID du document = UID Firebase Authentication"
+    ],
+    "resume": {
+      "total_roles": 3,
+      "total_entreprises": 3,
+      "total_statuts": 5,
+      "total_parametres": 1,
+      "total_utilisateurs": 5,
+      "total_utilisateurs_bloques": 1,
+      "total_signalements": 3,
+      "total_avancements": 5
+    }
+  }
 }
