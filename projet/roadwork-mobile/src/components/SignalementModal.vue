@@ -30,8 +30,8 @@
           </ion-item>
 
           <!-- Description -->
+          <ion-label position="floating">Description *</ion-label>
           <ion-item>
-            <ion-label position="floating">Description *</ion-label>
             <ion-textarea
               v-model="form.description"
               placeholder="Décrivez en détail le problème (nid de poule, fissure, chaussée dégradée, etc.)..."
@@ -43,8 +43,8 @@
           </ion-item>
 
           <!-- Surface -->
+          <ion-label position="floating">Surface (m²) *</ion-label>
           <ion-item>
-            <ion-label position="floating">Surface (m²) *</ion-label>
             <ion-input
               v-model="form.surface"
               type="number"
@@ -59,8 +59,8 @@
           </ion-item>
 
           <!-- Budget -->
-          <ion-item>
             <ion-label position="floating">Budget estimé (Ar) *</ion-label>
+          <ion-item>
             <ion-input
               v-model="form.budget"
               type="number"
@@ -70,13 +70,12 @@
               required
               @input="validateBudget"
             ></ion-input>
-            <ion-note slot="helper" v-if="!budgetError">Budget estimé pour les réparations</ion-note>
             <ion-note slot="error" v-if="budgetError">{{ budgetError }}</ion-note>
           </ion-item>
 
           <!-- ID Entreprise -->
+          <ion-label position="floating">Entreprise</ion-label>
           <ion-item>
-            <ion-label position="floating">Entreprise (optionnel)</ion-label>
             <ion-select 
               v-model="form.id_entreprise" 
               placeholder="Choisir une entreprise si applicable"
@@ -94,8 +93,8 @@
           </ion-item>
 
           <!-- Adresse -->
+          <ion-label position="floating">Adresse</ion-label>
           <ion-item>
-            <ion-label position="floating">Adresse</ion-label>
             <ion-input
               v-model="form.adresse"
               placeholder="Adresse précise ou point de repère (ex: près du marché Analakely)"
@@ -136,6 +135,8 @@
         </ion-button>
       </div>
     </ion-content>
+    <IonFooter>
+    </IonFooter>
   </ion-modal>
 </template>
 

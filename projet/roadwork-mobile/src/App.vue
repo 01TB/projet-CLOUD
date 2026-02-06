@@ -80,7 +80,7 @@
           
           <div class="app-info">
             <p class="app-version">Version 1.0.0</p>
-            <p class="app-copyright"> 2024 RoadWork Mobile</p>
+            <p class="app-copyright"> 2026 RoadWork Mobile</p>
           </div>
         </div>
       </ion-content>
@@ -104,14 +104,26 @@ const authStore = useAuthStore();
 
 const isAuthenticated = computed(() => authStore.isAuthenticated);
 
-const navigateTo = (path) => {
+const navigateTo = async (path) => {
   console.log('Navigating to:', path);
-  router.push(path);
+  await router.push(path);
+  
+  // Fermer le menu après navigation
+  const menu = document.querySelector('ion-menu');
+  if (menu) {
+    await menu.close();
+  }
 };
 
 const logout = async () => {
   await authStore.logout();
-  router.push('/login');
+  await router.push('/login');
+  
+  // Fermer le menu après déconnexion
+  const menu = document.querySelector('ion-menu');
+  if (menu) {
+    await menu.close();
+  }
 };
 
 const getRoleLabel = (role) => {
