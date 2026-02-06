@@ -129,8 +129,8 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
 
 ```json
 {
-  "email": "user@example.mg",
-  "password": "Password123"
+  "email": "admin@signalisation.mg",
+  "password": "password123"
 }
 ```
 
@@ -400,13 +400,17 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
       "id_utilisateur_createur": "user123",
       "avancement_signalements": [
         {
-          "id": "avancement1",
-          "statut_avancement": {
-            "id": "statut1",
-            "nom": "En cours"
-          },
-          "date_creation": "2026-01-16T08:00:00.000Z",
-          "commentaire": ""
+            "id": "1",
+            "statut_avancement": {
+                "id": "2",
+                "nom": "EN_COURS"
+            },
+            "utilisateur": {
+                "id": "1",
+                "email": "admin@signalisation.mg"
+            },
+            "date_creation": "2026-02-03T08:07:24.981054",
+            "commentaire": ""
         }
       ]
     }
@@ -574,13 +578,17 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
     "id_utilisateur_createur": "user123",
     "avancement_signalements": [
       {
-        "id": "avancement1",
-        "statut_avancement": {
-          "id": "statut1",
-          "nom": "En cours"
-        },
-        "date_creation": "2026-01-16T08:00:00.000Z",
-        "commentaire": ""
+        "id": "1",
+          "statut_avancement": {
+              "id": "2",
+              "nom": "EN_COURS"
+          },
+          "utilisateur": {
+              "id": "1",
+              "email": "admin@signalisation.mg"
+          },
+          "date_creation": "2026-02-03T08:07:24.981054",
+          "commentaire": ""
       }
     ]
   }

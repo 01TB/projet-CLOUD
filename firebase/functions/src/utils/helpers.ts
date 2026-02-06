@@ -2,7 +2,7 @@ import * as admin from "firebase-admin";
 
 export const db = admin.firestore();
 export const auth = admin.auth();
-export const apiKEY = 'AIzaSyDhLRO2eNXgH2_qHnZeIZYmRjIJvwr38RU';
+export const apiKEY = "AIzaSyDhLRO2eNXgH2_qHnZeIZYmRjIJvwr38RU";
 
 // Vérifier si l'utilisateur est Manager
 export async function isManager(uid: string): Promise<boolean> {
@@ -31,6 +31,17 @@ export async function isBlocked(uid: string): Promise<boolean> {
     return !blockedSnapshot.empty;
   } catch (error) {
     return false;
+  }
+}
+
+// Obtenir les informations de l'utilisateur
+export async function getUserInfo(uid: string): Promise<any | null> {
+  try {
+    const userDoc = await db.collection("utilisateurs").doc(uid).get();
+    if (!userDoc.exists) return null;
+    return userDoc.data();
+  } catch (error) {
+    return null;
   }
 }
 
@@ -97,4 +108,40 @@ export function isValidPassword(password: string): boolean {
   return (
     password.length >= 8 && /[a-zA-Z]/.test(password) && /\d/.test(password)
   );
+}
+
+/**
+ * Génère un ID entier unique compatible avec un INT SQL
+ * @param {string} collectionName - Le nom de la collection Firestore à vérifier
+ * @returns {Promise<number>} - Un nombre entier unique
+ */
+export async function generateUniqueIntId(collectionName: string): Promise<number> {
+  const MAX_INT = 2147483647;
+  const colRef = db.collection(collectionName);
+
+  let isUnique = false;
+  let candidateId: number = 0;
+
+  while (!isUnique) {
+    // 1. Générer un candidat aléatoire
+    candidateId = Math.floor(Math.random() * MAX_INT);
+
+    // 2. Vérifier l'existence de cet ID dans Firestore
+    // On utilise limit(1) et select() pour minimiser la consommation de ressources
+    const snapshot = await colRef
+      .where("id", "==", candidateId)
+      .limit(1)
+      .select() // Ne récupère aucun champ, juste l'existence du doc
+      .get();
+
+    if (snapshot.empty) {
+      isUnique = true;
+    } else {
+      console.log(
+        `Collision détectée pour l'ID ${candidateId}, on génère à nouveau...`,
+      );
+    }
+  }
+
+  return candidateId;
 }

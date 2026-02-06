@@ -8,6 +8,8 @@ import {
   errorResponse,
   extractToken,
   verifyToken,
+  generateUniqueIntId,
+  getUserInfo,
 } from "../utils/helpers";
 
 // GET /api/signalements
@@ -57,37 +59,37 @@ export const getSignalements = functions.https.onRequest(async (req, res) => {
       snapshot.docs.slice(startIndex, endIndex).map(async (doc) => {
         const data = doc.data();
 
-        // Récupérer les avancements (gérer id string et numeric)
-        let avancementsSnapshot = await db
+        // Récupérer les avancements
+        const avancementsSnapshot = await db
           .collection("avancements_signalement")
-          .where("id_signalement", "==", doc.id)
+          .where("id_signalement", "==", data.id)
           .orderBy("date_modification", "desc")
           .get();
-
-        // Si aucun résultat et qu'il existe un id numeric, essayer avec celui-ci
-        if (avancementsSnapshot.empty && data.id !== undefined) {
-          avancementsSnapshot = await db
-            .collection("avancements_signalement")
-            .where("id_signalement", "==", data.id)
-            .orderBy("date_modification", "desc")
-            .get();
-        }
 
         const avancements = await Promise.all(
           avancementsSnapshot.docs.map(async (avDoc) => {
             const avData = avDoc.data();
             const statutDoc = await db
               .collection("statuts_avancement")
-              .doc(avData.id_statut_avancement)
+              .where("id", "==", avData.id_statut_avancement)
+              .get();
+
+              const utilisateurDoc = await db
+              .collection("utilisateurs")
+              .where("id", "==", avData.id_utilisateur)
               .get();
 
             return {
               id: avDoc.id,
               statut_avancement: {
-                id: statutDoc.id,
-                nom: statutDoc.data()?.nom,
+                id: statutDoc.docs[0].id,
+                nom: statutDoc.docs[0].data()?.nom,
               },
-              date_creation: avData.date_modification?.toDate().toISOString(),
+              utilisateur: {
+                id: utilisateurDoc.docs[0].id,
+                email: utilisateurDoc.docs[0].data()?.email || "",
+              },
+              date_creation: avData.date_modification,
               commentaire: avData.commentaire || "",
             };
           }),
@@ -128,11 +130,7 @@ export const getSignalements = functions.https.onRequest(async (req, res) => {
 
     res.status(response.status).json(response.body);
   } catch (error: any) {
-    const response = errorResponse(
-      "INTERNAL_ERROR",
-      error.message || "Erreur interne du serveur",
-      500,
-    );
+    const response = errorResponse("INTERNAL_ERROR", error.message, 500);
     res.status(response.status).json(response.body);
   }
 });
@@ -220,11 +218,14 @@ export const createSignalement = functions.https.onRequest(async (req, res) => {
         .limit(1)
         .get();
       if (!entreprisesSnapshot.empty) {
-        entrepriseId = entreprisesSnapshot.docs[0].id;
+        entrepriseId = entreprisesSnapshot.docs[0].data()?.id;
       }
     }
 
+    let userId = (await getUserInfo(decodedToken.uid))?.id;
+
     const signalementData = {
+      id: generateUniqueIntId("signalements"),
       description: description || "",
       surface,
       budget,
@@ -235,7 +236,7 @@ export const createSignalement = functions.https.onRequest(async (req, res) => {
       ),
       date_creation: new Date().toISOString(),
       date_modification: admin.firestore.FieldValue.serverTimestamp(),
-      id_utilisateur_createur: decodedToken.uid,
+      id_utilisateur_createur: userId,
       id_entreprise: entrepriseId,
       synchro: true,
     };
@@ -265,11 +266,7 @@ export const createSignalement = functions.https.onRequest(async (req, res) => {
 
     res.status(response.status).json(response.body);
   } catch (error: any) {
-    const response = errorResponse(
-      "INTERNAL_ERROR",
-      error.message || "Erreur interne du serveur",
-      500,
-    );
+    const response = errorResponse("INTERNAL_ERROR", error.message, 500);
     res.status(response.status).json(response.body);
   }
 });
@@ -318,37 +315,47 @@ export const getSignalement = functions.https.onRequest(async (req, res) => {
 
     const data = doc.data();
 
-    // Récupérer les avancements (gérer id string et numeric)
-    let avancementsSnapshot = await db
+    if (!data) {
+      const response = errorResponse(
+        "SIGNALEMENT_NOT_FOUND",
+        "Signalement non trouvé",
+        404,
+      );
+      res.status(response.status).json(response.body);
+      return;
+    }
+
+    // Récupérer les avancements
+    const avancementsSnapshot = await db
       .collection("avancements_signalement")
-      .where("id_signalement", "==", doc.id)
+      .where("id_signalement", "==", data.id)
       .orderBy("date_modification", "desc")
       .get();
-
-    // Si aucun résultat et qu'il existe un id numeric, essayer avec celui-ci
-    if (avancementsSnapshot.empty && data?.id !== undefined) {
-      avancementsSnapshot = await db
-        .collection("avancements_signalement")
-        .where("id_signalement", "==", data.id)
-        .orderBy("date_modification", "desc")
-        .get();
-    }
 
     const avancements = await Promise.all(
       avancementsSnapshot.docs.map(async (avDoc) => {
         const avData = avDoc.data();
         const statutDoc = await db
           .collection("statuts_avancement")
-          .doc(avData.id_statut_avancement)
+          .where("id", "==", avData.id_statut_avancement)
           .get();
+
+        const utilisateurDoc = await db
+              .collection("utilisateurs")
+              .where("id", "==", avData.id_utilisateur)
+              .get();
 
         return {
           id: avDoc.id,
           statut_avancement: {
-            id: statutDoc.id,
-            nom: statutDoc.data()?.nom,
+            id: statutDoc.docs[0].id,
+            nom: statutDoc.docs[0].data()?.nom,
           },
-          date_creation: avData.date_modification?.toDate().toISOString(),
+          utilisateur: {
+            id: utilisateurDoc.docs[0].id,
+            email: utilisateurDoc.docs[0].data()?.email || "",
+          },
+          date_creation: avData.date_modification,
           commentaire: avData.commentaire || "",
         };
       }),
@@ -379,11 +386,7 @@ export const getSignalement = functions.https.onRequest(async (req, res) => {
 
     res.status(response.status).json(response.body);
   } catch (error: any) {
-    const response = errorResponse(
-      "INTERNAL_ERROR",
-      error.message || "Erreur interne du serveur",
-      500,
-    );
+    const response = errorResponse("INTERNAL_ERROR", error.message, 500);
     res.status(response.status).json(response.body);
   }
 });
@@ -462,7 +465,7 @@ export const updateSignalement = functions.https.onRequest(async (req, res) => {
 
     const response = successResponse({
       data: {
-        id: doc.id,
+        id: data?.id,
         description: data?.description || "",
         surface: data?.surface,
         budget: data?.budget,
@@ -473,11 +476,7 @@ export const updateSignalement = functions.https.onRequest(async (req, res) => {
 
     res.status(response.status).json(response.body);
   } catch (error: any) {
-    const response = errorResponse(
-      "INTERNAL_ERROR",
-      error.message || "Erreur interne du serveur",
-      500,
-    );
+    const response = errorResponse("INTERNAL_ERROR", error.message, 500);
     res.status(response.status).json(response.body);
   }
 });
@@ -547,11 +546,7 @@ export const deleteSignalement = functions.https.onRequest(async (req, res) => {
 
     res.status(response.status).json(response.body);
   } catch (error: any) {
-    const response = errorResponse(
-      "INTERNAL_ERROR",
-      error.message || "Erreur interne du serveur",
-      500,
-    );
+    const response = errorResponse("INTERNAL_ERROR", error.message, 500);
     res.status(response.status).json(response.body);
   }
 });
