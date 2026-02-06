@@ -4,17 +4,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import web.backend.project.entities.AvancementSignalement;
 import web.backend.project.entities.Entreprise;
 import web.backend.project.entities.Signalement;
+import web.backend.project.entities.StatutAvancement;
 import web.backend.project.entities.Utilisateur;
 import web.backend.project.exceptions.ResourceNotFoundException;
 import web.backend.project.features.signalements.dto.SignalementInsertDTO;
 import web.backend.project.features.signalements.dto.SignalementResponseDTO;
 import web.backend.project.mappers.CrudSignalementMapper;
+import web.backend.project.mappers.SignalementMapper;
+import web.backend.project.repositories.AvancementSignalementRepo;
 import web.backend.project.repositories.EntrepriseRepository;
 import web.backend.project.repositories.SignalementRepository;
+import web.backend.project.repositories.StatutAvancementRepo;
 import web.backend.project.repositories.UtilisateurRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,7 +35,13 @@ public class SignalementService {
     @Autowired
     private EntrepriseRepository entrepriseRepository;
     @Autowired
-    private CrudSignalementMapper signalementMapper;
+    private CrudSignalementMapper crudSignalementMapper;
+    @Autowired
+    private SignalementMapper signalementMapper;
+    @Autowired
+    private AvancementSignalementRepo avancementSignalementRepo;
+    @Autowired
+    private StatutAvancementRepo statutAvancementRepo;
 
     /**
      * Crée un nouveau signalement
@@ -46,7 +58,7 @@ public class SignalementService {
                         signalementDTO.getIdEntreprise()));
 
         // Convertir DTO vers entité
-        Signalement signalement = signalementMapper.toEntity(signalementDTO, utilisateur, entreprise);
+        Signalement signalement = crudSignalementMapper.toEntity(signalementDTO, utilisateur, entreprise);
 
         // Sauvegarder
         Signalement savedSignalement = signalementRepository.save(signalement);
@@ -94,8 +106,26 @@ public class SignalementService {
                 .orElseThrow(() -> new ResourceNotFoundException("Entreprise", "id",
                         signalementDTO.getIdEntreprise()));
 
+        // Si un nouveau statut est fourni, créer un nouvel AvancementSignalement
+        if (signalementDTO.getIdNouveauStatut() != null) {
+            StatutAvancement nouveauStatut = statutAvancementRepo.findById(signalementDTO.getIdNouveauStatut())
+                    .orElseThrow(() -> new ResourceNotFoundException("StatutAvancement", "id",
+                            signalementDTO.getIdNouveauStatut()));
+
+            // Créer le nouvel avancement
+            AvancementSignalement avancement = new AvancementSignalement();
+            avancement.setDateModification(LocalDateTime.now());
+            avancement.setSynchro(false);
+            avancement.setUtilisateur(utilisateur);
+            avancement.setStatutAvancement(nouveauStatut);
+            avancement.setSignalement(signalement);
+
+            // Ajouter l'avancement au signalement
+            signalement.addAvancement(avancement);
+        }
+
         // Mettre à jour l'entité
-        signalementMapper.updateEntity(signalement, signalementDTO, utilisateur, entreprise);
+        crudSignalementMapper.updateEntity(signalement, signalementDTO, utilisateur, entreprise);
 
         // Sauvegarder
         Signalement updatedSignalement = signalementRepository.save(signalement);

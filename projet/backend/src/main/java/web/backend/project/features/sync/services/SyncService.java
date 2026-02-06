@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import web.backend.project.entities.SyncableEntity;
 import web.backend.project.entities.dto.FirebaseSerializable;
 import web.backend.project.features.sync.dto.SyncRequest;
@@ -33,6 +35,9 @@ public class SyncService {
     private final FirebaseSyncService firebaseSyncService;
     private final EntitySyncHandler entitySyncHandler;
     private final EntitySyncRegistry syncRegistry;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     // Ancien système pour rétro-compatibilité
     private final Map<String, JpaRepository<?, Integer>> repositories;

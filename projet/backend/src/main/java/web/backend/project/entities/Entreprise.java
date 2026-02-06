@@ -1,6 +1,5 @@
 package web.backend.project.entities;
 
-
 import java.util.Objects;
 
 import jakarta.persistence.Column;
@@ -10,12 +9,13 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import web.backend.project.entities.dto.EntrepriseDTO;
 
 @Entity
 @Table(name = "entreprises", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"nom"})
+        @UniqueConstraint(columnNames = { "nom" })
 })
-public class Entreprise {
+public class Entreprise implements SyncableEntity<EntrepriseDTO> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -28,7 +28,8 @@ public class Entreprise {
     private Boolean synchro = false;
 
     // Constructeurs
-    public Entreprise() {}
+    public Entreprise() {
+    }
 
     public Entreprise(String nom, Boolean synchro) {
         this.nom = nom;
@@ -63,8 +64,10 @@ public class Entreprise {
     // Equals et HashCode
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         Entreprise that = (Entreprise) o;
         return Objects.equals(id, that.id);
     }
@@ -73,4 +76,20 @@ public class Entreprise {
     public int hashCode() {
         return Objects.hash(id);
     }
+
+    @Override
+    public EntrepriseDTO toDTO() {
+        EntrepriseDTO dto = new EntrepriseDTO();
+        dto.setId(this.id);
+        dto.setNom(this.nom);
+        dto.setSynchro(this.synchro);
+        return dto;
+    }
+
+    @Override
+    public void updateFromDTO(EntrepriseDTO dto) {
+        this.nom = dto.getNom();
+        this.synchro = dto.getSynchro();
+    }
+
 }

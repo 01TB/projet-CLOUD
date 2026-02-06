@@ -57,12 +57,21 @@ export const getSignalements = functions.https.onRequest(async (req, res) => {
       snapshot.docs.slice(startIndex, endIndex).map(async (doc) => {
         const data = doc.data();
 
-        // Récupérer les avancements
-        const avancementsSnapshot = await db
+        // Récupérer les avancements (gérer id string et numeric)
+        let avancementsSnapshot = await db
           .collection("avancements_signalement")
           .where("id_signalement", "==", doc.id)
           .orderBy("date_modification", "desc")
           .get();
+
+        // Si aucun résultat et qu'il existe un id numeric, essayer avec celui-ci
+        if (avancementsSnapshot.empty && data.id !== undefined) {
+          avancementsSnapshot = await db
+            .collection("avancements_signalement")
+            .where("id_signalement", "==", data.id)
+            .orderBy("date_modification", "desc")
+            .get();
+        }
 
         const avancements = await Promise.all(
           avancementsSnapshot.docs.map(async (avDoc) => {
@@ -309,12 +318,21 @@ export const getSignalement = functions.https.onRequest(async (req, res) => {
 
     const data = doc.data();
 
-    // Récupérer les avancements
-    const avancementsSnapshot = await db
+    // Récupérer les avancements (gérer id string et numeric)
+    let avancementsSnapshot = await db
       .collection("avancements_signalement")
       .where("id_signalement", "==", doc.id)
       .orderBy("date_modification", "desc")
       .get();
+
+    // Si aucun résultat et qu'il existe un id numeric, essayer avec celui-ci
+    if (avancementsSnapshot.empty && data?.id !== undefined) {
+      avancementsSnapshot = await db
+        .collection("avancements_signalement")
+        .where("id_signalement", "==", data.id)
+        .orderBy("date_modification", "desc")
+        .get();
+    }
 
     const avancements = await Promise.all(
       avancementsSnapshot.docs.map(async (avDoc) => {
