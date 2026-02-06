@@ -226,6 +226,23 @@
                   </p>
                 </div>
                 
+                <div v-if="signalement.photos && signalement.photos.length > 0" class="detail-row">
+                  <strong>Photos:</strong>
+                  <div class="photo-gallery">
+                    <img 
+                      v-for="(photo, index) in signalement.photos.slice(0, 3)" 
+                      :key="index"
+                      :src="photo.data" 
+                      :alt="`Photo ${index + 1}`"
+                      class="detail-photo"
+                      @click="viewPhoto(photo)"
+                    />
+                    <div v-if="signalement.photos.length > 3" class="more-photos">
+                      +{{ signalement.photos.length - 3 }}
+                    </div>
+                  </div>
+                </div>
+                
                 <div class="detail-actions">
                   <ion-button 
                     size="small" 
@@ -331,7 +348,7 @@ import {
 
   IonItemOption, IonFab, IonFabButton,
 
-  toastController
+  toastController, alertController
 
 } from '@ionic/vue';
 
@@ -683,6 +700,32 @@ const shareSignalement = async (signalement) => {
 
 
 
+const viewPhoto = async (photo) => {
+
+  try {
+
+    const alert = await alertController.create({
+
+      header: 'Photo du signalement',
+
+      message: `<img src="${photo.data}" style="max-width: 100%; max-height: 300px; border-radius: 8px;" />`,
+
+      buttons: ['Fermer']
+
+    });
+
+    await alert.present();
+
+  } catch (error) {
+
+    console.error('Erreur affichage photo:', error);
+
+  }
+
+};
+
+
+
 onMounted(async () => {
 
   await loadSignalements();
@@ -831,6 +874,41 @@ ion-chip {
 
   border-top: 1px solid var(--ion-color-light);
 
+}
+
+/* Photo gallery styles */
+.photo-gallery {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.detail-photo {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.detail-photo:hover {
+  transform: scale(1.05);
+}
+
+.more-photos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ion-color-medium);
 }
 
 </style>

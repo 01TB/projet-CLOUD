@@ -19,8 +19,8 @@
 
         <form @submit.prevent="handleLogin">
           <ion-list>
+            <ion-label position="floating">Email</ion-label>
             <ion-item>
-              <ion-label position="floating">Email</ion-label>
               <ion-input
                 v-model="form.email"
                 type="email"
@@ -29,8 +29,8 @@
               ></ion-input>
             </ion-item>
 
+            <ion-label position="floating">Mot de passe</ion-label>
             <ion-item>
-              <ion-label position="floating">Mot de passe</ion-label>
               <ion-input
                 v-model="form.password"
                 type="password"

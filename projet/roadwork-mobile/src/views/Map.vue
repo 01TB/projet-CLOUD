@@ -60,6 +60,24 @@
                 <p><strong>Budget:</strong> {{ formatBudget(signalement.budget) }}</p>
                 <p><strong>Date:</strong> {{ formatDate(signalement.date_creation) }}</p>
                 
+                <!-- Photos -->
+                <div v-if="signalement.photos && signalement.photos.length > 0" class="popup-photos">
+                  <p><strong>Photos:</strong></p>
+                  <div class="photo-gallery">
+                    <img 
+                      v-for="(photo, index) in signalement.photos.slice(0, 3)" 
+                      :key="index"
+                      :src="photo.data" 
+                      :alt="`Photo ${index + 1}`"
+                      class="popup-photo"
+                      @click="viewPhoto(photo)"
+                    />
+                    <div v-if="signalement.photos.length > 3" class="more-photos">
+                      +{{ signalement.photos.length - 3 }}
+                    </div>
+                  </div>
+                </div>
+                
                 <!-- Actions CRUD pour utilisateur connecté -->
                 <div v-if="authStatus" class="popup-actions">
                   <!-- Actions pour le propriétaire du signalement
@@ -580,6 +598,19 @@ const handleMesSignalementsChange = async () => {
   filters.value.mesSignalements = !filters.value.mesSignalements;
 };
 
+const viewPhoto = async (photo) => {
+  try {
+    const alert = await alertController.create({
+      header: 'Photo du signalement',
+      message: `<img src="${photo.data}" style="max-width: 100%; max-height: 300px; border-radius: 8px;" />`,
+      buttons: ['Fermer']
+    });
+    await alert.present();
+  } catch (error) {
+    console.error('Erreur affichage photo:', error);
+  }
+};
+
 // Lifecycle
 onMounted(async () => {
   // Enregistrer le cleanup avant les await
@@ -800,6 +831,44 @@ ion-modal {
     min-width: 200px;
     max-width: 250px;
   }
+}
+
+/* Popup photos */
+.popup-photos {
+  margin-top: 0.5rem;
+}
+
+.photo-gallery {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+  margin-top: 0.25rem;
+}
+
+.popup-photo {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.popup-photo:hover {
+  transform: scale(1.05);
+}
+
+.more-photos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ion-color-medium);
 }
 
 /* Dark mode support */

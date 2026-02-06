@@ -81,17 +81,22 @@
           </ion-card-content>
         </ion-card>
 
-        <!-- Images -->
-        <ion-card v-if="signalement.images && signalement.images.length > 0">
+        <!-- Photos -->
+        <ion-card v-if="signalement.photos && signalement.photos.length > 0">
           <ion-card-header>
-            <ion-card-title>Images</ion-card-title>
+            <ion-card-title>Photos</ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            <ion-slides pager="true" :options="slideOptions">
-              <ion-slide v-for="(image, index) in signalement.images" :key="index">
-                <img :src="image.url" :alt="`Image ${index + 1}`" class="signalement-image" />
-              </ion-slide>
-            </ion-slides>
+            <Swiper 
+              :modules="[Pagination]"
+              :pagination="{ clickable: true }"
+              :space-between="10"
+              class="signalement-swiper"
+            >
+              <SwiperSlide v-for="(photo, index) in signalement.photos" :key="index">
+                <img :src="photo.data" :alt="`Photo ${index + 1}`" class="signalement-image" />
+              </SwiperSlide>
+            </Swiper>
           </ion-card-content>
         </ion-card>
 
@@ -101,16 +106,16 @@
             <ion-card-title>Historique des avancements</ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            <ion-timeline>
+            <ion-list>
               <ion-item v-for="avancement in sortedAvancements" :key="avancement.id">
-                <div slot="start" class="timeline-dot" :class="getStatusClass(avancement.statut_avancement?.nom)"></div>
+                <div class="timeline-dot" :class="getStatusClass(avancement.statut_avancement?.nom)" slot="start"></div>
                 <ion-label>
-                  <h3>{{ avancement.statut_avancement?.nom || 'Nouveau' }}</h3>
-                  <p>{{ formatDate(avancement.date_creation) }}</p>
+                  <h3>{{ avancement.statut_avancement?.nom || 'Statut inconnu' }}</h3>
+                  <p>{{ formatDate(avancement.date_avancement) }}</p>
                   <p v-if="avancement.commentaire">{{ avancement.commentaire }}</p>
                 </ion-label>
               </ion-item>
-            </ion-timeline>
+            </ion-list>
           </ion-card-content>
         </ion-card>
 
@@ -148,9 +153,13 @@ import {
   IonButton, IonIcon, IonBackButton, IonButtons,
   IonCard, IonCardContent, IonCardHeader, IonCardTitle,
   IonList, IonItem, IonLabel, IonNote, IonBadge, IonSpinner,
-  IonGrid, IonRow, IonCol, IonSlides, IonSlide, IonTimeline,
+  IonGrid, IonRow, IonCol,
   toastController
 } from '@ionic/vue';
+import { Swiper, SwiperSlide } from 'swiper/vue';
+import { Pagination } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/pagination';
 import {
   create, alertCircle, map, shareSocial, resize
 } from 'ionicons/icons';
@@ -165,12 +174,6 @@ const signalementsStore = useSignalementsStore();
 const loading = ref(true);
 const signalement = ref(null);
 const mapContainer = ref(null);
-
-const slideOptions = {
-  initialSlide: 0,
-  speed: 400,
-  spaceBetween: 10
-};
 
 const backRoute = computed(() => {
   return route.query.from || '/signalements';
@@ -400,5 +403,33 @@ ion-card-header {
 ion-card-title {
   font-size: 1.1rem;
   font-weight: 600;
+}
+
+/* Swiper styles */
+.signalement-swiper {
+  height: 300px;
+  width: 100%;
+}
+
+.signalement-swiper .swiper-slide {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.signalement-image {
+  max-width: 100%;
+  max-height: 280px;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.signalement-swiper .swiper-pagination-bullet {
+  background: var(--ion-color-primary);
+}
+
+.signalement-swiper .swiper-pagination-bullet-active {
+  background: var(--ion-color-primary);
 }
 </style>
