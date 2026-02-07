@@ -39,6 +39,9 @@
 .login-form-section {
   flex: 1;
   display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
   flex-direction: column;
   background: white;
   overflow-y: auto;
