@@ -17,9 +17,11 @@ import web.backend.project.features.sync.dto.SyncRequest;
 import web.backend.project.features.sync.dto.SyncResponse;
 import web.backend.project.features.sync.dto.SyncResponse.EntitySyncResult;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Service principal d'orchestration de la synchronisation
@@ -151,8 +153,9 @@ public class SyncService {
 
     /**
      * Effectue un pull Firebase → Backend
-     * Utilise le système générique via EntitySyncRegistry
+     * Après traitement, repousse les entités vers Firebase avec synchro=true
      */
+    @SuppressWarnings("unchecked")
     private EntitySyncResult performPull(String entityType) {
         SyncResponse.EntitySyncResult result = new SyncResponse.EntitySyncResult();
 
@@ -185,9 +188,13 @@ public class SyncService {
             }
 
             // Met à jour ou crée les entités via le système générique
+            // Collecte les entités traitées pour les repousser vers Firebase
+            List<SyncableEntity<?>> processedEntities = new ArrayList<>();
+
             for (Map<String, Object> data : firebaseData) {
                 try {
-                    entitySyncHandler.updateOrCreateFromFirebase(entityType, data);
+                    SyncableEntity<?> savedEntity = entitySyncHandler.updateOrCreateFromFirebase(entityType, data);
+                    processedEntities.add(savedEntity);
                     result.incrementPulled();
                 } catch (Exception e) {
                     logger.error("Failed to pull entity of type {} for data {}: {}", entityType, data, e.getMessage());
@@ -197,6 +204,28 @@ public class SyncService {
             }
 
             logger.info("Pulled {} entities of type {} from Firebase", result.getPulled(), entityType);
+
+            // Après traitement, repousse les entités vers Firebase avec synchro=true
+            if (!processedEntities.isEmpty()) {
+                try {
+                    List<FirebaseSerializable> dtos = processedEntities.stream()
+                            .map(entity -> {
+                                FirebaseSerializable dto = ((SyncableEntity<FirebaseSerializable>) entity).toDTO();
+                                dto.setSynchro(true);
+                                return dto;
+                            })
+                            .collect(Collectors.toList());
+
+                    int pushed = firebaseSyncService.pushToFirebase(entityType, dtos);
+                    result.setPushed(pushed);
+                    logger.info("Pushed back {} entities of type {} to Firebase after pull (synchro=true)",
+                            pushed, entityType);
+                } catch (Exception e) {
+                    logger.error("Failed to push back entities to Firebase after pull for type {}: {}",
+                            entityType, e.getMessage());
+                    logger.debug("Push-back stacktrace:", e);
+                }
+            }
 
         } catch (Exception e) {
             logger.error("Pull failed for entity type: {}", entityType, e);
