@@ -1,8 +1,7 @@
 -- 1. Insertion des Rôles
 INSERT INTO role (nom, synchro) VALUES 
 ('Administrateur', true),
-('Utilisateur', true),
-('Entreprise', true);
+('Utilisateur', true);
 
 -- 2. Insertion des Entreprises
 INSERT INTO entreprise (nom, synchro) VALUES 
@@ -13,10 +12,8 @@ INSERT INTO entreprise (nom, synchro) VALUES
 -- 3. Insertion des Statuts d''avancement
 INSERT INTO statut_avancement (nom, valeur, synchro) VALUES 
 ('Nouveau', 0, true),
-('En cours d''analyse', 25, true),
-('Travaux commencés', 50, true),
-('Travaux terminés', 100, true),
-('Rejeté', -1, true);
+('En cours', 50, true),
+('Terminé', 100, true);
 
 -- 4. Insertion des Paramètres globaux
 INSERT INTO parametre (nb_tentatives_connexion, duree_session, synchro) VALUES 
@@ -28,7 +25,7 @@ INSERT INTO utilisateur (email, password, synchro, id_role) VALUES
 ('admin@signalement.com', 'admin123', true, 1), -- ID 1 (Admin)
 ('jean.dupont@email.com', 'user123', true, 2), -- ID 2 (User)
 ('marie.curie@email.com', 'user456', true, 2), -- ID 3 (User)
-('contact@btp-renovation.com', 'entr123', true, 3), -- ID 4 (Entreprise)
+('contact@btp-renovation.com', 'entr123', true, 2), -- ID 2
 ('spammeur@bad.com', 'badpass', true, 2); -- ID 5 (A bloquer)
 
 -- 6. Insertion d'un Utilisateur bloqué
@@ -76,4 +73,4 @@ INSERT INTO avancement_signalement (date_modification, synchro, id_utilisateur, 
 -- Historique pour le signalement 2
 (NOW() - INTERVAL '5 days', true, 3, 1, 2), -- Créé
 (NOW() - INTERVAL '4 days', true, 1, 2, 2), -- En analyse
-(NOW() - INTERVAL '1 day', true, 4, 3, 2);  -- Travaux commencés (par l'entreprise)
+(NOW() - INTERVAL '1 day', true, 4, 3, 2);  -- Terminé)

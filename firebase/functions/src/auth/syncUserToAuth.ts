@@ -12,7 +12,7 @@ export const syncUserToAuth = functions.firestore
   .document("utilisateurs/{userId}")
   .onCreate(async (snap, context) => {
     const userData = snap.data();
-    const userId = context.params.userId;
+    const userId = userData.id; // ID numérique de l'utilisateur (champ "id" dans Firestore)
 
     try {
       // Vérifier que les champs nécessaires sont présents
@@ -29,7 +29,7 @@ export const syncUserToAuth = functions.firestore
 
       // Créer l'utilisateur dans Firebase Authentication
       const userRecord = await admin.auth().createUser({
-        uid: userId, // Utiliser l'ID du document Firestore comme UID Firebase Auth
+        uid: userData.id.toString(), // Utiliser l'ID du document Firestore comme UID Firebase Auth
         email: userData.email,
         password: userData.password, // ⚠️ En production, ne jamais stocker le password en clair
         displayName: displayName
