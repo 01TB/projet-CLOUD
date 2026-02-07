@@ -16,7 +16,6 @@ import web.backend.project.entities.Signalement;
 import web.backend.project.entities.Utilisateur;
 import web.backend.project.features.signalements.dto.SignalementInsertDTO;
 import web.backend.project.features.signalements.dto.AvancementResponseDTO;
-import web.backend.project.features.signalements.dto.SignalementDTO;
 import web.backend.project.features.signalements.dto.SignalementResponseDTO;
 import web.backend.project.repositories.AvancementSignalementRepo;
 

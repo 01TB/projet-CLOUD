@@ -10,7 +10,6 @@ import java.util.Objects;
 @Table(name = "utilisateurs_bloques")
 public class UtilisateurBloque implements SyncableEntity<UtilisateurBloqueDTO> {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Integer id;
 

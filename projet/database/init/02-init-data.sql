@@ -1,78 +1,76 @@
--- -- ===============================
--- -- = DONNÉES DE TEST MINIMALES
--- -- ===============================
+-- 1. Insertion des Rôles
+INSERT INTO roles (nom, synchro) VALUES 
+('Administrateur', false),
+('Utilisateur', false);
 
--- -- Insertion des rôles
--- INSERT INTO roles (nom, synchro) VALUES 
---     ('ADMIN', false),
---     ('UTILISATEUR', false),
---     ('SUPERVISEUR', false)
--- ON CONFLICT (nom) DO NOTHING;
+-- 2. Insertion des Entreprises
+INSERT INTO entreprises (nom, synchro) VALUES 
+('BTP Rénovation', false),
+('Eco-Construction', false),
+('Travaux Express', false);
 
--- -- Insertion des statuts d'avancement
--- INSERT INTO statuts_avancement (nom, valeur, synchro) VALUES 
---     ('EN_ATTENTE', 0, false),
---     ('EN_COURS', 1, false),
---     ('TERMINE', 2, false),
---     ('ANNULE', 3, false)
--- ON CONFLICT (nom) DO NOTHING;
+-- 3. Insertion des Statuts d''avancement
+INSERT INTO statuts_avancement (nom, valeur, synchro) VALUES 
+('Nouveau', 0, false),
+('En cours', 50, false),
+('Terminé', 100, false);
 
--- -- Insertion des entreprises de test
--- INSERT INTO entreprises (nom, synchro) VALUES 
---     ('Entreprise Madagascar Routes', false),
---     ('Construction Tana', false),
---     ('BTP Services', false)
--- ON CONFLICT (nom) DO NOTHING;
+-- 4. Insertion des Paramètres globaux
+INSERT INTO parametres (nb_tentatives_connexion, duree_session, synchro) VALUES 
+(5, 3600, false);
 
--- -- Insertion des paramètres système
--- INSERT INTO parametres (nb_tentatives_connexion, duree_session, synchro) 
--- SELECT 3, 3600, false
--- WHERE NOT EXISTS (SELECT 1 FROM parametres LIMIT 1);
--- -- Insertion d'utilisateurs de test (password: 'password123' hashé avec BCrypt)
--- -- Note: Vous devriez remplacer ces passwords par des hashs BCrypt réels
--- INSERT INTO utilisateurs (email, password, synchro, id_role) VALUES 
---     ('admin@signalisation.mg', 'password123', false, 
---      (SELECT id FROM roles WHERE nom = 'ADMIN')),
---     ('user@signalisation.mg', 'password123', false, 
---      (SELECT id FROM roles WHERE nom = 'UTILISATEUR')),
---     ('superviseur@signalisation.mg', 'password123', false, 
---      (SELECT id FROM roles WHERE nom = 'SUPERVISEUR'))
--- ON CONFLICT (email) DO NOTHING;
+-- 5. Insertion des Utilisateurs
+-- Note: Les mots de passe sont en clair ici pour l'exemple, mais devraient être hachés en prod.
+INSERT INTO utilisateurs (email, password, synchro, id_role) VALUES 
+('admin@signalement.com', 'admin123', false, 1), -- ID 1 (Admin)
+('jean.dupont@email.com', 'user123', false, 2), -- ID 2 (User)
+('marie.curie@email.com', 'user456', false, 2), -- ID 3 (User)
+('contact@btp-renovation.com', 'entr123', false, 2), -- ID 2
+('spammeur@bad.com', 'badpass', false, 2); -- ID 5 (A bloquer)
 
--- -- Insertion d'un signalements de test pour Antananarivo
--- -- Coordonnées: Place de l'Indépendance, Antananarivo (-18.9137, 47.5361)
--- INSERT INTO signalements (date_creation, surface, budget, localisation, synchro, id_utilisateur_createur, id_entreprise) VALUES 
---     (
---         '2026-01-20T10:30:00',
---         150.5,
---         5000000,
---         ST_GeogFromText('POINT(47.5361 -18.9137)'),
---         false,
---         (SELECT id FROM utilisateurs WHERE email = 'admin@signalisation.mg'),
---         (SELECT id FROM entreprises WHERE nom = 'Entreprise Madagascar Routes')
---     )
--- ON CONFLICT DO NOTHING;
+-- 6. Insertion d'un Utilisateur bloqué
+INSERT INTO utilisateurs_bloques (date_blocage, synchro, id_utilisateur) VALUES 
+('2023-10-25 14:00:00', false, 5);
 
--- -- Insertion d'un avancement pour le signalements de test
--- INSERT INTO avancements_signalement (date_modification, synchro, id_utilisateur, id_statut_avancement, id_signalement)
--- SELECT 
---     CURRENT_TIMESTAMP,
---     false,
---     (SELECT id FROM utilisateurs WHERE email = 'admin@signalisation.mg'),
---     (SELECT id FROM statuts_avancement WHERE nom = 'EN_COURS'),
---     (SELECT id FROM signalements ORDER BY id DESC LIMIT 1)
--- WHERE EXISTS (SELECT 1 FROM signalements);
+-- 7. Insertion des Signalements
+-- Note: Localisation utilise la syntaxe PostGIS (Longitude, Latitude). 
+-- date_creation est un VARCHAR dans votre schéma.
+INSERT INTO signalements (date_creation, surface, budget, localisation, synchro, id_utilisateur_createur, id_entreprise) VALUES 
+(
+    '2023-11-01 09:30:00', 
+    45.5, 
+    15000, 
+    ST_GeographyFromText('POINT(47.50 18.90)'), -- Exemple coords Madagascar (Antananarivo approx)
+    false, 
+    2, -- Jean Dupont
+    1  -- BTP Rénovation
+),
+(
+    '2023-11-02 10:15:00', 
+    120.0, 
+    50000, 
+    ST_GeographyFromText('POINT(49.29 -12.28)'), -- Exemple coords (Diego Suarez approx)
+    false, 
+    3, -- Marie Curie
+    2  -- Eco-Construction
+),
+(
+    '2023-11-03 16:00:00', 
+    15.0, 
+    2000, 
+    ST_GeographyFromText('POINT(47.52 18.92)'), 
+    false, 
+    2, -- Jean Dupont
+    3  -- Travaux Express
+);
 
--- -- Affichage de confirmation
--- DO $$
--- BEGIN
---     RAISE NOTICE '===========================================';
---     RAISE NOTICE 'Données de test insérées avec succès';
---     RAISE NOTICE '===========================================';
---     RAISE NOTICE 'Utilisateurs créés:';
---     RAISE NOTICE '  - admin@signalisation.mg (ADMIN)';
---     RAISE NOTICE '  - user@signalisation.mg (UTILISATEUR)';
---     RAISE NOTICE '  - superviseur@signalisation.mg (SUPERVISEUR)';
---     RAISE NOTICE 'Password par défaut: password123';
---     RAISE NOTICE '===========================================';
--- END $$;
+-- 8. Insertion de l'historique d'avancement (Avancement Signalement)
+INSERT INTO avancements_signalement (date_modification, synchro, id_utilisateur, id_statut_avancement, id_signalement) VALUES 
+-- Historique pour le signalement 1
+(NOW() - INTERVAL '3 days', false, 2, 1, 1), -- Créé par l'utilisateur (Statut Nouveau)
+(NOW() - INTERVAL '2 days', false, 1, 2, 1), -- Passé en analyse par l'admin
+
+-- Historique pour le signalement 2
+(NOW() - INTERVAL '5 days', false, 3, 1, 2), -- Créé
+(NOW() - INTERVAL '4 days', false, 1, 2, 2), -- En analyse
+(NOW() - INTERVAL '1 day', false, 4, 3, 2);  -- Terminé)

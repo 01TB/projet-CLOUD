@@ -6,10 +6,11 @@ import web.backend.project.entities.dto.UtilisateurDTO;
 import java.util.Objects;
 
 @Entity
-@Table(name = "utilisateurs")
+@Table(name = "utilisateurs", uniqueConstraints = {
+        @UniqueConstraint(columnNames = { "email" })
+})
 public class Utilisateur implements SyncableEntity<UtilisateurDTO> {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Integer id;
 

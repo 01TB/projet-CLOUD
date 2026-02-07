@@ -9,7 +9,6 @@ import java.util.Objects;
 @Table(name = "parametres")
 public class Parametre implements SyncableEntity<ParametreDTO> {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Integer id;
 
