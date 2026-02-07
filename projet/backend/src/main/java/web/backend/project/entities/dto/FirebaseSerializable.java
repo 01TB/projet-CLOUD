@@ -10,8 +10,8 @@ import java.util.Map;
 public interface FirebaseSerializable {
 
     /*
-    * Getters et Setters communs
-    */
+     * Getters et Setters communs
+     */
     Integer getId();
 
     void setId(Integer id);
@@ -96,10 +96,18 @@ public interface FirebaseSerializable {
         if (value == null)
             return null;
         if (value instanceof String) {
+            String str = ((String) value).trim();
             try {
-                return java.time.LocalDateTime.parse((String) value);
-            } catch (Exception e) {
-                return null;
+                // Format ISO standard: "2026-02-07T12:39:22"
+                return java.time.LocalDateTime.parse(str);
+            } catch (Exception e1) {
+                try {
+                    // Format avec espace au lieu de T: "2026-02-07 12:39:22"
+                    return java.time.LocalDateTime.parse(str,
+                            java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                } catch (Exception e2) {
+                    return null;
+                }
             }
         }
         return null;

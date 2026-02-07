@@ -66,7 +66,13 @@ public class FirebaseSyncService {
 
             for (QueryDocumentSnapshot document : documents) {
                 Map<String, Object> data = document.getData();
-                data.put("id", document.getId()); // Ajouter l'ID du document
+                // Stocker l'ID du document Firestore séparément
+                data.put("_firebase_doc_id", document.getId());
+                // Ne mettre l'ID Firestore dans "id" que si le document n'a pas déjà un id
+                // entier valide
+                if (!data.containsKey("id") || data.get("id") == null) {
+                    data.put("id", document.getId());
+                }
                 results.add(data);
             }
         } catch (InterruptedException | ExecutionException e) {

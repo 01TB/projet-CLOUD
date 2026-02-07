@@ -31,5 +31,8 @@ export { getEntreprises } from "./entreprises";
 // Statistiques
 export { getStats } from "./stats";
 
+// Photos de signalements
+export { addSignalementPhoto } from "./photos";
+
 // Synchronisation
 export { syncToBackend } from "./sync";
