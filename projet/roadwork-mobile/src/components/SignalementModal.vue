@@ -92,8 +92,8 @@
             </ion-select>
           </ion-item>
 
-          <!-- Photos -->
-          <ion-label position="floating">Photos</ion-label>
+          <!-- Photos (temporairement désactivé) -->
+          <!-- <ion-label position="floating">Photos</ion-label>
           <ion-item>
             <div class="photo-section">
               <div class="photo-preview" v-if="form.photos.length > 0">
@@ -141,7 +141,7 @@
                 <small>Maximum 3 photos atteint</small>
               </ion-text>
             </div>
-          </ion-item>
+          </ion-item> -->
 
           <!-- Adresse -->
           <ion-label position="floating">Adresse</ion-label>
@@ -200,7 +200,7 @@ import {
   IonFooter, IonListHeader, toastController, IonButtons, IonBackButton, IonNote,
   IonSelect, IonSelectOption
 } from '@ionic/vue';
-import { pin, camera, images, close } from 'ionicons/icons';
+import { pin, /* camera, images, */ close } from 'ionicons/icons';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useSignalementsStore } from '@/store/modules/signalements';
@@ -232,6 +232,7 @@ const form = ref({
   budget: '',
   adresse: '',
   id_entreprise: '',
+  // photos: [] // Temporairement désactivé
   photos: []
 });
 
@@ -261,6 +262,31 @@ const validationErrors = computed(() => {
 const formValid = computed(() => {
   return validationErrors.value.length === 0;
 });
+
+// Validation refs
+const surfaceError = ref('');
+const budgetError = ref('');
+
+// Validation functions
+const validateSurface = () => {
+  const surface = parseFloat(form.value.surface);
+  if (!form.value.surface || surface <= 0) {
+    surfaceError.value = 'La surface doit être supérieure à 0';
+    return false;
+  }
+  surfaceError.value = '';
+  return true;
+};
+
+const validateBudget = () => {
+  const budget = parseFloat(form.value.budget);
+  if (!form.value.budget || budget < 1000) {
+    budgetError.value = 'Le budget minimum est de 1000 Ar';
+    return false;
+  }
+  budgetError.value = '';
+  return true;
+};
 
 const entreprises = computed(() => entreprisesStore.entreprises || []);
 
@@ -327,7 +353,11 @@ const initMiniMap = () => {
 };
 
 const handleSubmit = async () => {
-  if (!formValid.value) {
+  // Valider explicitement tous les champs
+  const isSurfaceValid = validateSurface();
+  const isBudgetValid = validateBudget();
+  
+  if (!formValid.value || !isSurfaceValid || !isBudgetValid) {
     return;
   }
 
@@ -340,12 +370,12 @@ const handleSubmit = async () => {
       surface: parseFloat(form.value.surface),
       budget: parseFloat(form.value.budget),
       adresse: form.value.adresse.trim() || undefined,
-      id_entreprise: form.value.id_entreprise ? parseInt(form.value.id_entreprise) : undefined,
-      photos: form.value.photos.map(photo => ({
-        data: photo.data,
-        name: photo.name,
-        type: photo.type
-      })),
+      id_entreprise: form.value.id_entreprise ? String(form.value.id_entreprise) : undefined,
+      // photos: form.value.photos.map(photo => ({ // Temporairement désactivé
+      //   data: photo.data,
+      //   name: photo.name,
+      //   type: photo.type
+      // })),
       localisation: {
         type: 'Point',
         coordinates: [props.coordinates.lng, props.coordinates.lat]
@@ -354,7 +384,13 @@ const handleSubmit = async () => {
 
     console.log('Données du signalement:', signalementData);
     
-    await signalementsStore.createSignalement(signalementData);
+    // Vérifier le token d'authentification
+    const token = localStorage.getItem('token') || localStorage.getItem('idToken');
+    console.log('Token présent:', !!token);
+    console.log('Token preview:', token ? token.substring(0, 20) + '...' : 'none');
+    
+    const result = await signalementsStore.createSignalement(signalementData);
+    console.log('Result:', result);
     
     const toast = await toastController.create({
       message: 'Signalement créé avec succès !',
@@ -374,8 +410,14 @@ const handleSubmit = async () => {
       budget: '',
       adresse: '',
       id_entreprise: '',
+      // photos: [] // Temporairement désactivé
       photos: []
     };
+    
+    // Reset validation errors
+    surfaceError.value = '';
+    budgetError.value = '';
+    error.value = '';
     
   } catch (err) {
     console.error('Erreur création signalement:', err);
@@ -432,7 +474,8 @@ watch(() => props.isOpen, (newValue) => {
   }
 }, { deep: true });
 
-// Fonctions de gestion des photos
+// Fonctions de gestion des photos (temporairement désactivées)
+/*
 const selectFromGallery = async () => {
   try {
     const input = document.createElement('input');
@@ -540,6 +583,7 @@ const removePhoto = (index) => {
   form.value.photos.splice(index, 1);
   showToast('Photo supprimée', 'success');
 };
+*/
 
 const showToast = async (message, color = 'primary') => {
   const toast = await toastController.create({
@@ -559,6 +603,15 @@ watch(() => props.coordinates, (newCoords) => {
     }, 100);
   }
 }, { deep: true });
+
+// Watchers pour la validation en temps réel
+watch(() => form.value.surface, () => {
+  validateSurface();
+});
+
+watch(() => form.value.budget, () => {
+  validateBudget();
+});
 </script>
 
 <style scoped>
@@ -595,7 +648,8 @@ ion-list {
   font-size: 0.9rem;
 }
 
-/* Photo section styles */
+/* Photo section styles (temporairement désactivées) */
+/*
 .photo-section {
   width: 100%;
   padding: 0.5rem 0;
@@ -645,6 +699,7 @@ ion-list {
   flex: 1;
   min-width: 120px;
 }
+*/
 
 ion-item {
   --background: rgba(255, 255, 255, 0.9);

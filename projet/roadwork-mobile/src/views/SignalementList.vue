@@ -380,7 +380,7 @@ const loading = ref(true);
 
 const showFilters = ref(true);
 
-const selectedStatus = ref(['Nouveau']); // "Nouveau" sélectionné par défaut
+const selectedStatus = ref(['En attente']); // "En attente" sélectionné par défaut
 
 const expandedSignalements = ref([]); // IDs des signalements développés
 
@@ -438,11 +438,11 @@ const getCurrentStatus = (signalement) => {
 
   if (signalement.avancement_signalements && signalement.avancement_signalements[0]) {
 
-    return signalement.avancement_signalements[0].statut_avancement?.nom || 'Nouveau';
+    return signalement.avancement_signalements[0].statut_avancement?.nom || 'En attente';
 
   }
 
-  return 'Nouveau';
+  return 'En attente';
 
 };
 
@@ -452,9 +452,13 @@ const getStatusColor = (status) => {
 
   const colors = {
 
-    'Nouveau': 'danger',
+    'En attente': 'danger',
 
     'En cours': 'warning',
+
+    'En validation': 'tertiary',
+
+    'Validé': 'success',
 
     'Terminé': 'success'
 

@@ -153,12 +153,6 @@ export const useAuthStore = defineStore('auth', {
           this.token = validToken;
           this.idToken = (idToken && idToken !== 'undefined') ? idToken : null;
           this.isAuthenticated = true;
-          console.log('Auth initialized from localStorage:', {
-            user: this.user,
-            hasToken: !!this.token,
-            hasIdToken: !!this.idToken,
-            tokenValue: this.token
-          });
         } catch (error) {
           console.error('Error parsing user from localStorage:', error);
           this.logout();

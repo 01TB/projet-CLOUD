@@ -145,19 +145,11 @@ class AuthService {
     try {
       const baseURL = import.meta.env.VITE_API_URL || 'https://us-central1-projet-cloud-e2146.cloudfunctions.net';
       const fullUrl = `${baseURL}/me`;
-      console.log('Checking auth at:', fullUrl);
-      console.log('With token:', this.token ? 'present' : 'missing');
       
       const response = await api.get('/me');
-      console.log('Auth check response:', response.data);
       return response.data.success;
     } catch (error) {
-      console.warn('Auth check failed:', error);
-      console.warn('Error details:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data
-      });
+      console.warn('Auth check failed:', error.message);
       return false;
     }
   }

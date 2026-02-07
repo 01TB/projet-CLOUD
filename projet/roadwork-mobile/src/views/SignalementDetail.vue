@@ -198,15 +198,17 @@ const sortedAvancements = computed(() => {
 
 const getCurrentStatus = () => {
   if (signalement.value?.avancement_signalements && signalement.value.avancement_signalements[0]) {
-    return signalement.value.avancement_signalements[0].statut_avancement?.nom || 'Nouveau';
+    return signalement.value.avancement_signalements[0].statut_avancement?.nom || 'En attente';
   }
-  return 'Nouveau';
+  return 'En attente';
 };
 
 const getStatusColor = (status) => {
   const colors = {
-    'Nouveau': 'danger',
+    'En attente': 'danger',
     'En cours': 'warning',
+    'En validation': 'tertiary',
+    'Validé': 'success',
     'Terminé': 'success'
   };
   return colors[status] || 'medium';
@@ -214,8 +216,10 @@ const getStatusColor = (status) => {
 
 const getStatusClass = (status) => {
   const classes = {
-    'Nouveau': 'status-new',
+    'En attente': 'status-new',
     'En cours': 'status-progress',
+    'En validation': 'status-validation',
+    'Validé': 'status-completed',
     'Terminé': 'status-completed'
   };
   return classes[status] || 'status-default';
@@ -382,6 +386,10 @@ onMounted(() => {
 
 .status-progress {
   background: var(--ion-color-warning);
+}
+
+.status-validation {
+  background: var(--ion-color-tertiary);
 }
 
 .status-completed {

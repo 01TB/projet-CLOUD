@@ -8,9 +8,11 @@ export const useSignalementsStore = defineStore('signalements', {
     currentSignalement: null,
     mySignalements: [],
     statuts: [
-      { id: 1, nom: 'Nouveau' },
-      { id: 2, nom: 'En cours' },
-      { id: 3, nom: 'Terminé' }
+      { id: "statut1", nom: "En attente", valeur: 0 },
+      { id: "statut2", nom: "En cours", valeur: 25 },
+      { id: "statut3", nom: "En validation", valeur: 50 },
+      { id: "statut4", nom: "Validé", valeur: 75 },
+      { id: "statut5", nom: "Terminé", valeur: 100 }
     ],
     stats: {
       total_signalements: 0,
@@ -103,6 +105,23 @@ export const useSignalementsStore = defineStore('signalements', {
       }
     },
 
+    async fetchSignalementById(id) {
+      this.loading = true;
+      try {
+        const result = await signalementService.getSignalementById(id);
+        if (result.success) {
+          this.currentSignalement = result.data;
+        }
+        return result;
+      } catch (error) {
+        console.error('Error fetching signalement by ID:', error);
+        this.error = 'Erreur lors du chargement du signalement';
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
     setFilter(filter) {
       this.filter = filter;
     },
@@ -131,10 +150,12 @@ export const useSignalementsStore = defineStore('signalements', {
         count
       }));
       
-      // Avancement moyen (simplifié)
+      // Avancement moyen (basé sur les valeurs de l'API)
       const statusValues = {
-        'Nouveau': 0,
-        'En cours': 50,
+        'En attente': 0,
+        'En cours': 25,
+        'En validation': 50,
+        'Validé': 75,
         'Terminé': 100
       };
       
@@ -147,10 +168,10 @@ export const useSignalementsStore = defineStore('signalements', {
     },
 
     getCurrentStatus(signalement) {
-      if (signalement.avancement_signalements && signalement.avancement_signalements[0]) {
-        return signalement.avancement_signalements[0].statut_avancement?.nom || 'Nouveau';
+      if (signalement.avancement_signalements && signalement.avancement_signalements.length > 0) {
+        return signalement.avancement_signalements[0].statut_avancement?.nom || 'En attente';
       }
-      return 'Nouveau';
+      return 'En attente';
     },
 
     async fetchStatuts() {
@@ -164,18 +185,22 @@ export const useSignalementsStore = defineStore('signalements', {
         } else {
           // Statuts par défaut si l'API ne retourne rien
           this.statuts = [
-            { id: 1, nom: 'Nouveau' },
-            { id: 2, nom: 'En cours' },
-            { id: 3, nom: 'Terminé' }
+            { id: "statut1", nom: "En attente", valeur: 0 },
+            { id: "statut2", nom: "En cours", valeur: 25 },
+            { id: "statut3", nom: "En validation", valeur: 50 },
+            { id: "statut4", nom: "Validé", valeur: 75 },
+            { id: "statut5", nom: "Terminé", valeur: 100 }
           ];
         }
       } catch (error) {
         console.error('Error fetching statuts:', error);
         // Statuts par défaut en cas d'erreur
         this.statuts = [
-          { id: 1, nom: 'Nouveau' },
-          { id: 2, nom: 'En cours' },
-          { id: 3, nom: 'Terminé' }
+          { id: "statut1", nom: "En attente", valeur: 0 },
+          { id: "statut2", nom: "En cours", valeur: 25 },
+          { id: "statut3", nom: "En validation", valeur: 50 },
+          { id: "statut4", nom: "Validé", valeur: 75 },
+          { id: "statut5", nom: "Terminé", valeur: 100 }
         ];
       } finally {
         this.loading = false;

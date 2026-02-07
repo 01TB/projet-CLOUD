@@ -37,8 +37,11 @@
         >
           <l-tile-layer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            :options="tileOptions"
             layer-type="base"
             name="OpenStreetMap"
+            @tileerror="onTileError"
+            @tileload="onTileLoad"
           ></l-tile-layer>
           
           <!-- Marqueurs des signalements -->
@@ -289,7 +292,7 @@ const selectedCoordinates = ref({ lat: -18.8792, lng: 47.5079 });
 
 // Filtres
 const filters = ref({
-  statuts: ['Nouveau', 'En cours', 'Terminé'],
+  statuts: ['En attente', 'En cours', 'En validation', 'Validé', 'Terminé'],
   mesSignalements: false
 });
 
@@ -313,6 +316,20 @@ const userLocationIcon = computed(() => {
     popupAnchor: [1, -34]
   });
 });
+
+// Options pour les tiles de la carte
+const tileOptions = {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  maxZoom: 19,
+  errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhQDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+  noWrap: false,
+  tileSize: 256,
+  zoomOffset: 0,
+  keepBuffer: 4,
+  updateWhenIdle: false,
+  updateWhenZooming: false,
+  preferCanvas: true
+};
 
 const filteredSignalements = computed(() => {
   let signalements = signalementsStore.signalements || [];
@@ -462,9 +479,11 @@ const getLatLng = (signalement) => {
       signalement.localisation.coordinates.length >= 2 &&
       signalement.localisation.coordinates[0] != null && 
       signalement.localisation.coordinates[1] != null) {
+    // Format API : [longitude, latitude]
+    // Leaflet attend : [latitude, longitude]
     return [
-      signalement.localisation.coordinates[1],
-      signalement.localisation.coordinates[0]
+      signalement.localisation.coordinates[1], // latitude
+      signalement.localisation.coordinates[0]  // longitude
     ];
   }
   // Retourner null si les coordonnées sont invalides pour ne pas afficher le marqueur
@@ -474,20 +493,20 @@ const getLatLng = (signalement) => {
 const getMarkerIcon = (signalement) => {
   const status = getCurrentStatus(signalement);
   const colors = {
-    'Nouveau': 'red',
+    'En attente': 'red',
     'En cours': 'orange',
+    'En validation': 'yellow',
+    'Validé': 'lightgreen',
     'Terminé': 'green'
   };
-  
-  const color = colors[status] || 'blue';
-  return `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`;
+  return colors[status] || 'red';
 };
 
 const getCurrentStatus = (signalement) => {
   if (signalement.avancement_signalements && signalement.avancement_signalements[0]) {
-    return signalement.avancement_signalements[0].statut_avancement?.nom || 'Nouveau';
+    return signalement.avancement_signalements[0].statut_avancement?.nom || 'En attente';
   }
-  return 'Nouveau';
+  return 'En attente';
 };
 
 const formatBudget = (budget) => {
@@ -561,13 +580,24 @@ const getStatutCount = (statutName) => {
 
 const resetFilters = () => {
   filters.value = {
-    statuts: ['Nouveau', 'En cours', 'Terminé'],
+    statuts: ['En attente', 'En cours', 'En validation', 'Validé', 'Terminé'],
     mesSignalements: false
   };
 };
 
 const refreshData = async () => {
   await loadInitialData();
+};
+
+// Gestion des erreurs de tiles
+const onTileError = (error) => {
+  console.warn('Tile loading error:', error);
+  // Les tiles qui échouent utiliseront automatiquement l'errorTileUrl (image vide)
+};
+
+const onTileLoad = (tile) => {
+  // Log pour debugging si nécessaire
+  // console.log('Tile loaded successfully');
 };
 
 const toggleMySignalements = async () => {
@@ -756,6 +786,35 @@ ion-header {
   --background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+/* Tile loading improvements */
+.leaflet-tile {
+  transition: opacity 0.3s ease;
+}
+
+.leaflet-tile-loading {
+  opacity: 0.6;
+}
+
+.leaflet-tile-error {
+  opacity: 0.3;
+  background: #f7fafc;
+}
+
+/* Map container improvements for better loading */
+.map-container {
+  background: #f8fafc;
+}
+
+.leaflet-container {
+  background: #f8fafc;
+}
+
+/* Hide tile borders for cleaner look */
+.leaflet-tile-pane {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
 }
 
 ion-title {
