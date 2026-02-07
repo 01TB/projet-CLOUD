@@ -65,25 +65,25 @@ export class UserManagementService {
     );
   }
 
-  // /**
-  //  * Bloque un utilisateur
-  //  */
-  // blockUser(userId: number): Observable<Utilisateur> {
-  //   return this.http.post<any>(`${this.apiUrl}/${userId}/bloquer`, {}).pipe(
-  //     switchMap(() => this.getUserById(userId)),
-  //     catchError(this.handleError)
-  //   );
-  // }
+  /**
+   * Bloque un utilisateur
+   */
+  blockUser(userId: number): Observable<Utilisateur> {
+    return this.http.post<any>(`${this.apiUrl}/${userId}/bloquer`, {}).pipe(
+      switchMap(() => this.getUserById(userId)),
+      catchError(this.handleError)
+    );
+  }
 
-  // /**
-  //  * Débloque un utilisateur
-  //  */
-  // unblockUser(userId: number): Observable<Utilisateur> {
-  //   return this.http.delete<any>(`${this.apiUrl}/${userId}/bloquer`).pipe(
-  //     switchMap(() => this.getUserById(userId)),
-  //     catchError(this.handleError)
-  //   );
-  // }
+  /**
+   * Débloque un utilisateur
+   */
+  unblockUser(userId: number): Observable<Utilisateur> {
+    return this.http.delete<any>(`${this.apiUrl}/${userId}/bloquer`).pipe(
+      switchMap(() => this.getUserById(userId)),
+      catchError(this.handleError)
+    );
+  }
 
   /**
    * Supprime un utilisateur
