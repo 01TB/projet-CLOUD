@@ -13,7 +13,6 @@ import web.backend.project.exceptions.ResourceNotFoundException;
 import web.backend.project.features.signalements.dto.SignalementInsertDTO;
 import web.backend.project.features.signalements.dto.SignalementResponseDTO;
 import web.backend.project.mappers.CrudSignalementMapper;
-import web.backend.project.mappers.SignalementMapper;
 import web.backend.project.repositories.EntrepriseRepository;
 import web.backend.project.repositories.SignalementRepository;
 import web.backend.project.repositories.StatutAvancementRepo;
@@ -35,8 +34,7 @@ public class SignalementService {
 	private EntrepriseRepository entrepriseRepository;
 	@Autowired
 	private CrudSignalementMapper crudSignalementMapper;
-	@Autowired
-	private SignalementMapper signalementMapper;
+
 	@Autowired
 	private StatutAvancementRepo statutAvancementRepo;
 
@@ -61,7 +59,7 @@ public class SignalementService {
 		Signalement savedSignalement = signalementRepository.save(signalement);
 
 		// Retourner le DTO de réponse
-		return signalementMapper.toResponseDTO(savedSignalement);
+		return crudSignalementMapper.toResponseDTO(savedSignalement);
 	}
 
 	/**
@@ -70,7 +68,7 @@ public class SignalementService {
 	@Transactional(readOnly = true)
 	public List<SignalementResponseDTO> getAllSignalements() {
 		return signalementRepository.findAll().stream()
-				.map(signalementMapper::toResponseDTO)
+				.map(crudSignalementMapper::toResponseDTO)
 				.collect(Collectors.toList());
 	}
 
@@ -82,7 +80,7 @@ public class SignalementService {
 		Signalement signalement = signalementRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Signalement", "id", id));
 
-		return signalementMapper.toResponseDTO(signalement);
+		return crudSignalementMapper.toResponseDTO(signalement);
 	}
 
 	/**
@@ -128,7 +126,7 @@ public class SignalementService {
 		Signalement updatedSignalement = signalementRepository.save(signalement);
 
 		// Retourner le DTO de réponse
-		return signalementMapper.toResponseDTO(updatedSignalement);
+		return crudSignalementMapper.toResponseDTO(updatedSignalement);
 	}
 
 	/**
@@ -147,7 +145,7 @@ public class SignalementService {
 	@Transactional(readOnly = true)
 	public List<SignalementResponseDTO> getSignalementsByEntreprise(Integer entrepriseId) {
 		return signalementRepository.findByEntrepriseId(entrepriseId).stream()
-				.map(signalementMapper::toResponseDTO)
+				.map(crudSignalementMapper::toResponseDTO)
 				.collect(Collectors.toList());
 	}
 
@@ -157,7 +155,7 @@ public class SignalementService {
 	@Transactional(readOnly = true)
 	public List<SignalementResponseDTO> getSignalementsByUtilisateur(Integer utilisateurId) {
 		return signalementRepository.findByUtilisateurCreateurId(utilisateurId).stream()
-				.map(signalementMapper::toResponseDTO)
+				.map(crudSignalementMapper::toResponseDTO)
 				.collect(Collectors.toList());
 	}
 
@@ -167,7 +165,7 @@ public class SignalementService {
 	@Transactional(readOnly = true)
 	public List<SignalementResponseDTO> getSignalementsBySynchro(Boolean synchro) {
 		return signalementRepository.findBySynchro(synchro).stream()
-				.map(signalementMapper::toResponseDTO)
+				.map(crudSignalementMapper::toResponseDTO)
 				.collect(Collectors.toList());
 	}
 
@@ -177,7 +175,7 @@ public class SignalementService {
 	@Transactional(readOnly = true)
 	public List<SignalementResponseDTO> getSignalementsByBudgetMin(Integer budgetMin) {
 		return signalementRepository.findByBudgetGreaterThanEqual(budgetMin).stream()
-				.map(signalementMapper::toResponseDTO)
+				.map(crudSignalementMapper::toResponseDTO)
 				.collect(Collectors.toList());
 	}
 
@@ -187,7 +185,7 @@ public class SignalementService {
 	@Transactional(readOnly = true)
 	public List<SignalementResponseDTO> getSignalementsBySurfaceMin(Double surfaceMin) {
 		return signalementRepository.findBySurfaceGreaterThanEqual(surfaceMin).stream()
-				.map(signalementMapper::toResponseDTO)
+				.map(crudSignalementMapper::toResponseDTO)
 				.collect(Collectors.toList());
 	}
 
@@ -197,7 +195,7 @@ public class SignalementService {
 	@Transactional(readOnly = true)
 	public List<SignalementResponseDTO> getSignalementsByBudgetRange(Integer minBudget, Integer maxBudget) {
 		return signalementRepository.findByBudgetBetween(minBudget, maxBudget).stream()
-				.map(signalementMapper::toResponseDTO)
+				.map(crudSignalementMapper::toResponseDTO)
 				.collect(Collectors.toList());
 	}
 
@@ -207,7 +205,7 @@ public class SignalementService {
 	@Transactional(readOnly = true)
 	public List<SignalementResponseDTO> getSignalementsBySurfaceRange(Double minSurface, Double maxSurface) {
 		return signalementRepository.findBySurfaceBetween(minSurface, maxSurface).stream()
-				.map(signalementMapper::toResponseDTO)
+				.map(crudSignalementMapper::toResponseDTO)
 				.collect(Collectors.toList());
 	}
 
@@ -221,6 +219,6 @@ public class SignalementService {
 		signalement.setSynchro(synchro);
 		Signalement updatedSignalement = signalementRepository.save(signalement);
 
-		return signalementMapper.toResponseDTO(updatedSignalement);
+		return crudSignalementMapper.toResponseDTO(updatedSignalement);
 	}
 }
