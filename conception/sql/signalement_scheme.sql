@@ -1,5 +1,3 @@
-CREATE EXTENSION IF NOT EXISTS postgis;
-
 CREATE TABLE role(
    id SERIAL,
    nom VARCHAR(50)  NOT NULL,
@@ -77,5 +75,14 @@ CREATE TABLE avancement_signalement(
    PRIMARY KEY(id),
    FOREIGN KEY(id_utilisateur) REFERENCES utilisateur(id),
    FOREIGN KEY(id_statut_avancement) REFERENCES statut_avancement(id),
+   FOREIGN KEY(id_signalement) REFERENCES signalement(id)
+);
+
+CREATE TABLE signalement_photo(
+   id SERIAL,
+   photo TEXT NOT NULL,
+   synchro BOOLEAN NOT NULL,
+   id_signalement INTEGER NOT NULL,
+   PRIMARY KEY(id),
    FOREIGN KEY(id_signalement) REFERENCES signalement(id)
 );
