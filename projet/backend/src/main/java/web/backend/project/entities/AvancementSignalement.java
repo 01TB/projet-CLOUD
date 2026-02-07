@@ -3,19 +3,14 @@ package web.backend.project.entities;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import web.backend.project.entities.dto.AvancementSignalementDTO;
 
 @Entity
 @Table(name = "avancements_signalement")
 public class AvancementSignalement implements SyncableEntity<AvancementSignalementDTO> {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Integer id;
 

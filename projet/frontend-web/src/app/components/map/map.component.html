@@ -175,6 +175,19 @@
             </select>
           </div>
 
+          <div class="form-group" *ngIf="editForm.idNouveauStatut">
+            <label for="editDateModification">Date de modification du statut:</label>
+            <input 
+              type="datetime-local" 
+              id="editDateModification" 
+              class="form-input" 
+              [(ngModel)]="editForm.dateModificationStatut"
+              [ngModelOptions]="{standalone: true}"
+              required
+            />
+            <small class="form-hint">📅 Date à laquelle le nouveau statut sera appliqué</small>
+          </div>
+
           <div class="info-message" *ngIf="editForm.idNouveauStatut && editForm.idNouveauStatut !== selectedSignalement.statut_actuel.id">
             ℹ️ Un nouveau statut d'avancement sera créé pour ce signalement.
           </div>

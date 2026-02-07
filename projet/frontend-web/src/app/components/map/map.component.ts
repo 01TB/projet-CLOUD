@@ -277,7 +277,8 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
         idUtilisateurCreateur: signalement.id_utilisateur_createur,
         idEntreprise: signalement.entreprise.id,
         synchro: false,
-        idNouveauStatut: null // Pas de changement de statut par défaut
+        idNouveauStatut: null, // Pas de changement de statut par défaut
+        dateModificationStatut: new Date().toISOString().slice(0, 16) // Date actuelle au format YYYY-MM-DDTHH:mm
       };
       
       this.showStatusModal = true;
@@ -319,8 +320,16 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
         return;
       }
 
+      // Préparer les données avec conversion de la date au format ISO 8601
+      const dataToSend = {
+        ...this.editForm,
+        // Convertir la date au format ISO 8601 avec secondes (requis par Java LocalDateTime)
+        dateModificationStatut: this.editForm.dateModificationStatut ? 
+          this.editForm.dateModificationStatut + ':00' : undefined
+      };
+
       // Appeler l'API pour mettre à jour le signalement
-      this.signalementService.updateSignalement(this.selectedSignalement.id, this.editForm).subscribe({
+      this.signalementService.updateSignalement(this.selectedSignalement.id, dataToSend).subscribe({
         next: (updatedSignalement) => {
           console.log('Signalement mis à jour avec succès:', updatedSignalement);
           

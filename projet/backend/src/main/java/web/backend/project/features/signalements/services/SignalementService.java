@@ -109,7 +109,19 @@ public class SignalementService {
 
 			// Créer le nouvel avancement
 			AvancementSignalement avancement = new AvancementSignalement();
-			avancement.setDateModification(LocalDateTime.now());
+			
+			// Utiliser la date fournie ou la date actuelle par défaut
+			LocalDateTime dateModification = LocalDateTime.now();
+			if (signalementDTO.getDateModificationStatut() != null && !signalementDTO.getDateModificationStatut().isEmpty()) {
+				try {
+					dateModification = LocalDateTime.parse(signalementDTO.getDateModificationStatut());
+				} catch (Exception e) {
+					// Si le parsing échoue, utiliser la date actuelle
+					dateModification = LocalDateTime.now();
+				}
+			}
+			avancement.setDateModification(dateModification);
+			
 			avancement.setSynchro(false);
 			avancement.setUtilisateur(utilisateur);
 			avancement.setStatutAvancement(nouveauStatut);
