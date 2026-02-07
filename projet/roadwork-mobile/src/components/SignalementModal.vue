@@ -370,7 +370,7 @@ const handleSubmit = async () => {
       surface: parseFloat(form.value.surface),
       budget: parseFloat(form.value.budget),
       adresse: form.value.adresse.trim() || undefined,
-      id_entreprise: form.value.id_entreprise ? String(form.value.id_entreprise) : undefined,
+      id_entreprise: form.value.id_entreprise ? { id: parseInt(form.value.id_entreprise) } : undefined,
       // photos: form.value.photos.map(photo => ({ // Temporairement désactivé
       //   data: photo.data,
       //   name: photo.name,

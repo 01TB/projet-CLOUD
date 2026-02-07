@@ -118,10 +118,21 @@ const handleLogin = async () => {
   error.value = '';
 
   try {
-    const result = await authStore.login({
-      email: form.value.email,
-      password: form.value.password
-    });
+    // Nettoyer les anciens tokens pour éviter les conflits
+    console.log(' Nettoyage des anciens tokens...');
+    localStorage.removeItem('token');
+    localStorage.removeItem('idToken');
+    localStorage.removeItem('user');
+    
+    // Créer un objet simple avec seulement email et password
+    const credentials = {
+      email: String(form.value.email).trim(),
+      password: String(form.value.password)
+    };
+    
+    console.log(' Envoi des identifiants:', credentials);
+    
+    const result = await authStore.login(credentials);
 
     if (result.success) {
       const toast = await toastController.create({
@@ -135,9 +146,20 @@ const handleLogin = async () => {
       // Rediriger vers la carte
       router.push('/map');
     } else {
+      console.error(' Échec connexion:', result);
       error.value = result.error || 'Erreur de connexion';
+      
+      // Suggérer de créer un compte si identifiants incorrects
+      if (result.error?.includes('incorrect') || result.error?.includes('trouvé')) {
+        setTimeout(() => {
+          if (confirm('Identifiants incorrects. Voulez-vous créer un nouveau compte ?')) {
+            router.push('/register');
+          }
+        }, 1000);
+      }
     }
   } catch (err) {
+    console.error(' Erreur connexion:', err);
     error.value = err.message || 'Erreur de connexion';
   } finally {
     loading.value = false;

@@ -19,8 +19,8 @@
 
         <form @submit.prevent="handleRegister">
           <ion-list>
+            <ion-label position="floating">Nom</ion-label>
             <ion-item>
-              <ion-label position="floating">Nom</ion-label>
               <ion-input
                 v-model="form.nom"
                 type="text"
@@ -32,8 +32,8 @@
               <ion-note slot="error" v-if="nomError">{{ nomError }}</ion-note>
             </ion-item>
 
+            <ion-label position="floating">Prénom</ion-label>
             <ion-item>
-              <ion-label position="floating">Prénom</ion-label>
               <ion-input
                 v-model="form.prenom"
                 type="text"
@@ -45,8 +45,8 @@
               <ion-note slot="error" v-if="prenomError">{{ prenomError }}</ion-note>
             </ion-item>
 
+            <ion-label position="floating">Email</ion-label>
             <ion-item>
-              <ion-label position="floating">Email</ion-label>
               <ion-input
                 v-model="form.email"
                 type="email"
@@ -58,8 +58,8 @@
               <ion-note slot="error" v-if="emailError">{{ emailError }}</ion-note>
             </ion-item>
 
+            <ion-label position="floating">Téléphone</ion-label>
             <ion-item>
-              <ion-label position="floating">Téléphone</ion-label>
               <ion-input
                 v-model="form.telephone"
                 type="tel"
@@ -70,8 +70,8 @@
               <ion-note slot="error" v-if="telephoneError">{{ telephoneError }}</ion-note>
             </ion-item>
 
+            <ion-label position="floating">Mot de passe</ion-label>
             <ion-item>
-              <ion-label position="floating">Mot de passe</ion-label>
               <ion-input
                 v-model="form.password"
                 type="password"
@@ -84,8 +84,8 @@
               <ion-note slot="error" v-if="passwordError">{{ passwordError }}</ion-note>
             </ion-item>
 
+            <ion-label position="floating">Confirmer le mot de passe</ion-label>
             <ion-item>
-              <ion-label position="floating">Confirmer le mot de passe</ion-label>
               <ion-input
                 v-model="form.confirmPassword"
                 type="password"

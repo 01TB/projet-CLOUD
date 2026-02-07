@@ -45,8 +45,9 @@
           ></l-tile-layer>
           
           <!-- Marqueurs des signalements -->
+          <!-- Marqueurs réels des signalements -->
           <l-marker
-            v-for="signalement in filteredSignalements"
+            v-for="signalement in validMarkers"
             :key="signalement.id"
             :lat-lng="getLatLng(signalement)"
           >
@@ -242,8 +243,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { 
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
   IonButton, IonIcon, IonButtons, IonMenuButton, IonFab,
@@ -274,6 +275,7 @@ L.Icon.Default.mergeOptions({
 });
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 const signalementsStore = useSignalementsStore();
 const { checkAuthAndRedirect } = useAuthCheck();
@@ -292,7 +294,7 @@ const selectedCoordinates = ref({ lat: -18.8792, lng: 47.5079 });
 
 // Filtres
 const filters = ref({
-  statuts: ['En attente', 'En cours', 'En validation', 'Validé', 'Terminé'],
+  statuts: ['Nouveau', 'En attente', 'En cours', 'En validation', 'Validé', 'Terminé'], // Inclure tous les statuts possibles
   mesSignalements: false
 });
 
@@ -304,7 +306,6 @@ const statuts = computed(() => signalementsStore.statuts || []);
 const stats = computed(() => signalementsStore.stats || {});
 
 const authStatus = computed(() => {
-  
   return authStore.isLoggedIn && authStore.token;
 });
 
@@ -332,34 +333,50 @@ const tileOptions = {
 };
 
 const filteredSignalements = computed(() => {
-  let signalements = signalementsStore.signalements || [];
+  const allSignalements = signalementsStore.signalements || [];
+  console.log('📊 Signalements bruts:', allSignalements.length);
   
-  // Filtrer par statut
-  if (filters.value.statuts.length > 0) {
-    signalements = signalements.filter(sig => {
-      const currentStatus = getCurrentStatus(sig);
-      return filters.value.statuts.includes(currentStatus);
-    });
-  }
-  
-  // Filtrer mes signalements
-  if (filters.value.mesSignalements && authStore.user) {
-    signalements = signalements.filter(sig => 
-      sig.id_utilisateur_createur === authStore.user.id
-    );
-  }
-  
-  // Filtrer les signalements avec des coordonnées valides
-  signalements = signalements.filter(sig => {
-    return sig.localisation && 
-           sig.localisation.coordinates && 
-           Array.isArray(sig.localisation.coordinates) && 
-           sig.localisation.coordinates.length >= 2 &&
-           sig.localisation.coordinates[0] != null && 
-           sig.localisation.coordinates[1] != null;
+  let filtered = allSignalements.filter(sig => {
+    // Vérifier si le statut est dans les filtres
+    const status = getCurrentStatus(sig);
+    const statusMatch = filters.value.statuts.includes(status);
+    
+    // Vérifier si c'est un filtre "mes signalements"
+    const userMatch = !filters.value.mesSignalements || 
+                     (sig.id_utilisateur_createur === authStore.user?.id);
+    
+    return statusMatch && userMatch;
   });
   
-  return signalements;
+  console.log('📊 Signalements filtrés:', filtered.length);
+  
+  // Log détaillé des coordonnées pour chaque signalement filtré
+  filtered.forEach(sig => {
+    console.log(`🔍 Signalement ${sig.id} - Statut: ${getCurrentStatus(sig)} - Coordonnées:`, sig.localisation?.coordinates);
+  });
+  
+  return filtered;
+});
+
+// Computed property pour les marqueurs valides uniquement
+const validMarkers = computed(() => {
+  const markers = filteredSignalements.value.filter(signalement => {
+    if (!signalement || !signalement.id) {
+      return false;
+    }
+    
+    const latLng = getLatLng(signalement);
+    return latLng !== null;
+  });
+  
+  console.log('📍 Marqueurs valides:', markers.length);
+  
+  // Log tous les statuts trouvés pour débogage
+  const allStatuses = [...new Set(filteredSignalements.value.map(sig => getCurrentStatus(sig)))];
+  console.log('🏷️ Tous les statuts trouvés:', allStatuses);
+  console.log('🔍 Filtres actuels:', filters.value.statuts);
+  
+  return markers;
 });
 
 // Méthodes
@@ -473,6 +490,19 @@ const zoomUpdated = (newZoom) => {
 };
 
 const getLatLng = (signalement) => {
+  // Vérification de sécurité pour éviter les erreurs quand signalement est undefined
+  if (!signalement || !signalement.id) {
+    console.warn('❌ getLatLng appelé avec signalement invalide:', signalement);
+    return null;
+  }
+  
+  console.log(`🔍 Vérification coordonnées pour signalement ${signalement.id}:`, {
+    localisation: signalement.localisation,
+    coordinates: signalement.localisation?.coordinates,
+    isArray: Array.isArray(signalement.localisation?.coordinates),
+    length: signalement.localisation?.coordinates?.length
+  });
+  
   if (signalement.localisation && 
       signalement.localisation.coordinates && 
       Array.isArray(signalement.localisation.coordinates) && 
@@ -481,25 +511,38 @@ const getLatLng = (signalement) => {
       signalement.localisation.coordinates[1] != null) {
     // Format API : [longitude, latitude]
     // Leaflet attend : [latitude, longitude]
-    return [
+    const latLng = [
       signalement.localisation.coordinates[1], // latitude
       signalement.localisation.coordinates[0]  // longitude
     ];
+    console.log(`✅ Marqueur pour ${signalement.id}:`, latLng, signalement.localisation.coordinates);
+    return latLng;
   }
+  console.warn(`❌ Coordonnées invalides pour signalement ${signalement.id}:`, signalement.localisation);
   // Retourner null si les coordonnées sont invalides pour ne pas afficher le marqueur
   return null;
 };
 
 const getMarkerIcon = (signalement) => {
+  // Vérification de sécurité
+  if (!signalement || !signalement.id) {
+    console.warn('❌ getMarkerIcon appelé avec signalement invalide:', signalement);
+    return 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png';
+  }
+  
   const status = getCurrentStatus(signalement);
   const colors = {
+    'Nouveau': 'violet',
     'En attente': 'red',
-    'En cours': 'orange',
+    'En cours': 'orange', 
     'En validation': 'yellow',
     'Validé': 'lightgreen',
     'Terminé': 'green'
   };
-  return colors[status] || 'red';
+  const color = colors[status] || 'red';
+  
+  // URL valide pour les icônes Leaflet
+  return `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`;
 };
 
 const getCurrentStatus = (signalement) => {
@@ -641,6 +684,48 @@ const viewPhoto = async (photo) => {
   }
 };
 
+// Fonction pour gérer le focus sur un signalement
+const handleSignalementFocus = () => {
+  console.log('🔍 Query parameters reçus:', route.query);
+  if (route.query.focus && route.query.lat && route.query.lng) {
+    console.log('🎯 Focus sur signalement:', route.query.focus);
+    console.log('📍 Coordonnées reçues:', { lat: route.query.lat, lng: route.query.lng });
+    
+    const targetLat = parseFloat(route.query.lat);
+    const targetLng = parseFloat(route.query.lng);
+    
+    console.log('📍 Coordonnées parsées:', { lat: targetLat, lng: targetLng });
+    
+    // Centrer la carte sur les coordonnées spécifiées
+    center.value = [targetLat, targetLng];
+    
+    // Zoomer pour bien voir le marqueur
+    zoom.value = 16;
+    
+    console.log('🗺️ Carte centrée sur:', center.value, 'zoom:', zoom.value);
+    
+    // Attendre que les données soient chargées puis mettre en évidence le marqueur
+    setTimeout(() => {
+      const targetSignalement = signalementsStore.signalements.find(sig => sig.id === route.query.focus);
+      if (targetSignalement) {
+        console.log('✅ Signalement trouvé pour focus:', targetSignalement);
+        // Ouvrir le popup du marqueur si possible
+        // TODO: Implémenter l'ouverture automatique du popup
+      } else {
+        console.warn('❌ Signalement non trouvé:', route.query.focus);
+      }
+    }, 2000);
+  } else {
+    console.log('ℹ️ Pas de query parameters pour focus');
+  }
+};
+
+// Watcher pour les query parameters
+watch(() => route.query, () => {
+  console.log('🔄 Route query changé:', route.query);
+  handleSignalementFocus();
+}, { immediate: true });
+
 // Lifecycle
 onMounted(async () => {
   // Enregistrer le cleanup avant les await
@@ -655,6 +740,9 @@ onMounted(async () => {
   
   // Vérifier l'authentification au montage
   await authStore.checkAuth();
+  
+  // Gérer les query parameters pour focus sur un signalement
+  handleSignalementFocus();
 });
 
 </script>

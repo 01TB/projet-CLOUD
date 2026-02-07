@@ -34,19 +34,12 @@ class SignalementService {
       console.log(' Réponse Firebase:', response.data);
       return response.data;
     } catch (error) {
-      console.error(' Erreur Firebase détaillée:', error);
+      console.error(' Erreur Firebase:', error);
       
       // Logs détaillés pour le debug
       if (error.response) {
         console.error('Status:', error.response.status);
-        console.error('Status Text:', error.response.statusText);
-        console.error('Headers:', error.response.headers);
-        console.error('Data:', error.response.data);
-        console.error('Config:', error.response.config);
-      } else if (error.request) {
-        console.error('Request:', error.request);
-      } else {
-        console.error('Error Message:', error.message);
+        console.error('Error Message:', error.response.data?.error?.message || error.response.statusText);
       }
       
       throw error;
