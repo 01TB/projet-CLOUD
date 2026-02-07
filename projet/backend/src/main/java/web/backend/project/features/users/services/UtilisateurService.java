@@ -118,10 +118,7 @@ public class UtilisateurService {
             utilisateur.setRole(role);
         }
 
-        // Modification du statut de synchronisation si fourni
-        if (utilisateurDTO.getSynchro() != null) {
-            utilisateur.setSynchro(utilisateurDTO.getSynchro());
-        }
+        utilisateur.setSynchro(false);
 
         return utilisateurRepository.save(utilisateur);
     }
