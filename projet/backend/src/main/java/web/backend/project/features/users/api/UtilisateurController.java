@@ -7,12 +7,12 @@ import org.springframework.web.bind.annotation.*;
 import web.backend.project.entities.Utilisateur;
 import web.backend.project.entities.UtilisateurBloque;
 import web.backend.project.entities.dto.UtilisateurDTO;
+import web.backend.project.entities.dto.UtilisateurResponseDTO;
 import web.backend.project.features.users.services.UtilisateurService;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/utilisateurs")
@@ -31,8 +31,11 @@ public class UtilisateurController {
     @PostMapping
     public ResponseEntity<?> creerUtilisateur(@RequestBody UtilisateurDTO utilisateurDTO) {
         try {
+            System.out.println(">>> debut creation entite");
             Utilisateur utilisateur = utilisateurService.creerUtilisateur(utilisateurDTO);
-            return ResponseEntity.status(HttpStatus.CREATED).body(utilisateur.toDTO());
+            UtilisateurResponseDTO response = utilisateurService.toResponseDTO(utilisateur);
+            System.out.println("<<< creation entite reussie");
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", e.getMessage()));
@@ -49,12 +52,9 @@ public class UtilisateurController {
      * @return La liste de tous les utilisateurs
      */
     @GetMapping
-    public ResponseEntity<List<UtilisateurDTO>> getAllUtilisateurs() {
+    public ResponseEntity<List<UtilisateurResponseDTO>> getAllUtilisateurs() {
         try {
-            List<UtilisateurDTO> utilisateurs = utilisateurService.getAllUtilisateurs()
-                    .stream()
-                    .map(Utilisateur::toDTO)
-                    .collect(Collectors.toList());
+            List<UtilisateurResponseDTO> utilisateurs = utilisateurService.getAllUtilisateursWithBlockInfo();
             return ResponseEntity.ok(utilisateurs);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -71,8 +71,8 @@ public class UtilisateurController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getUtilisateurById(@PathVariable Integer id) {
         try {
-            Utilisateur utilisateur = utilisateurService.getUtilisateurById(id);
-            return ResponseEntity.ok(utilisateur.toDTO());
+            UtilisateurResponseDTO utilisateur = utilisateurService.getUtilisateurWithBlockInfo(id);
+            return ResponseEntity.ok(utilisateur);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("error", e.getMessage()));
@@ -116,7 +116,8 @@ public class UtilisateurController {
             @RequestBody UtilisateurDTO utilisateurDTO) {
         try {
             Utilisateur utilisateur = utilisateurService.modifierUtilisateur(id, utilisateurDTO);
-            return ResponseEntity.ok(utilisateur.toDTO());
+            UtilisateurResponseDTO response = utilisateurService.toResponseDTO(utilisateur);
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", e.getMessage()));

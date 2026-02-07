@@ -8,13 +8,16 @@ import web.backend.project.entities.Role;
 import web.backend.project.entities.Utilisateur;
 import web.backend.project.entities.UtilisateurBloque;
 import web.backend.project.entities.dto.UtilisateurDTO;
+import web.backend.project.entities.dto.UtilisateurResponseDTO;
 import web.backend.project.repositories.RoleRepository;
 import web.backend.project.repositories.UtilisateurBloqueRepo;
 import web.backend.project.repositories.UtilisateurRepository;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class UtilisateurService {
@@ -30,6 +33,52 @@ public class UtilisateurService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+    /**
+     * Convertit un Utilisateur en UtilisateurResponseDTO avec les informations de blocage
+     */
+    public UtilisateurResponseDTO toResponseDTO(Utilisateur utilisateur) {
+        UtilisateurResponseDTO response = new UtilisateurResponseDTO();
+        response.setId(utilisateur.getId());
+        response.setEmail(utilisateur.getEmail());
+        response.setRole(utilisateur.getRole());
+        
+        // Vérifier si l'utilisateur est bloqué
+        Optional<UtilisateurBloque> blocage = utilisateurBloqueRepo.findByUtilisateurId(utilisateur.getId());
+        response.setEstBloque(blocage.isPresent());
+        
+        if (blocage.isPresent()) {
+            response.setDateBlocage(blocage.get().getDateBlocage().format(DATE_FORMATTER));
+        } else {
+            response.setDateBlocage(null);
+        }
+        
+        // Date de création - pour l'instant null car non disponible dans la base
+        response.setDateCreation(null);
+        
+        return response;
+    }
+
+    /**
+     * Récupère tous les utilisateurs avec leurs informations de blocage
+     */
+    public List<UtilisateurResponseDTO> getAllUtilisateursWithBlockInfo() {
+        return utilisateurRepository.findAll()
+                .stream()
+                .map(this::toResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Récupère un utilisateur avec ses informations de blocage
+     */
+    public UtilisateurResponseDTO getUtilisateurWithBlockInfo(Integer id) {
+        Utilisateur utilisateur = utilisateurRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("L'utilisateur avec l'ID " + id + " n'existe pas"));
+        return toResponseDTO(utilisateur);
+    }
 
     /**
      * Crée un nouvel utilisateur
@@ -57,19 +106,22 @@ public class UtilisateurService {
             throw new IllegalArgumentException("Le mot de passe ne peut pas être vide");
         }
 
+        System.out.println("check role");
         // Récupération du rôle
         Role role = roleRepository.findById(utilisateurDTO.getRoleId())
                 .orElseThrow(() -> new IllegalArgumentException("Le rôle spécifié n'existe pas"));
+        System.out.println("apres check role");
 
         // Création de l'utilisateur
         Utilisateur utilisateur = new Utilisateur();
-        utilisateur.setId(utilisateurDTO.getId());
+        // L'ID sera généré automatiquement par la base de données
         utilisateur.setEmail(utilisateurDTO.getEmail().toLowerCase().trim());
         // Encodage du mot de passe
         utilisateur.setPassword(passwordEncoder.encode(utilisateurDTO.getPassword()));
         utilisateur.setSynchro(false);
         utilisateur.setRole(role);
 
+        System.out.println("------------ efa tsy maka id tsony e");
         return utilisateurRepository.save(utilisateur);
     }
 

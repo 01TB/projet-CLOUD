@@ -11,6 +11,7 @@ import java.util.Objects;
 })
 public class Utilisateur implements SyncableEntity<UtilisateurDTO> {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Integer id;
 
@@ -23,7 +24,7 @@ public class Utilisateur implements SyncableEntity<UtilisateurDTO> {
     @Column(name = "synchro", nullable = false)
     private Boolean synchro = false;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_role", nullable = false)
     private Role role;
 

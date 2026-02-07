@@ -1,7 +1,7 @@
 -- 1. Insertion des Rôles
 INSERT INTO roles (nom, synchro) VALUES 
-('Administrateur', false),
-('Utilisateur', false);
+('MANAGER', false),
+('UTILISATEUR', false);
 
 -- 2. Insertion des Entreprises
 INSERT INTO entreprises (nom, synchro) VALUES 
@@ -11,9 +11,9 @@ INSERT INTO entreprises (nom, synchro) VALUES
 
 -- 3. Insertion des Statuts d''avancement
 INSERT INTO statuts_avancement (nom, valeur, synchro) VALUES 
-('Nouveau', 0, false),
-('En cours', 50, false),
-('Terminé', 100, false);
+('NOUVEAU', 0, false),
+('EN_COURS', 50, false),
+('TERMINE', 100, false);
 
 -- 4. Insertion des Paramètres globaux
 INSERT INTO parametres (nb_tentatives_connexion, duree_session, synchro) VALUES 
