@@ -245,6 +245,11 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
             <span class="info-value">${signalement.entreprise.nom}</span>
           </div>
         </div>
+        <div class="popup-footer">
+          <a href="/signalement/${signalement.id}" class="popup-link">
+            👁️ Voir les détails
+          </a>
+        </div>
       </div>
     `;
   }

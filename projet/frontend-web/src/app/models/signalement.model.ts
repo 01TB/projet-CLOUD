@@ -45,6 +45,7 @@ export interface Signalement {
   entreprise: Entreprise;
   statut_actuel: StatutAvancement;
   id_utilisateur_createur: number;
+  photos?: string[]; // URLs des photos - par défaut login.png
 }
 
 export interface StatistiquesRecap {

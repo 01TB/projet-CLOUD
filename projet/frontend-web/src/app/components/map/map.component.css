@@ -234,6 +234,31 @@
   font-weight: 500;
 }
 
+:global(.popup-footer) {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 2px solid #f0f0f0;
+}
+
+:global(.popup-link) {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #2a8eb5 0%, #1a5f7a 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+:global(.popup-link:hover) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(42, 142, 181, 0.3);
+}
+
 /* Modal overlay */
 .modal-overlay {
   position: fixed;
@@ -376,6 +401,25 @@
   height: 100%;
   background: linear-gradient(90deg, #4CAF50 0%, #8BC34A 100%);
   transition: width 0.5s ease;
+}
+
+.recap-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #2a8eb5 0%, #1a5f7a 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.recap-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(42, 142, 181, 0.3);
 }
 
 /* Modal de statut */
