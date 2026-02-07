@@ -1,14 +1,14 @@
 package web.backend.project.entities;
 
-
 import jakarta.persistence.*;
+import web.backend.project.entities.dto.ParametreDTO;
+
 import java.util.Objects;
 
 @Entity
 @Table(name = "parametres")
-public class Parametre {
+public class Parametre implements SyncableEntity<ParametreDTO> {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Integer id;
 
@@ -22,7 +22,8 @@ public class Parametre {
     private Boolean synchro = false;
 
     // Constructeurs
-    public Parametre() {}
+    public Parametre() {
+    }
 
     public Parametre(Integer nbTentativesConnexion, Integer dureeSession, Boolean synchro) {
         this.nbTentativesConnexion = nbTentativesConnexion;
@@ -66,8 +67,10 @@ public class Parametre {
     // Equals et HashCode
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         Parametre parametre = (Parametre) o;
         return Objects.equals(id, parametre.id);
     }
@@ -75,5 +78,22 @@ public class Parametre {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    @Override
+    public ParametreDTO toDTO() {
+        ParametreDTO dto = new ParametreDTO();
+        dto.setId(this.id);
+        dto.setNbTentativesConnexion(this.nbTentativesConnexion);
+        dto.setDureeSession(this.dureeSession);
+        dto.setSynchro(this.synchro);
+        return dto;
+    }
+
+    @Override
+    public void updateFromDTO(ParametreDTO dto) {
+        this.nbTentativesConnexion = dto.getNbTentativesConnexion();
+        this.dureeSession = dto.getDureeSession();
+        this.synchro = dto.getSynchro();
     }
 }

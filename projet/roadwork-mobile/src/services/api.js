@@ -23,6 +23,26 @@ api.interceptors.request.use(
       if (token === 'undefined') localStorage.removeItem('token');
     }
     
+    // Vérifier l'expiration du token avant de l'utiliser
+    try {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        if (user.session_expires_at) {
+          const expirationTime = new Date(user.session_expires_at).getTime();
+          const currentTime = new Date().getTime();
+          
+          if (currentTime >= expirationTime) {
+            console.warn('Token expired in interceptor, skipping request...');
+            // Retourner une promesse rejetée pour éviter la requête
+            return Promise.reject(new Error('Token expired'));
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('Error checking token expiration in interceptor:', error);
+    }
+    
     // Essayer d'abord le localStorage avec idToken, puis token, puis le store
     let token = localStorage.getItem('idToken') || localStorage.getItem('token');
     

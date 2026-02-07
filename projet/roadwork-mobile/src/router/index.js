@@ -4,19 +4,19 @@ import { useAuthStore } from '@/store/modules/auth';
 const routes = [
   {
     path: '/',
-    redirect: '/login'
+    redirect: '/map'
   },
   {
     path: '/login',
     name: 'Login',
     component: () => import('@/views/Login.vue'),
-    meta: { requiresAuth: false }
+    meta: { requiresAuth: false } // Accessible aux visiteurs
   },
   {
     path: '/register',
     name: 'Register',
     component: () => import('@/views/Register.vue'),
-    meta: { requiresAuth: false }
+    meta: { requiresAuth: false } // Accessible aux visiteurs
   },
   {
     path: '/map',
@@ -34,7 +34,7 @@ const routes = [
     path: '/signalement/:id',
     name: 'SignalementDetail',
     component: () => import('@/views/SignalementDetail.vue'),
-    meta: { requiresAuth: false }
+    meta: { requiresAuth: false } // Accessible aux visiteurs
   },
   {
     path: '/profile',
@@ -46,7 +46,7 @@ const routes = [
     path: '/stats',
     name: 'Stats',
     component: () => import('@/views/Stats.vue'),
-    meta: { requiresAuth: false }
+    meta: { requiresAuth: false } // Accessible aux visiteurs
   }
 ];
 
@@ -58,6 +58,9 @@ const router = createRouter({
 // Garde de navigation
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
+  
+  // Initialiser l'authentification depuis localStorage avant toute vérification
+  authStore.initializeAuth();
   
   // Vérifier l'authentification si nécessaire
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {

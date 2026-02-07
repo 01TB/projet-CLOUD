@@ -18,7 +18,26 @@ class AuthService {
 
   async login(credentials) {
     try {
-      const response = await api.post('/login', credentials);
+      console.log('🔐 Tentative de connexion avec:', credentials);
+      
+      // Créer un objet propre avec seulement les champs requis
+      const filteredCredentials = {
+        email: String(credentials.email || '').trim(),
+        password: String(credentials.password || '')
+      };
+      
+      // Double vérification : s'assurer qu'aucune valeur n'est undefined
+      Object.keys(filteredCredentials).forEach(key => {
+        if (filteredCredentials[key] === 'undefined') {
+          filteredCredentials[key] = '';
+        }
+      });
+      
+      console.log('🔐 Credentials finales:', filteredCredentials);
+      
+      const response = await api.post('/login', filteredCredentials);
+      
+      console.log('📥 Réponse serveur:', response.data);
       
       if (response.data.success) {
         // Utiliser idToken en priorité, puis token pour compatibilité
@@ -29,6 +48,8 @@ class AuthService {
         localStorage.setItem('token', this.token);
         localStorage.setItem('idToken', this.token);
         localStorage.setItem('user', JSON.stringify(this.user));
+        
+        console.log('✅ Connexion réussie:', { user: this.user, hasToken: !!this.token });
         
         return { 
           success: true, 
@@ -142,12 +163,57 @@ class AuthService {
       return false;
     }
     
+    // Vérifier si le token a expiré
     try {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        if (user.session_expires_at) {
+          const expirationTime = new Date(user.session_expires_at).getTime();
+          const currentTime = new Date().getTime();
+          
+          if (currentTime >= expirationTime) {
+            console.warn('Token expired, cleaning up...');
+            this.logout(); // Nettoyer le token expiré
+            return false;
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('Error checking token expiration:', error);
+    }
+    
+    try {
+      const baseURL = import.meta.env.VITE_API_URL || 'https://us-central1-projet-cloud-e2146.cloudfunctions.net';
+      const fullUrl = `${baseURL}/me`;
+      console.log('Checking auth at:', fullUrl);
+      console.log('With token:', this.token ? 'present' : 'missing');
+      
       const response = await api.get('/me');
+      console.log('Auth check response:', response.data);
       return response.data.success;
     } catch (error) {
       console.warn('Auth check failed:', error);
-      return false;
+      console.warn('Error details:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data
+      });
+      
+      // Gérer les différents types d'erreurs
+      if (error.response?.status === 401) {
+        console.warn('Token invalid, logging out...');
+        this.logout();
+        return false;
+      } else if (error.response?.status === 404) {
+        console.warn('Endpoint /me not implemented, but token exists and is not expired');
+        // Si /me n'existe pas mais le token est valide, on considère l'utilisateur comme authentifié
+        return !!this.token && !!this.user;
+      } else {
+        // Pour les autres erreurs (réseau, serveur), on garde l'utilisateur connecté
+        console.warn('Network or server error, keeping user logged in');
+        return !!this.token && !!this.user;
+      }
     }
   }
 

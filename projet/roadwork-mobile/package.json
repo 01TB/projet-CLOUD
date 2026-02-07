@@ -12,7 +12,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@capacitor/android": "^8.0.1",
+    "@capacitor/android": "8.0.1",
     "@capacitor/app": "8.0.0",
     "@capacitor/camera": "^8.0.0",
     "@capacitor/core": "^8.0.1",
@@ -30,6 +30,7 @@
     "ionicons": "^7.0.0",
     "leaflet": "^1.9.4",
     "pinia": "^3.0.4",
+    "swiper": "^12.1.0",
     "vue": "^3.3.0",
     "vue-leaflet": "^0.1.0",
     "vue-router": "^4.2.0",

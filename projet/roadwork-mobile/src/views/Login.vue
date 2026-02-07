@@ -19,8 +19,8 @@
 
         <form @submit.prevent="handleLogin">
           <ion-list>
+            <ion-label position="floating">Email</ion-label>
             <ion-item>
-              <ion-label position="floating">Email</ion-label>
               <ion-input
                 v-model="form.email"
                 type="email"
@@ -29,8 +29,8 @@
               ></ion-input>
             </ion-item>
 
+            <ion-label position="floating">Mot de passe</ion-label>
             <ion-item>
-              <ion-label position="floating">Mot de passe</ion-label>
               <ion-input
                 v-model="form.password"
                 type="password"
@@ -63,15 +63,10 @@
             >
               Créer un compte
             </ion-button>
-
-            <div class="offline-mode ion-margin-top" v-if="!isOnline">
-              <ion-icon :icon="warning" color="warning"></ion-icon>
-              <small>Mode hors ligne - Connexion locale seulement</small>
-            </div>
           </ion-list>
         </form>
 
-        <div class="guest-section ion-margin-top">
+        <div class="guest-section ion-margin-bottom">
           <ion-text color="medium">
             <small>Ou continuer en tant que</small>
           </ion-text>
@@ -79,7 +74,7 @@
             expand="block"
             fill="outline"
             @click="continueAsGuest"
-            class="ion-margin-top"
+            class="ion-margin-bottom"
           >
             Visiteur
           </ion-button>
@@ -123,10 +118,21 @@ const handleLogin = async () => {
   error.value = '';
 
   try {
-    const result = await authStore.login({
-      email: form.value.email,
-      password: form.value.password
-    });
+    // Nettoyer les anciens tokens pour éviter les conflits
+    console.log(' Nettoyage des anciens tokens...');
+    localStorage.removeItem('token');
+    localStorage.removeItem('idToken');
+    localStorage.removeItem('user');
+    
+    // Créer un objet simple avec seulement email et password
+    const credentials = {
+      email: String(form.value.email).trim(),
+      password: String(form.value.password)
+    };
+    
+    console.log(' Envoi des identifiants:', credentials);
+    
+    const result = await authStore.login(credentials);
 
     if (result.success) {
       const toast = await toastController.create({
@@ -140,9 +146,20 @@ const handleLogin = async () => {
       // Rediriger vers la carte
       router.push('/map');
     } else {
+      console.error(' Échec connexion:', result);
       error.value = result.error || 'Erreur de connexion';
+      
+      // Suggérer de créer un compte si identifiants incorrects
+      if (result.error?.includes('incorrect') || result.error?.includes('trouvé')) {
+        setTimeout(() => {
+          if (confirm('Identifiants incorrects. Voulez-vous créer un nouveau compte ?')) {
+            router.push('/register');
+          }
+        }, 1000);
+      }
     }
   } catch (err) {
+    console.error(' Erreur connexion:', err);
     error.value = err.message || 'Erreur de connexion';
   } finally {
     loading.value = false;

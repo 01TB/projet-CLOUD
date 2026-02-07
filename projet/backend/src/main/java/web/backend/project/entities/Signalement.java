@@ -7,13 +7,14 @@ import web.backend.project.utils.GeometryUtils;
 import org.locationtech.jts.geom.Geometry;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @Entity
 @Table(name = "signalements")
 public class Signalement implements SyncableEntity<SignalementDTO> {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Integer id;
 
@@ -39,6 +40,9 @@ public class Signalement implements SyncableEntity<SignalementDTO> {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_entreprise", nullable = false)
     private Entreprise entreprise;
+
+    @OneToMany(mappedBy = "signalement", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AvancementSignalement> avancements = new ArrayList<>();
 
     // Constructeurs
     public Signalement() {
@@ -153,6 +157,26 @@ public class Signalement implements SyncableEntity<SignalementDTO> {
 
     public void setEntreprise(Entreprise entreprise) {
         this.entreprise = entreprise;
+    }
+
+    public List<AvancementSignalement> getAvancements() {
+        return avancements;
+    }
+
+    public void setAvancements(List<AvancementSignalement> avancements) {
+        this.avancements = avancements;
+    }
+
+    // Helper method to add an avancement
+    public void addAvancement(AvancementSignalement avancement) {
+        avancements.add(avancement);
+        avancement.setSignalement(this);
+    }
+
+    // Helper method to remove an avancement
+    public void removeAvancement(AvancementSignalement avancement) {
+        avancements.remove(avancement);
+        avancement.setSignalement(null);
     }
 
     // Equals et HashCode

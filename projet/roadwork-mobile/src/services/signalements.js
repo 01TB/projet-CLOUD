@@ -27,10 +27,21 @@ class SignalementService {
   // Créer un nouveau signalement
   async createSignalement(signalementData) {
     try {
+      console.log(' Envoi à Firebase:', signalementData);
+      
       const response = await api.post('/createSignalement', signalementData);
+      
+      console.log(' Réponse Firebase:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Error creating signalement:', error);
+      console.error(' Erreur Firebase:', error);
+      
+      // Logs détaillés pour le debug
+      if (error.response) {
+        console.error('Status:', error.response.status);
+        console.error('Error Message:', error.response.data?.error?.message || error.response.statusText);
+      }
+      
       throw error;
     }
   }
@@ -60,9 +71,18 @@ class SignalementService {
   // Récupérer les signalements de l'utilisateur connecté (utilise le filtre id_utilisateur_createur)
   async getMySignalements() {
     try {
+      // Récupérer l'ID de l'utilisateur connecté depuis le localStorage ou token
+      const { useAuthStore } = await import('@/store/modules/auth');
+      const authStore = useAuthStore();
+      const userId = authStore.user?.id;
+      
+      if (!userId) {
+        throw new Error('Utilisateur non connecté');
+      }
+      
       // Utiliser le endpoint getSignalements avec le filtre approprié
       const response = await api.get('/getSignalements', { 
-        params: { id_utilisateur_createur: 'current' } 
+        params: { id_utilisateur_createur: userId } 
       });
       return response.data;
     } catch (error) {

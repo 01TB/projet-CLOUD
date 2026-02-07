@@ -45,6 +45,7 @@ export interface Signalement {
   entreprise: Entreprise;
   statut_actuel: StatutAvancement;
   id_utilisateur_createur: number;
+  photos?: string[]; // URLs des photos - par défaut login.png
 }
 
 export interface StatistiquesRecap {
@@ -52,4 +53,30 @@ export interface StatistiquesRecap {
   surface_totale: number;
   budget_total: number;
   avancement_pct: number;
+}
+
+// Interface correspondant au SignalementResponseDTO du backend
+export interface SignalementResponseDTO {
+  id: number;
+  dateCreation: string;
+  surface: number;
+  budget: number;
+  localisation: string; // Format WKT (ex: "POINT(47.5236 -18.8792)")
+  synchro: boolean;
+  idUtilisateurCreateur: number;
+  emailUtilisateurCreateur: string;
+  idEntreprise: number | null;
+  nomEntreprise: string | null;
+  avancements: AvancementResponseDTO[]; // Liste des avancements
+}
+
+// Interface pour les avancements de signalement
+export interface AvancementResponseDTO {
+  id: number;
+  dateModification: string;
+  idUtilisateur: number;
+  emailUtilisateur: string;
+  idStatutAvancement: number;
+  nomStatutAvancement: string;
+  valeurStatutAvancement: number;
 }

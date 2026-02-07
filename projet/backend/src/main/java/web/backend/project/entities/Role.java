@@ -9,12 +9,13 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import web.backend.project.entities.dto.RoleDTO;
 
 @Entity
 @Table(name = "roles", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"nom"})
+        @UniqueConstraint(columnNames = { "nom" })
 })
-public class Role {
+public class Role implements SyncableEntity<RoleDTO> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -27,7 +28,8 @@ public class Role {
     private Boolean synchro = false;
 
     // Constructeurs
-    public Role() {}
+    public Role() {
+    }
 
     public Role(String nom, Boolean synchro) {
         this.nom = nom;
@@ -62,8 +64,10 @@ public class Role {
     // Equals et HashCode
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         Role role = (Role) o;
         return Objects.equals(id, role.id);
     }
@@ -71,5 +75,19 @@ public class Role {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    @Override
+    public RoleDTO toDTO() {
+        RoleDTO dto = new RoleDTO();
+        dto.setId(this.id);
+        dto.setNom(this.nom);
+        dto.setSynchro(this.synchro);
+        return dto;
+    }
+
+    @Override
+    public void updateFromDTO(RoleDTO dto) {
+        this.nom = dto.getNom();
     }
 }

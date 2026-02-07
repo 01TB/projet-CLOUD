@@ -30,8 +30,8 @@
           </ion-item>
 
           <!-- Description -->
+          <ion-label position="floating">Description *</ion-label>
           <ion-item>
-            <ion-label position="floating">Description *</ion-label>
             <ion-textarea
               v-model="form.description"
               placeholder="Décrivez en détail le problème (nid de poule, fissure, chaussée dégradée, etc.)..."
@@ -43,8 +43,8 @@
           </ion-item>
 
           <!-- Surface -->
+          <ion-label position="floating">Surface (m²) *</ion-label>
           <ion-item>
-            <ion-label position="floating">Surface (m²) *</ion-label>
             <ion-input
               v-model="form.surface"
               type="number"
@@ -59,8 +59,8 @@
           </ion-item>
 
           <!-- Budget -->
-          <ion-item>
             <ion-label position="floating">Budget estimé (Ar) *</ion-label>
+          <ion-item>
             <ion-input
               v-model="form.budget"
               type="number"
@@ -70,13 +70,12 @@
               required
               @input="validateBudget"
             ></ion-input>
-            <ion-note slot="helper" v-if="!budgetError">Budget estimé pour les réparations</ion-note>
             <ion-note slot="error" v-if="budgetError">{{ budgetError }}</ion-note>
           </ion-item>
 
           <!-- ID Entreprise -->
+          <ion-label position="floating">Entreprise</ion-label>
           <ion-item>
-            <ion-label position="floating">Entreprise (optionnel)</ion-label>
             <ion-select 
               v-model="form.id_entreprise" 
               placeholder="Choisir une entreprise si applicable"
@@ -93,9 +92,60 @@
             </ion-select>
           </ion-item>
 
-          <!-- Adresse -->
+          <!-- Photos (temporairement désactivé) -->
+          <!-- <ion-label position="floating">Photos</ion-label>
           <ion-item>
-            <ion-label position="floating">Adresse</ion-label>
+            <div class="photo-section">
+              <div class="photo-preview" v-if="form.photos.length > 0">
+                <div 
+                  v-for="(photo, index) in form.photos" 
+                  :key="index"
+                  class="photo-item"
+                >
+                  <img :src="photo.data" :alt="`Photo ${index + 1}`" />
+                  <ion-button 
+                    size="small" 
+                    fill="clear" 
+                    color="danger"
+                    @click="removePhoto(index)"
+                    class="remove-photo-btn"
+                  >
+                    <ion-icon :icon="close" slot="icon-only"></ion-icon>
+                  </ion-button>
+                </div>
+              </div>
+              
+              <div class="photo-actions" v-if="form.photos.length < 3">
+                <ion-button 
+                  size="small" 
+                  fill="outline" 
+                  @click="selectFromGallery"
+                  class="photo-action-btn"
+                >
+                  <ion-icon :icon="images" slot="start"></ion-icon>
+                  Galerie
+                </ion-button>
+                
+                <ion-button 
+                  size="small" 
+                  fill="outline" 
+                  @click="takePhoto"
+                  class="photo-action-btn"
+                >
+                  <ion-icon :icon="camera" slot="start"></ion-icon>
+                  Appareil photo
+                </ion-button>
+              </div>
+              
+              <ion-text color="medium" v-if="form.photos.length >= 3">
+                <small>Maximum 3 photos atteint</small>
+              </ion-text>
+            </div>
+          </ion-item> -->
+
+          <!-- Adresse -->
+          <ion-label position="floating">Adresse</ion-label>
+          <ion-item>
             <ion-input
               v-model="form.adresse"
               placeholder="Adresse précise ou point de repère (ex: près du marché Analakely)"
@@ -136,6 +186,8 @@
         </ion-button>
       </div>
     </ion-content>
+    <IonFooter>
+    </IonFooter>
   </ion-modal>
 </template>
 
@@ -148,7 +200,7 @@ import {
   IonFooter, IonListHeader, toastController, IonButtons, IonBackButton, IonNote,
   IonSelect, IonSelectOption
 } from '@ionic/vue';
-import { pin } from 'ionicons/icons';
+import { pin, /* camera, images, */ close } from 'ionicons/icons';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useSignalementsStore } from '@/store/modules/signalements';
@@ -179,7 +231,9 @@ const form = ref({
   surface: '',
   budget: '',
   adresse: '',
-  id_entreprise: ''
+  id_entreprise: '',
+  // photos: [] // Temporairement désactivé
+  photos: []
 });
 
 const submitting = ref(false);
@@ -208,6 +262,31 @@ const validationErrors = computed(() => {
 const formValid = computed(() => {
   return validationErrors.value.length === 0;
 });
+
+// Validation refs
+const surfaceError = ref('');
+const budgetError = ref('');
+
+// Validation functions
+const validateSurface = () => {
+  const surface = parseFloat(form.value.surface);
+  if (!form.value.surface || surface <= 0) {
+    surfaceError.value = 'La surface doit être supérieure à 0';
+    return false;
+  }
+  surfaceError.value = '';
+  return true;
+};
+
+const validateBudget = () => {
+  const budget = parseFloat(form.value.budget);
+  if (!form.value.budget || budget < 1000) {
+    budgetError.value = 'Le budget minimum est de 1000 Ar';
+    return false;
+  }
+  budgetError.value = '';
+  return true;
+};
 
 const entreprises = computed(() => entreprisesStore.entreprises || []);
 
@@ -274,7 +353,11 @@ const initMiniMap = () => {
 };
 
 const handleSubmit = async () => {
-  if (!formValid.value) {
+  // Valider explicitement tous les champs
+  const isSurfaceValid = validateSurface();
+  const isBudgetValid = validateBudget();
+  
+  if (!formValid.value || !isSurfaceValid || !isBudgetValid) {
     return;
   }
 
@@ -287,7 +370,12 @@ const handleSubmit = async () => {
       surface: parseFloat(form.value.surface),
       budget: parseFloat(form.value.budget),
       adresse: form.value.adresse.trim() || undefined,
-      id_entreprise: form.value.id_entreprise ? parseInt(form.value.id_entreprise) : undefined,
+      id_entreprise: form.value.id_entreprise ? { id: parseInt(form.value.id_entreprise) } : undefined,
+      // photos: form.value.photos.map(photo => ({ // Temporairement désactivé
+      //   data: photo.data,
+      //   name: photo.name,
+      //   type: photo.type
+      // })),
       localisation: {
         type: 'Point',
         coordinates: [props.coordinates.lng, props.coordinates.lat]
@@ -296,7 +384,13 @@ const handleSubmit = async () => {
 
     console.log('Données du signalement:', signalementData);
     
-    await signalementsStore.createSignalement(signalementData);
+    // Vérifier le token d'authentification
+    const token = localStorage.getItem('token') || localStorage.getItem('idToken');
+    console.log('Token présent:', !!token);
+    console.log('Token preview:', token ? token.substring(0, 20) + '...' : 'none');
+    
+    const result = await signalementsStore.createSignalement(signalementData);
+    console.log('Result:', result);
     
     const toast = await toastController.create({
       message: 'Signalement créé avec succès !',
@@ -315,8 +409,15 @@ const handleSubmit = async () => {
       surface: '',
       budget: '',
       adresse: '',
-      id_entreprise: ''
+      id_entreprise: '',
+      // photos: [] // Temporairement désactivé
+      photos: []
     };
+    
+    // Reset validation errors
+    surfaceError.value = '';
+    budgetError.value = '';
+    error.value = '';
     
   } catch (err) {
     console.error('Erreur création signalement:', err);
@@ -373,6 +474,126 @@ watch(() => props.isOpen, (newValue) => {
   }
 }, { deep: true });
 
+// Fonctions de gestion des photos (temporairement désactivées)
+/*
+const selectFromGallery = async () => {
+  try {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.multiple = false;
+    
+    input.onchange = async (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        await processPhoto(file);
+      }
+    };
+    
+    input.click();
+  } catch (error) {
+    console.error('Erreur sélection photo:', error);
+    showToast('Erreur lors de la sélection de la photo', 'danger');
+  }
+};
+
+const takePhoto = async () => {
+  try {
+    // Vérifier si l'appareil photo est disponible
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      showToast('Appareil photo non disponible sur cet appareil', 'warning');
+      return;
+    }
+    
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.capture = 'environment';
+    
+    input.onchange = async (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        await processPhoto(file);
+      }
+    };
+    
+    input.click();
+  } catch (error) {
+    console.error('Erreur capture photo:', error);
+    showToast('Erreur lors de la capture de la photo', 'danger');
+  }
+};
+
+const processPhoto = async (file) => {
+  try {
+    // Vérifier la taille du fichier (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('L\'image est trop grande (max 5MB)', 'warning');
+      return;
+    }
+    
+    // Créer un canvas pour redimensionner l'image
+    const img = new Image();
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    img.onload = () => {
+      // Dimensions maximales
+      const maxWidth = 800;
+      const maxHeight = 600;
+      
+      let width = img.width;
+      let height = img.height;
+      
+      // Redimensionner si nécessaire
+      if (width > maxWidth || height > maxHeight) {
+        const ratio = Math.min(maxWidth / width, maxHeight / height);
+        width *= ratio;
+        height *= ratio;
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      
+      // Dessiner l'image redimensionnée
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      // Convertir en base64 avec compression
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+      
+      // Ajouter la photo au formulaire
+      form.value.photos.push({
+        data: dataUrl,
+        name: file.name,
+        size: file.size,
+        type: file.type
+      });
+      
+      showToast('Photo ajoutée avec succès', 'success');
+    };
+    
+    img.src = URL.createObjectURL(file);
+  } catch (error) {
+    console.error('Erreur traitement photo:', error);
+    showToast('Erreur lors du traitement de la photo', 'danger');
+  }
+};
+
+const removePhoto = (index) => {
+  form.value.photos.splice(index, 1);
+  showToast('Photo supprimée', 'success');
+};
+*/
+
+const showToast = async (message, color = 'primary') => {
+  const toast = await toastController.create({
+    message,
+    duration: 2000,
+    color
+  });
+  await toast.present();
+};
+
 // Watch pour les changements de coordonnées
 watch(() => props.coordinates, (newCoords) => {
   if (props.isOpen && newCoords) {
@@ -382,6 +603,15 @@ watch(() => props.coordinates, (newCoords) => {
     }, 100);
   }
 }, { deep: true });
+
+// Watchers pour la validation en temps réel
+watch(() => form.value.surface, () => {
+  validateSurface();
+});
+
+watch(() => form.value.budget, () => {
+  validateBudget();
+});
 </script>
 
 <style scoped>
@@ -417,6 +647,59 @@ ion-list {
   padding: 0;
   font-size: 0.9rem;
 }
+
+/* Photo section styles (temporairement désactivées) */
+/*
+.photo-section {
+  width: 100%;
+  padding: 0.5rem 0;
+}
+
+.photo-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.photo-item {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.photo-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.remove-photo-btn {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  --padding-start: 4px;
+  --padding-end: 4px;
+  --padding-top: 4px;
+  --padding-bottom: 4px;
+  min-height: 24px;
+  min-width: 24px;
+}
+
+.photo-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.photo-action-btn {
+  flex: 1;
+  min-width: 120px;
+}
+*/
 
 ion-item {
   --background: rgba(255, 255, 255, 0.9);

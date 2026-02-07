@@ -6,7 +6,9 @@ import web.backend.project.entities.dto.UtilisateurDTO;
 import java.util.Objects;
 
 @Entity
-@Table(name = "utilisateurs")
+@Table(name = "utilisateurs", uniqueConstraints = {
+        @UniqueConstraint(columnNames = { "email" })
+})
 public class Utilisateur implements SyncableEntity<UtilisateurDTO> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,7 +24,7 @@ public class Utilisateur implements SyncableEntity<UtilisateurDTO> {
     @Column(name = "synchro", nullable = false)
     private Boolean synchro = false;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_role", nullable = false)
     private Role role;
 
@@ -109,8 +111,6 @@ public class Utilisateur implements SyncableEntity<UtilisateurDTO> {
     public void updateFromDTO(UtilisateurDTO dto) {
         if (dto == null) {
             return;
-        } else if (dto.getId() != null) {
-            this.id = dto.getId();
         }
         this.email = dto.getEmail();
         this.password = dto.getPassword();

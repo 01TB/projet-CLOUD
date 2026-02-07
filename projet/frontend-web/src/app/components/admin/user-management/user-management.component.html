@@ -134,7 +134,7 @@
               {{ user.role.nom }}
             </span>
           </td>
-          <td class="date-cell">{{ user.date_creation }}</td>
+          <td class="date-cell">{{ user.date_creation || 'N/A' }}</td>
           <td>
             <span class="status-badge" [class.status-active]="!user.est_bloque" [class.status-blocked]="user.est_bloque">
               {{ user.est_bloque ? '🚫 Bloqué' : '✓ Actif' }}
@@ -197,6 +197,17 @@
             class="form-control" 
             [(ngModel)]="newUserEmail"
             placeholder="utilisateur@exemple.com"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="newPassword">Mot de passe *</label>
+          <input 
+            type="password" 
+            id="newPassword"
+            class="form-control" 
+            [(ngModel)]="newUserPassword"
+            placeholder="Mot de passe sécurisé"
           />
         </div>
 

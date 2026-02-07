@@ -5,7 +5,7 @@
         <ion-buttons slot="start">
           <ion-menu-button></ion-menu-button>
         </ion-buttons>
-        <ion-title>Carte des Signalements</ion-title>
+        <ion-title>Carte</ion-title>
         <ion-buttons slot="end">
           <ion-button @click="refreshData">
             <ion-icon :icon="refresh" slot="icon-only"></ion-icon>
@@ -16,7 +16,7 @@
           <ion-button @click="toggleMySignalements" v-if="authStatus" :color="filters.mesSignalements ? 'primary' : 'medium'">
             <ion-icon :icon="person" slot="icon-only"></ion-icon>
           </ion-button>
-          <ion-button @click="toggleFilter" v-if="authStatus">
+          <ion-button @click="toggleFilter">
             <ion-icon :icon="filter" slot="icon-only"></ion-icon>
           </ion-button>
         </ion-buttons>
@@ -37,16 +37,19 @@
         >
           <l-tile-layer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            :options="tileOptions"
             layer-type="base"
             name="OpenStreetMap"
+            @tileerror="onTileError"
+            @tileload="onTileLoad"
           ></l-tile-layer>
           
           <!-- Marqueurs des signalements -->
+          <!-- Marqueurs réels des signalements -->
           <l-marker
-            v-for="signalement in filteredSignalements"
+            v-for="signalement in validMarkers"
             :key="signalement.id"
             :lat-lng="getLatLng(signalement)"
-            @click="showSignalementDetail(signalement)"
           >
             <l-icon
               :icon-url="getMarkerIcon(signalement)"
@@ -56,14 +59,32 @@
             <l-popup>
               <div class="signalement-popup">
                 <h3>{{ signalement.description }}</h3>
-                <p><strong>Statut:</strong> {{ getCurrentStatus(signalement) }}</p>
                 <p><strong>Surface:</strong> {{ signalement.surface }} m²</p>
+                <p><strong>Statut:</strong> {{ getCurrentStatus(signalement) }}</p>
                 <p><strong>Budget:</strong> {{ formatBudget(signalement.budget) }}</p>
                 <p><strong>Date:</strong> {{ formatDate(signalement.date_creation) }}</p>
                 
+                <!-- Photos -->
+                <div v-if="signalement.photos && signalement.photos.length > 0" class="popup-photos">
+                  <p><strong>Photos:</strong></p>
+                  <div class="photo-gallery">
+                    <img 
+                      v-for="(photo, index) in signalement.photos.slice(0, 3)" 
+                      :key="index"
+                      :src="photo.data" 
+                      :alt="`Photo ${index + 1}`"
+                      class="popup-photo"
+                      @click="viewPhoto(photo)"
+                    />
+                    <div v-if="signalement.photos.length > 3" class="more-photos">
+                      +{{ signalement.photos.length - 3 }}
+                    </div>
+                  </div>
+                </div>
+                
                 <!-- Actions CRUD pour utilisateur connecté -->
                 <div v-if="authStatus" class="popup-actions">
-                  <!-- Actions pour le propriétaire du signalement -->
+                  <!-- Actions pour le propriétaire du signalement
                   <template v-if="canEditSignalement(signalement)">
                     <ion-button 
                       size="small" 
@@ -87,18 +108,9 @@
                       Supprimer
                     </ion-button>
                   </template>
+                   -->
                   
                   <!-- Actions pour tous les utilisateurs connectés -->
-                  <ion-button 
-                    size="small" 
-                    expand="block" 
-                    fill="outline"
-                    @click="addProgress(signalement)"
-                    class="action-button"
-                  >
-                    <ion-icon :icon="chatbubble" slot="start"></ion-icon>
-                    Ajouter un commentaire
-                  </ion-button>
                   
                   <ion-button 
                     size="small" 
@@ -205,7 +217,7 @@
               <ion-checkbox
                 slot="start"
                 :checked="filters.mesSignalements"
-                @ionChange="filters.mesSignalements = !filters.mesSignalements"
+                @ionChange="handleMesSignalementsChange"
               ></ion-checkbox>
               <ion-label>Mes signalements uniquement</ion-label>
             </ion-item>
@@ -231,8 +243,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { 
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
   IonButton, IonIcon, IonButtons, IonMenuButton, IonFab,
@@ -263,6 +275,7 @@ L.Icon.Default.mergeOptions({
 });
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 const signalementsStore = useSignalementsStore();
 const { checkAuthAndRedirect } = useAuthCheck();
@@ -281,7 +294,7 @@ const selectedCoordinates = ref({ lat: -18.8792, lng: 47.5079 });
 
 // Filtres
 const filters = ref({
-  statuts: ['Nouveau', 'En cours', 'Terminé'],
+  statuts: ['Nouveau', 'En attente', 'En cours', 'En validation', 'Validé', 'Terminé'], // Inclure tous les statuts possibles
   mesSignalements: false
 });
 
@@ -293,7 +306,6 @@ const statuts = computed(() => signalementsStore.statuts || []);
 const stats = computed(() => signalementsStore.stats || {});
 
 const authStatus = computed(() => {
-  
   return authStore.isLoggedIn && authStore.token;
 });
 
@@ -306,35 +318,65 @@ const userLocationIcon = computed(() => {
   });
 });
 
+// Options pour les tiles de la carte
+const tileOptions = {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  maxZoom: 19,
+  errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhQDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+  noWrap: false,
+  tileSize: 256,
+  zoomOffset: 0,
+  keepBuffer: 4,
+  updateWhenIdle: false,
+  updateWhenZooming: false,
+  preferCanvas: true
+};
+
 const filteredSignalements = computed(() => {
-  let signalements = signalementsStore.signalements || [];
+  const allSignalements = signalementsStore.signalements || [];
+  console.log('📊 Signalements bruts:', allSignalements.length);
   
-  // Filtrer par statut
-  if (filters.value.statuts.length > 0) {
-    signalements = signalements.filter(sig => {
-      const currentStatus = getCurrentStatus(sig);
-      return filters.value.statuts.includes(currentStatus);
-    });
-  }
-  
-  // Filtrer mes signalements
-  if (filters.value.mesSignalements && authStore.user) {
-    signalements = signalements.filter(sig => 
-      sig.id_utilisateur_createur === authStore.user.id
-    );
-  }
-  
-  // Filtrer les signalements avec des coordonnées valides
-  signalements = signalements.filter(sig => {
-    return sig.localisation && 
-           sig.localisation.coordinates && 
-           Array.isArray(sig.localisation.coordinates) && 
-           sig.localisation.coordinates.length >= 2 &&
-           sig.localisation.coordinates[0] != null && 
-           sig.localisation.coordinates[1] != null;
+  let filtered = allSignalements.filter(sig => {
+    // Vérifier si le statut est dans les filtres
+    const status = getCurrentStatus(sig);
+    const statusMatch = filters.value.statuts.includes(status);
+    
+    // Vérifier si c'est un filtre "mes signalements"
+    const userMatch = !filters.value.mesSignalements || 
+                     (sig.id_utilisateur_createur === authStore.user?.id);
+    
+    return statusMatch && userMatch;
   });
   
-  return signalements;
+  console.log('📊 Signalements filtrés:', filtered.length);
+  
+  // Log détaillé des coordonnées pour chaque signalement filtré
+  filtered.forEach(sig => {
+    console.log(`🔍 Signalement ${sig.id} - Statut: ${getCurrentStatus(sig)} - Coordonnées:`, sig.localisation?.coordinates);
+  });
+  
+  return filtered;
+});
+
+// Computed property pour les marqueurs valides uniquement
+const validMarkers = computed(() => {
+  const markers = filteredSignalements.value.filter(signalement => {
+    if (!signalement || !signalement.id) {
+      return false;
+    }
+    
+    const latLng = getLatLng(signalement);
+    return latLng !== null;
+  });
+  
+  console.log('📍 Marqueurs valides:', markers.length);
+  
+  // Log tous les statuts trouvés pour débogage
+  const allStatuses = [...new Set(filteredSignalements.value.map(sig => getCurrentStatus(sig)))];
+  console.log('🏷️ Tous les statuts trouvés:', allStatuses);
+  console.log('🔍 Filtres actuels:', filters.value.statuts);
+  
+  return markers;
 });
 
 // Méthodes
@@ -404,6 +446,7 @@ const loadInitialData = async () => {
     await signalementsStore.fetchSignalements();
     // fetchStats n'existe plus dans le store, les stats sont déjà dans le state
     await signalementsStore.fetchStatuts();
+    console.log('Statuts loaded:', signalementsStore.statuts);
   } catch (error) {
     console.error('Erreur chargement données:', error);
   }
@@ -447,38 +490,66 @@ const zoomUpdated = (newZoom) => {
 };
 
 const getLatLng = (signalement) => {
+  // Vérification de sécurité pour éviter les erreurs quand signalement est undefined
+  if (!signalement || !signalement.id) {
+    console.warn('❌ getLatLng appelé avec signalement invalide:', signalement);
+    return null;
+  }
+  
+  console.log(`🔍 Vérification coordonnées pour signalement ${signalement.id}:`, {
+    localisation: signalement.localisation,
+    coordinates: signalement.localisation?.coordinates,
+    isArray: Array.isArray(signalement.localisation?.coordinates),
+    length: signalement.localisation?.coordinates?.length
+  });
+  
   if (signalement.localisation && 
       signalement.localisation.coordinates && 
       Array.isArray(signalement.localisation.coordinates) && 
       signalement.localisation.coordinates.length >= 2 &&
       signalement.localisation.coordinates[0] != null && 
       signalement.localisation.coordinates[1] != null) {
-    return [
-      signalement.localisation.coordinates[1],
-      signalement.localisation.coordinates[0]
+    // Format API : [longitude, latitude]
+    // Leaflet attend : [latitude, longitude]
+    const latLng = [
+      signalement.localisation.coordinates[1], // latitude
+      signalement.localisation.coordinates[0]  // longitude
     ];
+    console.log(`✅ Marqueur pour ${signalement.id}:`, latLng, signalement.localisation.coordinates);
+    return latLng;
   }
+  console.warn(`❌ Coordonnées invalides pour signalement ${signalement.id}:`, signalement.localisation);
   // Retourner null si les coordonnées sont invalides pour ne pas afficher le marqueur
   return null;
 };
 
 const getMarkerIcon = (signalement) => {
+  // Vérification de sécurité
+  if (!signalement || !signalement.id) {
+    console.warn('❌ getMarkerIcon appelé avec signalement invalide:', signalement);
+    return 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png';
+  }
+  
   const status = getCurrentStatus(signalement);
   const colors = {
-    'Nouveau': 'red',
-    'En cours': 'orange',
+    'Nouveau': 'violet',
+    'En attente': 'red',
+    'En cours': 'orange', 
+    'En validation': 'yellow',
+    'Validé': 'lightgreen',
     'Terminé': 'green'
   };
+  const color = colors[status] || 'red';
   
-  const color = colors[status] || 'blue';
+  // URL valide pour les icônes Leaflet
   return `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`;
 };
 
 const getCurrentStatus = (signalement) => {
   if (signalement.avancement_signalements && signalement.avancement_signalements[0]) {
-    return signalement.avancement_signalements[0].statut_avancement?.nom || 'Nouveau';
+    return signalement.avancement_signalements[0].statut_avancement?.nom || 'En attente';
   }
-  return 'Nouveau';
+  return 'En attente';
 };
 
 const formatBudget = (budget) => {
@@ -531,30 +602,6 @@ const addProgress = (signalement) => {
   console.log('Add progress to signalement:', signalement);
 };
 
-const showSignalementDetail = async (signalement) => {
-  const alert = await alertController.create({
-    header: `Signalement #${signalement.id}`,
-    message: `Statut: ${getCurrentStatus(signalement)}
-Description: ${signalement.description || 'Non spécifiée'}
-Surface: ${signalement.surface || 'Non spécifiée'} m²
-Budget: ${formatBudget(signalement.budget)}
-Adresse: ${signalement.adresse || 'Non spécifiée'}
-Créé le: ${formatDate(signalement.date_creation)}`,
-    buttons: [
-      {
-        text: 'Fermer',
-        role: 'cancel'
-      },
-      {
-        text: 'Voir détails',
-        handler: () => viewDetails(signalement.id)
-      }
-    ]
-  });
-  
-  await alert.present();
-};
-
 const toggleFilter = () => {
   filterModalOpen.value = !filterModalOpen.value;
 };
@@ -576,7 +623,7 @@ const getStatutCount = (statutName) => {
 
 const resetFilters = () => {
   filters.value = {
-    statuts: ['Nouveau', 'En cours', 'Terminé'],
+    statuts: ['En attente', 'En cours', 'En validation', 'Validé', 'Terminé'],
     mesSignalements: false
   };
 };
@@ -585,9 +632,99 @@ const refreshData = async () => {
   await loadInitialData();
 };
 
-const toggleMySignalements = () => {
+// Gestion des erreurs de tiles
+const onTileError = (error) => {
+  console.warn('Tile loading error:', error);
+  // Les tiles qui échouent utiliseront automatiquement l'errorTileUrl (image vide)
+};
+
+const onTileLoad = (tile) => {
+  // Log pour debugging si nécessaire
+  // console.log('Tile loaded successfully');
+};
+
+const toggleMySignalements = async () => {
+  if (!authStatus) {
+    const alert = await alertController.create({
+      header: 'Connexion requise',
+      message: 'Vous devez être connecté pour filtrer vos signalements',
+      buttons: ['OK']
+    });
+    await alert.present();
+    return;
+  }
   filters.value.mesSignalements = !filters.value.mesSignalements;
 };
+
+const handleMesSignalementsChange = async () => {
+  if (!authStatus) {
+    const alert = await alertController.create({
+      header: 'Connexion requise',
+      message: 'Vous devez être connecté pour filtrer vos signalements',
+      buttons: ['OK']
+    });
+    await alert.present();
+    // Réinitialiser la checkbox
+    filters.value.mesSignalements = false;
+    return;
+  }
+  filters.value.mesSignalements = !filters.value.mesSignalements;
+};
+
+const viewPhoto = async (photo) => {
+  try {
+    const alert = await alertController.create({
+      header: 'Photo du signalement',
+      message: `<img src="${photo.data}" style="max-width: 100%; max-height: 300px; border-radius: 8px;" />`,
+      buttons: ['Fermer']
+    });
+    await alert.present();
+  } catch (error) {
+    console.error('Erreur affichage photo:', error);
+  }
+};
+
+// Fonction pour gérer le focus sur un signalement
+const handleSignalementFocus = () => {
+  console.log('🔍 Query parameters reçus:', route.query);
+  if (route.query.focus && route.query.lat && route.query.lng) {
+    console.log('🎯 Focus sur signalement:', route.query.focus);
+    console.log('📍 Coordonnées reçues:', { lat: route.query.lat, lng: route.query.lng });
+    
+    const targetLat = parseFloat(route.query.lat);
+    const targetLng = parseFloat(route.query.lng);
+    
+    console.log('📍 Coordonnées parsées:', { lat: targetLat, lng: targetLng });
+    
+    // Centrer la carte sur les coordonnées spécifiées
+    center.value = [targetLat, targetLng];
+    
+    // Zoomer pour bien voir le marqueur
+    zoom.value = 16;
+    
+    console.log('🗺️ Carte centrée sur:', center.value, 'zoom:', zoom.value);
+    
+    // Attendre que les données soient chargées puis mettre en évidence le marqueur
+    setTimeout(() => {
+      const targetSignalement = signalementsStore.signalements.find(sig => sig.id === route.query.focus);
+      if (targetSignalement) {
+        console.log('✅ Signalement trouvé pour focus:', targetSignalement);
+        // Ouvrir le popup du marqueur si possible
+        // TODO: Implémenter l'ouverture automatique du popup
+      } else {
+        console.warn('❌ Signalement non trouvé:', route.query.focus);
+      }
+    }, 2000);
+  } else {
+    console.log('ℹ️ Pas de query parameters pour focus');
+  }
+};
+
+// Watcher pour les query parameters
+watch(() => route.query, () => {
+  console.log('🔄 Route query changé:', route.query);
+  handleSignalementFocus();
+}, { immediate: true });
 
 // Lifecycle
 onMounted(async () => {
@@ -603,6 +740,9 @@ onMounted(async () => {
   
   // Vérifier l'authentification au montage
   await authStore.checkAuth();
+  
+  // Gérer les query parameters pour focus sur un signalement
+  handleSignalementFocus();
 });
 
 </script>
@@ -736,6 +876,35 @@ ion-header {
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
 }
 
+/* Tile loading improvements */
+.leaflet-tile {
+  transition: opacity 0.3s ease;
+}
+
+.leaflet-tile-loading {
+  opacity: 0.6;
+}
+
+.leaflet-tile-error {
+  opacity: 0.3;
+  background: #f7fafc;
+}
+
+/* Map container improvements for better loading */
+.map-container {
+  background: #f8fafc;
+}
+
+.leaflet-container {
+  background: #f8fafc;
+}
+
+/* Hide tile borders for cleaner look */
+.leaflet-tile-pane {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
 ion-title {
   color: rgba(255, 255, 255, 0.98) !important;
   font-weight: 700;
@@ -811,6 +980,44 @@ ion-modal {
   }
 }
 
+/* Popup photos */
+.popup-photos {
+  margin-top: 0.5rem;
+}
+
+.photo-gallery {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+  margin-top: 0.25rem;
+}
+
+.popup-photo {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.popup-photo:hover {
+  transform: scale(1.05);
+}
+
+.more-photos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ion-color-medium);
+}
+
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
   .stats-container {
@@ -836,15 +1043,15 @@ ion-modal {
   }
   
   .signalement-popup h3 {
-    color: #f7fafc;
+    color: #002657;
   }
   
   .signalement-popup p strong {
-    color: #e2e8f0;
+    color: #0d3c7a;
   }
   
   .popup-actions {
-    border-top-color: rgba(74, 85, 104, 0.8);
+    border-top-color: rgba(49, 68, 101, 0.8);
   }
   
   ion-header {

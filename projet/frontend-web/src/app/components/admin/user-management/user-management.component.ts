@@ -36,6 +36,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   
   // Formulaire de création
   newUserEmail = '';
+  newUserPassword = '';
   newUserRoleId: number | null = null;
   
   // Utilisateur sélectionné
@@ -121,6 +122,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   // Création d'utilisateur
   openCreateModal(): void {
     this.newUserEmail = '';
+    this.newUserPassword = '';
     this.newUserRoleId = 2; // Utilisateur par défaut
     this.showCreateModal = true;
     this.clearMessages();
@@ -129,11 +131,12 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   closeCreateModal(): void {
     this.showCreateModal = false;
     this.newUserEmail = '';
+    this.newUserPassword = '';
     this.newUserRoleId = null;
   }
 
   createUser(): void {
-    if (!this.newUserEmail || !this.newUserRoleId) {
+    if (!this.newUserEmail || !this.newUserPassword || !this.newUserRoleId) {
       this.showError('Veuillez remplir tous les champs');
       return;
     }
@@ -145,21 +148,21 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Vérifier si l'email existe déjà
-    if (this.utilisateurs.some(u => u.email === this.newUserEmail)) {
-      this.showError('Cet email est déjà utilisé');
+    // Validation mot de passe
+    if (this.newUserPassword.length < 6) {
+      this.showError('Le mot de passe doit contenir au moins 6 caractères');
       return;
     }
 
     this.loading = true;
-    this.userManagementService.createUser(this.newUserEmail, this.newUserRoleId).subscribe({
+    this.userManagementService.createUser(this.newUserEmail, this.newUserPassword, this.newUserRoleId).subscribe({
       next: (newUser) => {
         this.showSuccess(`Utilisateur ${newUser.email} créé avec succès`);
         this.closeCreateModal();
         this.loadData();
       },
       error: (error) => {
-        this.showError('Erreur lors de la création');
+        this.showError(error.message || 'Erreur lors de la création');
         this.loading = false;
       }
     });

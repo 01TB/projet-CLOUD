@@ -112,7 +112,7 @@
 
         <h3>Aucun signalement</h3>
 
-        <p>Aucun signalement ne correspond aux filtres</p>
+        <p>Aucun signalement "Nouveau" ne correspond aux filtres</p>
 
         <ion-button fill="outline" @click="router.push('/signalement/create')" v-if="isAuthenticated">
 
@@ -134,7 +134,7 @@
 
         >
 
-          <ion-item @click="viewDetails(signalement.id)">
+          <ion-item @click="toggleSignalementExpansion(signalement.id)" button>
 
             <ion-avatar slot="start">
 
@@ -184,6 +184,88 @@
 
             </ion-note>
 
+          </ion-item>
+
+          <!-- Section développée avec détails -->
+          <ion-item v-if="expandedSignalements.includes(signalement.id)" class="expanded-details">
+            <ion-label class="ion-padding">
+              <div class="details-container">
+                <h4>Détails complets</h4>
+                
+                <div class="detail-row">
+                  <strong>Description:</strong>
+                  <p>{{ signalement.description || 'Non spécifiée' }}</p>
+                </div>
+                
+                <div class="detail-row">
+                  <strong>Surface:</strong>
+                  <p>{{ signalement.surface ? signalement.surface + ' m²' : 'Non spécifiée' }}</p>
+                </div>
+                
+                <div class="detail-row">
+                  <strong>Budget:</strong>
+                  <p>{{ formatBudget(signalement.budget) }}</p>
+                </div>
+                
+                <div class="detail-row">
+                  <strong>Adresse:</strong>
+                  <p>{{ signalement.adresse || 'Non spécifiée' }}</p>
+                </div>
+                
+                <div class="detail-row">
+                  <strong>Date de création:</strong>
+                  <p>{{ formatDate(signalement.date_creation) }}</p>
+                </div>
+                
+                <div class="detail-row">
+                  <strong>Statut:</strong>
+                  <p>
+                    <ion-badge :color="getStatusColor(getCurrentStatus(signalement))">
+                      {{ getCurrentStatus(signalement) }}
+                    </ion-badge>
+                  </p>
+                </div>
+                
+                <div v-if="signalement.photos && signalement.photos.length > 0" class="detail-row">
+                  <strong>Photos:</strong>
+                  <div class="photo-gallery">
+                    <img 
+                      v-for="(photo, index) in signalement.photos.slice(0, 3)" 
+                      :key="index"
+                      :src="photo.data" 
+                      :alt="`Photo ${index + 1}`"
+                      class="detail-photo"
+                      @click="viewPhoto(photo)"
+                    />
+                    <div v-if="signalement.photos.length > 3" class="more-photos">
+                      +{{ signalement.photos.length - 3 }}
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="detail-actions">
+                  <ion-button 
+                    size="small" 
+                    fill="outline" 
+                    @click="viewOnMap(signalement)"
+                    class="ion-margin-end"
+                  >
+                    <ion-icon :icon="map" slot="start"></ion-icon>
+                    Voir sur carte
+                  </ion-button>
+                  
+                  <ion-button 
+                    size="small" 
+                    fill="outline" 
+                    @click="shareSignalement(signalement)"
+                    v-if="canShare"
+                  >
+                    <ion-icon :icon="share" slot="start"></ion-icon>
+                    Partager
+                  </ion-button>
+                </div>
+              </div>
+            </ion-label>
           </ion-item>
 
 
@@ -266,7 +348,7 @@ import {
 
   IonItemOption, IonFab, IonFabButton,
 
-  toastController
+  toastController, alertController
 
 } from '@ionic/vue';
 
@@ -298,7 +380,9 @@ const loading = ref(true);
 
 const showFilters = ref(true);
 
-const selectedStatus = ref([]); // Vide pour montrer tous les signalements par défaut
+const selectedStatus = ref(['En attente']); // "En attente" sélectionné par défaut
+
+const expandedSignalements = ref([]); // IDs des signalements développés
 
 const page = ref(1);
 
@@ -354,11 +438,11 @@ const getCurrentStatus = (signalement) => {
 
   if (signalement.avancement_signalements && signalement.avancement_signalements[0]) {
 
-    return signalement.avancement_signalements[0].statut_avancement?.nom || 'Nouveau';
+    return signalement.avancement_signalements[0].statut_avancement?.nom || 'En attente';
 
   }
 
-  return 'Nouveau';
+  return 'En attente';
 
 };
 
@@ -368,9 +452,13 @@ const getStatusColor = (status) => {
 
   const colors = {
 
-    'Nouveau': 'danger',
+    'En attente': 'danger',
 
     'En cours': 'warning',
+
+    'En validation': 'tertiary',
+
+    'Validé': 'success',
 
     'Terminé': 'success'
 
@@ -528,6 +616,40 @@ const viewDetails = (id) => {
 
 };
 
+const toggleSignalementExpansion = (signalementId) => {
+
+  const index = expandedSignalements.value.indexOf(signalementId);
+
+  if (index > -1) {
+
+    expandedSignalements.value.splice(index, 1);
+
+  } else {
+
+    expandedSignalements.value.push(signalementId);
+
+  }
+
+};
+
+const formatBudget = (budget) => {
+
+  if (!budget) return 'Non spécifié';
+
+  return new Intl.NumberFormat('fr-MG', {
+
+    style: 'currency',
+
+    currency: 'MGA',
+
+    minimumFractionDigits: 0,
+
+    maximumFractionDigits: 0
+
+  }).format(budget);
+
+};
+
 
 
 const viewOnMap = async (signalement) => {
@@ -575,6 +697,32 @@ const shareSignalement = async (signalement) => {
   } catch (error) {
 
     console.log('Share cancelled:', error);
+
+  }
+
+};
+
+
+
+const viewPhoto = async (photo) => {
+
+  try {
+
+    const alert = await alertController.create({
+
+      header: 'Photo du signalement',
+
+      message: `<img src="${photo.data}" style="max-width: 100%; max-height: 300px; border-radius: 8px;" />`,
+
+      buttons: ['Fermer']
+
+    });
+
+    await alert.present();
+
+  } catch (error) {
+
+    console.error('Erreur affichage photo:', error);
 
   }
 
@@ -658,19 +806,9 @@ onMounted(async () => {
 
   margin-bottom: 1rem;
 
-}
-
-
-
-.load-more {
-
-  padding: 1rem;
-
   text-align: center;
 
 }
-
-
 
 ion-chip {
 
@@ -678,6 +816,103 @@ ion-chip {
 
   cursor: pointer;
 
+}
+
+.expanded-details {
+
+  --background: rgba(49, 130, 206, 0.05);
+
+  border-left: 4px solid var(--ion-color-primary);
+
+}
+
+.details-container {
+
+  padding: 1rem;
+
+}
+
+.details-container h4 {
+
+  color: var(--ion-color-primary);
+
+  margin-bottom: 1rem;
+
+  font-weight: 600;
+
+}
+
+.detail-row {
+
+  margin-bottom: 1rem;
+
+}
+
+.detail-row strong {
+
+  color: var(--ion-color-dark);
+
+  display: block;
+
+  margin-bottom: 0.25rem;
+
+  font-size: 0.9rem;
+
+}
+
+.detail-row p {
+
+  color: var(--ion-color-medium);
+
+  margin: 0;
+
+  line-height: 1.4;
+
+}
+
+.detail-actions {
+
+  margin-top: 1.5rem;
+
+  padding-top: 1rem;
+
+  border-top: 1px solid var(--ion-color-light);
+
+}
+
+/* Photo gallery styles */
+.photo-gallery {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.detail-photo {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.detail-photo:hover {
+  transform: scale(1.05);
+}
+
+.more-photos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ion-color-medium);
 }
 
 </style>

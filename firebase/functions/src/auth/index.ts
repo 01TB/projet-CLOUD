@@ -10,6 +10,9 @@ import {
   errorResponse,
   extractToken,
   verifyToken,
+  getParameters,
+  blockUser,
+  generateUniqueIntId,
   apiKEY,
 } from "../utils/helpers";
 
@@ -88,25 +91,31 @@ export const register = functions.https.onRequest(async (req, res) => {
 
     const roleUtilisateur = rolesSnapshot.docs[0];
 
+    // Générer un ID numérique unique pour l'utilisateur
+    const userNumericId = await generateUniqueIntId("utilisateurs");
+
     // Créer l'utilisateur dans Firebase Auth
     const userRecord = await auth.createUser({
+      uid: userNumericId.toString(), 
       email,
       password,
       displayName: `${prenom} ${nom}`,
     });
 
+
     // Créer le document utilisateur dans Firestore
     await db
       .collection("utilisateurs")
-      .doc(userRecord.uid)
+      .doc(String(userNumericId))
       .set({
+        id: userNumericId,
         email,
-        password: "hashed", // En production, hasher le mot de passe
-        id_role: roleUtilisateur.id,
+        password: password, // En production, hasher le mot de passe
+        id_role: Number(roleUtilisateur.id),
         nom,
         prenom,
         telephone: telephone || null,
-        synchro: true,
+        synchro: false,
         date_creation: admin.firestore.FieldValue.serverTimestamp(),
         date_modification: admin.firestore.FieldValue.serverTimestamp(),
       });
@@ -117,7 +126,8 @@ export const register = functions.https.onRequest(async (req, res) => {
     const response = successResponse(
       {
         user: {
-          id: userRecord.uid,
+          id: userNumericId,
+          firebase_uid: userRecord.uid,
           email,
           nom,
           prenom,
@@ -182,26 +192,85 @@ export const login = functions.https.onRequest(async (req, res) => {
       return;
     }
 
-    // Récupérer l'utilisateur par email
-    const userRecord = await auth.getUserByEmail(email);
+    // Charger les paramètres (durée de session et nombre max tentatives)
+    const params = (await getParameters()) || {
+      duree_session: 3600,
+      nb_tentatives_connexion: 3,
+    };
+    const duree_session = params.duree_session;
+    const nb_tentatives_connexion = params.nb_tentatives_connexion;
 
-    // Vérifier dans Firestore
-    const userDoc = await db
+    // Récupérer l'utilisateur Firestore par email (la collection `utilisateurs` stocke l'id numérique)
+    const userSnapshot = await db
       .collection("utilisateurs")
-      .doc(userRecord.uid)
+      .where("email", "==", email)
+      .limit(1)
       .get();
 
-    if (!userDoc.exists) {
+    if (userSnapshot.empty) {
       const response = errorResponse(
-        "USER_NOT_FOUND",
-        "Utilisateur non trouvé",
-        404,
+        "INVALID_CREDENTIALS",
+        "Email ou mot de passe incorrect",
+        401,
       );
       res.status(response.status).json(response.body);
       return;
     }
 
+    const userDoc = userSnapshot.docs[0];
     const userData = userDoc.data();
+
+    const userNumericId = userData?.id;
+
+    // Vérifier si l'utilisateur est déjà bloqué
+    const blockedSnap = await db
+      .collection("utilisateurs_bloques")
+      .where("id_utilisateur", "==", userNumericId)
+      .limit(1)
+      .get();
+
+    if (!blockedSnap.empty) {
+      const response = errorResponse("ACCOUNT_BLOCKED", "Compte bloqué", 403);
+      res.status(response.status).json(response.body);
+      return;
+    }
+
+    // Vérifier le mot de passe (ici comparaison simple, en production hacher)
+    const storedPassword = userData?.password || null;
+    if (storedPassword !== password) {
+      const failedAttempts = (userData?.failed_login_attempts || 0) + 1;
+      await userDoc.ref.update({
+        failed_login_attempts: failedAttempts,
+        last_failed_login: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      if (failedAttempts >= nb_tentatives_connexion) {
+        // Bloquer l'utilisateur
+        await blockUser(userNumericId);
+        const response = errorResponse(
+          "ACCOUNT_BLOCKED",
+          "Compte bloqué après trop de tentatives",
+          403,
+        );
+        res.status(response.status).json(response.body);
+        return;
+      }
+
+      const remaining = nb_tentatives_connexion - failedAttempts;
+      const response = errorResponse(
+        "INVALID_CREDENTIALS",
+        `Email ou mot de passe incorrect. Il reste ${remaining} tentative(s).`,
+        401,
+      );
+      res.status(response.status).json(response.body);
+      return;
+    }
+
+    // Reset failed attempts on succès
+    await userDoc.ref.update({ failed_login_attempts: 0 });
+
+    // Récupérer l'utilisateur Firebase Auth pour créer le custom token
+    const userRecord = await auth.getUserByEmail(email);
 
     // 1. Créer un custom token
     const token = await auth.createCustomToken(userRecord.uid);
@@ -211,23 +280,36 @@ export const login = functions.https.onRequest(async (req, res) => {
       {
         token: token,
         returnSecureToken: true,
-      }
+      },
     );
     // 3. Récupérer le idToken de la réponse
     const idToken = responseIdentity.data.idToken;
 
+    // 4. Créer un session cookie avec la durée souhaitée (en ms)
+    const expiresIn = duree_session * 1000;
+    let sessionCookie = null;
+    try {
+      sessionCookie = await auth.createSessionCookie(idToken, { expiresIn });
+    } catch (e) {
+      // Si création de session cookie échoue, on continue en renvoyant au moins l'idToken
+      console.error("Impossible de créer le sessionCookie :", e);
+    }
+
     const response = successResponse({
       user: {
-        id: userRecord.uid,
+        id: userNumericId,
         email: userData?.email,
         nom: userData?.nom,
         prenom: userData?.prenom,
         telephone: userData?.telephone,
         role: userData?.id_role,
-        date_creation: userData?.date_creation?.toDate().toISOString(),
-        date_modification: userData?.date_modification?.toDate().toISOString(),
+        date_creation:
+          userData?.date_creation?.toDate?.()?.toISOString?.() || null,
+        date_modification:
+          userData?.date_modification?.toDate?.()?.toISOString?.() || null,
       },
-      idToken,
+      token: sessionCookie,
+      session_expires_at: new Date(Date.now() + expiresIn).toISOString(),
     });
 
     res.status(response.status).json(response.body);

@@ -2,7 +2,7 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -12,6 +12,8 @@ import { MapComponent } from './components/map/map.component';
 import { LoginComponent } from './components/auth/login/login.component';
 import { SidebarComponent } from './components/sidebar/sidebar.component';
 import { UserManagementComponent } from './components/admin/user-management/user-management.component';
+import { SignalementManagementComponent } from './components/admin/signalement-management/signalement-management.component';
+import { SignalementDetailComponent } from './components/signalement-detail/signalement-detail.component';
 
 // Services
 import { AuthService } from './services/auth.service';
@@ -21,13 +23,18 @@ import { UserManagementService } from './services/user-management.service';
 // Guards
 import { AuthGuard } from './guards/auth.guard';
 
+// Interceptors
+import { JwtInterceptor } from './interceptors/jwt.interceptor';
+
 @NgModule({
   declarations: [
     AppComponent,
     MapComponent,
     LoginComponent,
     SidebarComponent,
-    UserManagementComponent
+    UserManagementComponent,
+    SignalementManagementComponent,
+    SignalementDetailComponent
   ],
   imports: [
     BrowserModule,
@@ -39,7 +46,12 @@ import { AuthGuard } from './guards/auth.guard';
     AuthService,
     MockDataService,
     UserManagementService,
-    AuthGuard
+    AuthGuard,
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: JwtInterceptor,
+      multi: true
+    }
   ],
   bootstrap: [AppComponent]
 })

@@ -29,6 +29,12 @@ public class SignalementInsertDTO {
 
     private Boolean synchro = false;
 
+    // Nouveau statut (optionnel, utilisé lors de la mise à jour pour changer le statut)
+    private Integer idNouveauStatut;
+
+    // Date de modification du statut (optionnel, par défaut la date actuelle)
+    private String dateModificationStatut;
+
     // Constructeurs
     public SignalementInsertDTO() {
     }
@@ -100,5 +106,21 @@ public class SignalementInsertDTO {
 
     public void setSynchro(Boolean synchro) {
         this.synchro = synchro;
+    }
+
+    public Integer getIdNouveauStatut() {
+        return idNouveauStatut;
+    }
+
+    public void setIdNouveauStatut(Integer idNouveauStatut) {
+        this.idNouveauStatut = idNouveauStatut;
+    }
+
+    public String getDateModificationStatut() {
+        return dateModificationStatut;
+    }
+
+    public void setDateModificationStatut(String dateModificationStatut) {
+        this.dateModificationStatut = dateModificationStatut;
     }
 }

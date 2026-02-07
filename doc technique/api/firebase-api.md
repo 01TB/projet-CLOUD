@@ -129,8 +129,8 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
 
 ```json
 {
-  "email": "user@example.mg",
-  "password": "Password123"
+  "email": "admin@signalement.com",
+  "password": "admin123"
 }
 ```
 
@@ -140,7 +140,7 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
 {
   "success": true,
   "user": {
-    "id": "abc123xyz",
+    "id": 1,
     "email": "user@example.mg",
     "nom": "Rakoto",
     "prenom": "Jean",
@@ -149,9 +149,23 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
     "date_creation": "2026-01-27T10:30:00.000Z",
     "date_modification": "2026-01-27T10:30:00.000Z"
   },
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  "token": "eyJhbGciOiJSUzI1NiIsImtpZCI6ImFhYTExMSJ9...",
+  "session_expires_at": "2026-01-27T11:30:00.000Z"
 }
 ```
+
+**Champs de la réponse** :
+
+- `token` (string) : Session cookie Firebase valide jusqu'à `session_expires_at`
+- `session_expires_at` (string) : Date d'expiration du token (ISO 8601)
+- `user.id` (number) : ID numérique de l'utilisateur dans Firestore
+
+**Notes importantes** :
+
+- ⏱️ **Durée de session** : Configurable via `parametres.duree_session` côté BACKEND FIREBASE (en secondes, défaut: 3600s = 1h)
+- 🔒 **Sécurité** : Le système compte les tentatives de connexion échouées
+- ⚠️ **Blocage automatique** : Après X tentatives échouées (configurable via `parametres.nb_tentatives_connexion` côté BACKEND FIREBASE, défaut: 3), le compte est bloqué
+- 🚫 **Utilisateurs bloqués** : Ajoutés automatiquement à la collection `utilisateurs_bloques` et ne peuvent plus se connecter
 
 **Réponses erreur** :
 
@@ -165,21 +179,30 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
   }
 }
 
-// 401 - Identifiants incorrects
+// 401 - Identifiants incorrects (avec compteur de tentatives)
 {
   "success": false,
   "error": {
     "code": "INVALID_CREDENTIALS",
-    "message": "Email ou mot de passe incorrect"
+    "message": "Email ou mot de passe incorrect. Il reste 2 tentative(s)."
   }
 }
 
-// 404 - Utilisateur non trouvé
+// 403 - Compte bloqué (déjà dans utilisateurs_bloques)
 {
   "success": false,
   "error": {
-    "code": "USER_NOT_FOUND",
-    "message": "Utilisateur non trouvé"
+    "code": "ACCOUNT_BLOCKED",
+    "message": "Compte bloqué"
+  }
+}
+
+// 403 - Compte bloqué après trop de tentatives
+{
+  "success": false,
+  "error": {
+    "code": "ACCOUNT_BLOCKED",
+    "message": "Compte bloqué après trop de tentatives"
   }
 }
 ```
@@ -398,14 +421,25 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
       "date_creation": "2026-01-15T10:30:00Z",
       "date_modification": "2026-01-15T10:30:00.000Z",
       "id_utilisateur_createur": "user123",
+      "photos": [
+        {
+          "id": 1,
+          "date_ajout": "2026-02-07T10:30:45.000Z",
+          "photo": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ..."
+        }
+      ],
       "avancement_signalements": [
         {
-          "id": "avancement1",
+          "id": "1",
           "statut_avancement": {
-            "id": "statut1",
-            "nom": "En cours"
+            "id": "2",
+            "nom": "EN_COURS"
           },
-          "date_creation": "2026-01-16T08:00:00.000Z",
+          "utilisateur": {
+            "id": "1",
+            "email": "admin@signalisation.mg"
+          },
+          "date_creation": "2026-02-03T08:07:24.981054",
           "commentaire": ""
         }
       ]
@@ -464,7 +498,7 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
     "type": "Point",
     "coordinates": [47.5079, -18.8792]
   },
-  "id_entreprise": "entrepriseId123"
+  "id_entreprise": "1"
 }
 ```
 
@@ -493,7 +527,13 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
       "coordinates": [47.5079, -18.8792]
     },
     "date_creation": "2026-01-27T10:30:00.000Z",
-    "id_utilisateur_createur": "user123"
+    "id_utilisateur_createur": "1",
+    "id_entreprise": "1"
+    "avancement_signalements": {
+        "id": "ORG39tzZZB1ZgwIn2IFS",
+        "id_statut_avancement": 1,
+        "date_modification": "2026-02-07T10:58:39.665Z"
+    }
   }
 }
 ```
@@ -572,14 +612,25 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
     "date_creation": "2026-01-15T10:30:00Z",
     "date_modification": "2026-01-15T10:30:00.000Z",
     "id_utilisateur_createur": "user123",
+    "photos": [
+      {
+        "id": 1,
+        "date_ajout": "2026-02-07T10:30:45.000Z",
+        "photo": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ..."
+      }
+    ],
     "avancement_signalements": [
       {
-        "id": "avancement1",
+        "id": "1",
         "statut_avancement": {
-          "id": "statut1",
-          "nom": "En cours"
+          "id": "2",
+          "nom": "EN_COURS"
         },
-        "date_creation": "2026-01-16T08:00:00.000Z",
+        "utilisateur": {
+          "id": "1",
+          "email": "admin@signalisation.mg"
+        },
+        "date_creation": "2026-02-03T08:07:24.981054",
         "commentaire": ""
       }
     ]
@@ -756,7 +807,146 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
 
 ---
 
-## 📊 Statuts d'avancement
+## � Photos de signalements
+
+### 11. POST /addSignalementPhoto
+
+**Description** : Ajouter une photo (encodée en base64) à un signalement existant.
+
+**URL complète** : `https://us-central1-projet-cloud-e2146.cloudfunctions.net/addSignalementPhoto`
+
+**Méthode HTTP** : `POST`
+
+**Authentification** : ✅ Requise (utilisateur non bloqué)
+
+**Headers** :
+
+```json
+{
+  "Content-Type": "application/json",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Corps de la requête** :
+
+```json
+{
+  "id_signalement": 1,
+  "photo": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ..."
+}
+```
+
+**Champs** :
+
+- `id_signalement` (number, requis) : ID numérique du signalement
+- `photo` (string, requis) : Photo encodée en base64 (avec ou sans préfixe `data:image/...`)
+
+**Réponse succès (201)** :
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "id_signalement": 1,
+    "date_ajout": "2026-02-07 10:30:45",
+    "photo_size": 15234
+  }
+}
+```
+
+**Champs de la réponse** :
+
+- `id` (number) : ID numérique unique de la photo dans Firestore
+- `id_signalement` (number) : ID du signalement lié
+- `date_ajout` (string) : Date d'ajout au format 'YYYY-MM-DD HH:mm:ss'
+- `photo_size` (number) : Taille de la photo en caractères
+
+**Réponses erreur** :
+
+```json
+// 401 - Non authentifié
+{
+  "success": false,
+  "error": {
+    "code": "AUTH_REQUIRED",
+    "message": "Token requis"
+  }
+}
+
+// 403 - Utilisateur bloqué
+{
+  "success": false,
+  "error": {
+    "code": "FORBIDDEN",
+    "message": "Utilisateur bloqué"
+  }
+}
+
+// 400 - Validation échouée
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "id_signalement et photo requis"
+  }
+}
+
+// 400 - Photo invalide
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "La photo doit être une chaîne de caractères non vide (base64)"
+  }
+}
+
+// 404 - Signalement non trouvé
+{
+  "success": false,
+  "error": {
+    "code": "SIGNALEMENT_NOT_FOUND",
+    "message": "Signalement non trouvé"
+  }
+}
+```
+
+**Notes importantes** :
+
+- 📸 La photo doit être encodée en **base64**
+- 💾 Format recommandé : `data:image/jpeg;base64,<données>`
+- 🔢 Un **ID numérique unique** est généré automatiquement
+- 📅 La date est au format SQL : `YYYY-MM-DD HH:mm:ss`
+- 🔄 Par défaut, `synchro = false` pour synchronisation ultérieure avec le backend
+
+**Structure de la collection `signalements_photos`** :
+
+```json
+{
+  "id": 1,
+  "id_signalement": 1,
+  "photo": "data:image/jpeg;base64,/9j/4AAQSkZ...",
+  "date_ajout": "2026-02-07 10:30:45",
+  "synchro": false
+}
+```
+
+**Exemple avec cURL** :
+
+```bash
+curl -X POST https://us-central1-projet-cloud-e2146.cloudfunctions.net/addSignalementPhoto \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <votre_token>" \
+  -d '{
+    "id_signalement": 1,
+    "photo": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD..."
+  }'
+```
+
+---
+
+## �📊 Statuts d'avancement
 
 ### 12. GET /getStatuts
 
@@ -818,7 +1008,7 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
 
 ## 🏢 Entreprises
 
-### 11. GET /getEntreprises
+### 13. GET /getEntreprises
 
 **Description** : Récupérer la liste de toutes les entreprises enregistrées dans le système (accessible à tous).
 
@@ -863,7 +1053,7 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
 
 ## 📈 Statistiques
 
-### 13. GET /getStats
+### 14. GET /getStats
 
 **Description** : Récupérer les statistiques globales du système (accessible à tous).
 
@@ -924,7 +1114,7 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
 
 ## � Synchronisation
 
-### 14. POST /syncToBackend
+### 15. POST /syncToBackend
 
 **Description** : Synchroniser les données Firestore vers le backend Spring Boot. Récupère toutes les données non synchronisées (synchro = false), les envoie au backend, puis met à jour synchro = true.
 
@@ -1135,19 +1325,20 @@ System.out.println("Documents synchronisés: " + syncData.getData().getSynced())
 
 ## �🔑 Codes d'erreur
 
-| Code                    | Message                        | Description                 |
-| ----------------------- | ------------------------------ | --------------------------- |
-| `AUTH_REQUIRED`         | Token requis                   | Authentification nécessaire |
-| `UNAUTHORIZED`          | Token invalide                 | Token expiré ou invalide    |
-| `FORBIDDEN`             | Accès interdit                 | Permissions insuffisantes   |
-| `VALIDATION_ERROR`      | Erreur de validation           | Données invalides           |
-| `EMAIL_EXISTS`          | Email déjà utilisé             | Email déjà enregistré       |
-| `INVALID_CREDENTIALS`   | Identifiants incorrects        | Email/password incorrects   |
-| `USER_NOT_FOUND`        | Utilisateur non trouvé         | Utilisateur inexistant      |
-| `SIGNALEMENT_NOT_FOUND` | Signalement non trouvé         | Signalement inexistant      |
-| `METHOD_NOT_ALLOWED`    | Méthode non autorisée          | Mauvaise méthode HTTP       |
-| `SYNC_ERROR`            | Erreur lors de synchronisation | Échec de synchronisation    |
-| `INTERNAL_ERROR`        | Erreur interne du serveur      | Erreur non prévue           |
+| Code                    | Message                        | Description                    |
+| ----------------------- | ------------------------------ | ------------------------------ |
+| `AUTH_REQUIRED`         | Token requis                   | Authentification nécessaire    |
+| `UNAUTHORIZED`          | Token invalide                 | Token expiré ou invalide       |
+| `FORBIDDEN`             | Accès interdit                 | Permissions insuffisantes      |
+| `ACCOUNT_BLOCKED`       | Compte bloqué                  | Compte bloqué après tentatives |
+| `VALIDATION_ERROR`      | Erreur de validation           | Données invalides              |
+| `EMAIL_EXISTS`          | Email déjà utilisé             | Email déjà enregistré          |
+| `INVALID_CREDENTIALS`   | Identifiants incorrects        | Email/password incorrects      |
+| `USER_NOT_FOUND`        | Utilisateur non trouvé         | Utilisateur inexistant         |
+| `SIGNALEMENT_NOT_FOUND` | Signalement non trouvé         | Signalement inexistant         |
+| `METHOD_NOT_ALLOWED`    | Méthode non autorisée          | Mauvaise méthode HTTP          |
+| `SYNC_ERROR`            | Erreur lors de synchronisation | Échec de synchronisation       |
+| `INTERNAL_ERROR`        | Erreur interne du serveur      | Erreur non prévue              |
 
 ---
 
@@ -1165,9 +1356,10 @@ Toutes les APIs supportent CORS avec :
 
 ### Authentification
 
-- Les tokens JWT sont générés via Firebase Authentication
+- Les tokens sont des **session cookies** générés via Firebase Authentication
 - Les tokens doivent être envoyés dans le header `Authorization: Bearer <token>`
-- Les tokens ont une durée de validité configurée par Firebase
+- **Durée de validité** : Configurable via `parametres.duree_session` (en secondes, défaut: 3600s = 1h)
+- Les tokens expirent automatiquement après la durée spécifiée
 
 ### Rôles et permissions
 
@@ -1175,12 +1367,32 @@ Toutes les APIs supportent CORS avec :
 - **Utilisateur** : Création de signalements + droits visiteurs
 - **Manager** : Tous les droits (création, modification, suppression)
 
+### Protection contre les attaques par force brute
+
+- 📊 **Comptage des tentatives** : Le système compte automatiquement les tentatives de connexion échouées
+- ⚠️ **Limite configurable** : Nombre max de tentatives via `parametres.nb_tentatives_connexion` (défaut: 3)
+- 🚫 **Blocage automatique** : Après X échecs, le compte est ajouté à `utilisateurs_bloques`
+- 🔄 **Réinitialisation** : Les tentatives sont remises à zéro après une connexion réussie
+- 🔒 **Feedback utilisateur** : Le message d'erreur indique le nombre de tentatives restantes
+
 ### Blocage d'utilisateurs
 
-Les utilisateurs bloqués ne peuvent pas :
+Les utilisateurs bloqués (dans la collection `utilisateurs_bloques`) ne peuvent pas :
 
+- Se connecter (erreur 403 - ACCOUNT_BLOCKED)
 - Créer de nouveaux signalements
 - Modifier des signalements existants
+
+**Structure de `utilisateurs_bloques`** :
+
+```json
+{
+  "id": 1, // ID numérique unique
+  "id_utilisateur": 123, // ID de l'utilisateur bloqué
+  "date_blocage": "2026-02-07T10:30:00Z", // Date du blocage
+  "synchro": false // Statut de synchronisation
+}
+```
 
 ---
 
@@ -1189,8 +1401,12 @@ Les utilisateurs bloqués ne peuvent pas :
 1. **Pagination** : Par défaut, `getSignalements` retourne 20 éléments par page
 2. **Localisation** : Format GeoPoint [longitude, latitude]
 3. **Dates** : Format ISO 8601 (YYYY-MM-DDTHH:mm:ss.sssZ)
-4. **IDs** : Générés automatiquement par Firestore
-5. **Token** : Valide tant que l'utilisateur ne se déconnecte pas (géré par Firebase Auth)
+4. **IDs** : Les IDs utilisateurs et signalements sont des nombres entiers uniques
+5. **Token** : Session cookie avec durée configurable (voir `parametres.duree_session`)
+6. **Paramètres** : Collection `parametres` (doc id=1) pour configurer :
+   - `duree_session` : Durée de vie du token en secondes (défaut: 3600)
+   - `nb_tentatives_connexion` : Nombre max de tentatives avant blocage (défaut: 3)
+   - `synchro` : Statut de synchronisation avec le backend
 
 ---
 
@@ -1226,5 +1442,11 @@ curl -X POST https://us-central1-projet-cloud-e2146.cloudfunctions.net/syncToBac
 
 ---
 
-**Date de dernière mise à jour** : 27 janvier 2026  
-**Version API** : 1.0.0
+**Date de dernière mise à jour** : 7 février 2026  
+**Version API** : 1.1.0  
+**Changelog v1.1.0** :
+
+- ✨ Durée de session configurable via `parametres.duree_session`
+- 🔒 Système de limitation des tentatives de connexion
+- 🚫 Blocage automatique après X échecs (configurable)
+- 📊 Nouveau code d'erreur `ACCOUNT_BLOCKED` (403)

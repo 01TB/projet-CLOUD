@@ -8,6 +8,8 @@ import {
   errorResponse,
   extractToken,
   verifyToken,
+  generateUniqueIntId,
+  getUserInfo,
 } from "../utils/helpers";
 
 // GET /api/signalements
@@ -42,7 +44,7 @@ export const getSignalements = functions.https.onRequest(async (req, res) => {
       query = query.where(
         "id_utilisateur_createur",
         "==",
-        id_utilisateur_createur,
+        Number(id_utilisateur_createur),
       ) as any;
     }
 
@@ -60,7 +62,7 @@ export const getSignalements = functions.https.onRequest(async (req, res) => {
         // Récupérer les avancements
         const avancementsSnapshot = await db
           .collection("avancements_signalement")
-          .where("id_signalement", "==", doc.id)
+          .where("id_signalement", "==", data.id)
           .orderBy("date_modification", "desc")
           .get();
 
@@ -69,17 +71,42 @@ export const getSignalements = functions.https.onRequest(async (req, res) => {
             const avData = avDoc.data();
             const statutDoc = await db
               .collection("statuts_avancement")
-              .doc(avData.id_statut_avancement)
+              .where("id", "==", avData.id_statut_avancement)
+              .get();
+
+            const utilisateurDoc = await db
+              .collection("utilisateurs")
+              .where("id", "==", avData.id_utilisateur)
               .get();
 
             return {
               id: avDoc.id,
               statut_avancement: {
-                id: statutDoc.id,
-                nom: statutDoc.data()?.nom,
+                id: statutDoc.docs[0].id,
+                nom: statutDoc.docs[0].data()?.nom,
               },
-              date_creation: avData.date_modification?.toDate().toISOString(),
+              utilisateur: {
+                id: utilisateurDoc.docs[0].id,
+                email: utilisateurDoc.docs[0].data()?.email || "",
+              },
+              date_creation: avData.date_modification,
               commentaire: avData.commentaire || "",
+            };
+          }),
+        );
+
+        const photosSnapshot = await db
+          .collection("signalements_photos")
+          .where("id_signalement", "==", data.id)
+          .get();
+
+        const photos = await Promise.all(
+          photosSnapshot.docs.map(async (photoDoc) => {
+            const photoData = photoDoc.data();
+            return {
+              id: photoData.id,
+              date_ajout: photoData.date_ajout?.toDate().toISOString() || "",
+              photo: photoData.photo, // Taille en caractères
             };
           }),
         );
@@ -99,9 +126,10 @@ export const getSignalements = functions.https.onRequest(async (req, res) => {
           },
           date_creation: data.date_creation,
           date_modification:
-            data.date_modification?.toDate().toISOString() ||
+            data.date_modification ||
             data.date_creation,
           id_utilisateur_createur: data.id_utilisateur_createur,
+          photos: photos,
           avancement_signalements: avancements,
         };
       }),
@@ -119,11 +147,7 @@ export const getSignalements = functions.https.onRequest(async (req, res) => {
 
     res.status(response.status).json(response.body);
   } catch (error: any) {
-    const response = errorResponse(
-      "INTERNAL_ERROR",
-      error.message || "Erreur interne du serveur",
-      500,
-    );
+    const response = errorResponse("INTERNAL_ERROR", error.message, 500);
     res.status(response.status).json(response.body);
   }
 });
@@ -211,11 +235,48 @@ export const createSignalement = functions.https.onRequest(async (req, res) => {
         .limit(1)
         .get();
       if (!entreprisesSnapshot.empty) {
-        entrepriseId = entreprisesSnapshot.docs[0].id;
+        entrepriseId = entreprisesSnapshot.docs[0].data()?.id;
       }
     }
 
+    const userInfo = await getUserInfo(decodedToken.uid);
+
+    if (!userInfo) {
+      const response = errorResponse(
+        "USER_NOT_FOUND",
+        "Utilisateur non trouvé avec UID : " + decodedToken.uid,
+        404,
+      );
+      res.status(response.status).json(response.body);
+      return;
+    }
+
+    if (!userInfo.id) {
+      const response = errorResponse(
+        "INTERNAL_ERROR",
+        "L'utilisateur n'a pas d'ID numérique. Veuillez vous réinscrire.",
+        500,
+      );
+      res.status(response.status).json(response.body);
+      return;
+    }
+
+    const userId = userInfo.id;
+
+    const signalementNumericId = await generateUniqueIntId("signalements");
+
+    // Date de création au format 'YYYY-MM-DD HH:mm:ss'
+    const date = new Date();
+    const formattedDate = date.getUTCFullYear() + '-' +
+      String(date.getUTCMonth() + 1).padStart(2, '0') + '-' +
+      String(date.getUTCDate()).padStart(2, '0') + ' ' +
+      String(date.getUTCHours()).padStart(2, '0') + ':' +
+      String(date.getUTCMinutes()).padStart(2, '0') + ':' +
+      String(date.getUTCSeconds()).padStart(2, '0');
+
+
     const signalementData = {
+      id: signalementNumericId,
       description: description || "",
       surface,
       budget,
@@ -224,21 +285,41 @@ export const createSignalement = functions.https.onRequest(async (req, res) => {
         localisation.coordinates[1], // latitude
         localisation.coordinates[0], // longitude
       ),
-      date_creation: new Date().toISOString(),
-      date_modification: admin.firestore.FieldValue.serverTimestamp(),
-      id_utilisateur_createur: decodedToken.uid,
-      id_entreprise: entrepriseId,
-      synchro: true,
+      date_creation: formattedDate,
+      date_modification: formattedDate,
+      id_utilisateur_createur: userId,
+      id_entreprise: Number(entrepriseId),
+      synchro: false,
     };
 
-    const signalementRef = await db
+    const avancementNumericId = await generateUniqueIntId(
+      "avancements_signalement",
+    );
+
+    const avancementData = {
+      date_modification: formattedDate,
+      id: avancementNumericId,
+      id_signalement: signalementData.id,
+      id_statut_avancement: 1, // "Nouveau"
+      id_utilisateur: userId,
+      last_modified: new Date().toISOString(),
+      synchro: false,
+    };
+
+    await db
       .collection("signalements")
-      .add(signalementData);
+      .doc(String(signalementNumericId))
+      .set(signalementData);
+
+    await db
+      .collection("avancements_signalement")
+      .doc(String(avancementNumericId))
+      .set(avancementData);
 
     const response = successResponse(
       {
         data: {
-          id: signalementRef.id,
+          id: signalementNumericId,
           description: signalementData.description,
           surface: signalementData.surface,
           budget: signalementData.budget,
@@ -249,6 +330,12 @@ export const createSignalement = functions.https.onRequest(async (req, res) => {
           },
           date_creation: signalementData.date_creation,
           id_utilisateur_createur: signalementData.id_utilisateur_createur,
+          id_entreprise: signalementData.id_entreprise,
+          avancement_signalements: {
+            id: signalementNumericId,
+            id_statut_avancement: avancementData.id_statut_avancement,
+            date_modification: avancementData.date_modification,
+          },
         },
       },
       201,
@@ -256,11 +343,7 @@ export const createSignalement = functions.https.onRequest(async (req, res) => {
 
     res.status(response.status).json(response.body);
   } catch (error: any) {
-    const response = errorResponse(
-      "INTERNAL_ERROR",
-      error.message || "Erreur interne du serveur",
-      500,
-    );
+    const response = errorResponse("INTERNAL_ERROR", error.message, 500);
     res.status(response.status).json(response.body);
   }
 });
@@ -309,10 +392,20 @@ export const getSignalement = functions.https.onRequest(async (req, res) => {
 
     const data = doc.data();
 
+    if (!data) {
+      const response = errorResponse(
+        "SIGNALEMENT_NOT_FOUND",
+        "Signalement non trouvé",
+        404,
+      );
+      res.status(response.status).json(response.body);
+      return;
+    }
+
     // Récupérer les avancements
     const avancementsSnapshot = await db
       .collection("avancements_signalement")
-      .where("id_signalement", "==", doc.id)
+      .where("id_signalement", "==", data.id)
       .orderBy("date_modification", "desc")
       .get();
 
@@ -321,17 +414,42 @@ export const getSignalement = functions.https.onRequest(async (req, res) => {
         const avData = avDoc.data();
         const statutDoc = await db
           .collection("statuts_avancement")
-          .doc(avData.id_statut_avancement)
+          .where("id", "==", avData.id_statut_avancement)
+          .get();
+
+        const utilisateurDoc = await db
+          .collection("utilisateurs")
+          .where("id", "==", avData.id_utilisateur)
           .get();
 
         return {
           id: avDoc.id,
           statut_avancement: {
-            id: statutDoc.id,
-            nom: statutDoc.data()?.nom,
+            id: statutDoc.docs[0].id,
+            nom: statutDoc.docs[0].data()?.nom,
           },
-          date_creation: avData.date_modification?.toDate().toISOString(),
+          utilisateur: {
+            id: utilisateurDoc.docs[0].id,
+            email: utilisateurDoc.docs[0].data()?.email || "",
+          },
+          date_creation: avData.date_modification,
           commentaire: avData.commentaire || "",
+        };
+      }),
+    );
+
+    const photosSnapshot = await db
+      .collection("signalements_photos")
+      .where("id_signalement", "==", data.id)
+      .get();
+
+    const photos = await Promise.all(
+      photosSnapshot.docs.map(async (photoDoc) => {
+        const photoData = photoDoc.data();
+        return {
+          id: photoData.id,
+          date_ajout: photoData.date_ajout?.toDate().toISOString() || "",
+          photo: photoData.photo, // Taille en caractères
         };
       }),
     );
@@ -352,20 +470,17 @@ export const getSignalement = functions.https.onRequest(async (req, res) => {
         },
         date_creation: data?.date_creation,
         date_modification:
-          data?.date_modification?.toDate().toISOString() ||
+          data?.date_modification ||
           data?.date_creation,
         id_utilisateur_createur: data?.id_utilisateur_createur,
+        photos: photos,
         avancement_signalements: avancements,
       },
     });
 
     res.status(response.status).json(response.body);
   } catch (error: any) {
-    const response = errorResponse(
-      "INTERNAL_ERROR",
-      error.message || "Erreur interne du serveur",
-      500,
-    );
+    const response = errorResponse("INTERNAL_ERROR", error.message, 500);
     res.status(response.status).json(response.body);
   }
 });
@@ -444,7 +559,7 @@ export const updateSignalement = functions.https.onRequest(async (req, res) => {
 
     const response = successResponse({
       data: {
-        id: doc.id,
+        id: data?.id,
         description: data?.description || "",
         surface: data?.surface,
         budget: data?.budget,
@@ -455,11 +570,7 @@ export const updateSignalement = functions.https.onRequest(async (req, res) => {
 
     res.status(response.status).json(response.body);
   } catch (error: any) {
-    const response = errorResponse(
-      "INTERNAL_ERROR",
-      error.message || "Erreur interne du serveur",
-      500,
-    );
+    const response = errorResponse("INTERNAL_ERROR", error.message, 500);
     res.status(response.status).json(response.body);
   }
 });
@@ -529,11 +640,7 @@ export const deleteSignalement = functions.https.onRequest(async (req, res) => {
 
     res.status(response.status).json(response.body);
   } catch (error: any) {
-    const response = errorResponse(
-      "INTERNAL_ERROR",
-      error.message || "Erreur interne du serveur",
-      500,
-    );
+    const response = errorResponse("INTERNAL_ERROR", error.message, 500);
     res.status(response.status).json(response.body);
   }
 });

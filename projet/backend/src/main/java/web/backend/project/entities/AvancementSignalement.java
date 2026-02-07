@@ -3,15 +3,7 @@ package web.backend.project.entities;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import web.backend.project.entities.dto.AvancementSignalementDTO;
 
 @Entity
@@ -23,7 +15,7 @@ public class AvancementSignalement implements SyncableEntity<AvancementSignaleme
     private Integer id;
 
     @Column(name = "date_modification", nullable = false)
-    private LocalDateTime dateModification;
+    private LocalDateTime dateModification = LocalDateTime.now();
 
     @Column(name = "synchro", nullable = false)
     private Boolean synchro = false;
@@ -47,7 +39,7 @@ public class AvancementSignalement implements SyncableEntity<AvancementSignaleme
     public AvancementSignalement(LocalDateTime dateModification, Boolean synchro,
             Utilisateur utilisateur, StatutAvancement statutAvancement,
             Signalement signalement) {
-        this.dateModification = dateModification;
+        this.dateModification = dateModification != null ? dateModification : LocalDateTime.now();
         this.synchro = synchro;
         this.utilisateur = utilisateur;
         this.statutAvancement = statutAvancement;
@@ -58,12 +50,12 @@ public class AvancementSignalement implements SyncableEntity<AvancementSignaleme
     public AvancementSignalementDTO toDTO() {
         AvancementSignalementDTO dto = new AvancementSignalementDTO();
         dto.setId(this.id);
-        dto.setDateModification(this.dateModification);
+        dto.setDateModification(this.dateModification != null ? this.dateModification : LocalDateTime.now());
         dto.setSynchro(this.synchro);
         dto.setUtilisateurId(this.utilisateur != null ? this.utilisateur.getId() : null);
         dto.setStatutAvancementId(this.statutAvancement != null ? this.statutAvancement.getId() : null);
         dto.setSignalementId(this.signalement != null ? this.signalement.getId() : null);
-        dto.setLastModified(this.dateModification);
+        dto.setLastModified(this.dateModification != null ? this.dateModification : LocalDateTime.now());
         return dto;
     }
 
@@ -93,7 +85,7 @@ public class AvancementSignalement implements SyncableEntity<AvancementSignaleme
     }
 
     public void setDateModification(LocalDateTime dateModification) {
-        this.dateModification = dateModification;
+        this.dateModification = dateModification != null ? dateModification : LocalDateTime.now();
     }
 
     public Boolean getSynchro() {

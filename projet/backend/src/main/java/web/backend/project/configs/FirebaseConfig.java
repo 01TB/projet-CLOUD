@@ -12,6 +12,7 @@ import org.springframework.core.io.Resource;
 
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * Configuration Firebase pour la synchronisation avec Firestore
@@ -29,8 +30,15 @@ public class FirebaseConfig {
     public void initialize() {
         try {
             if (FirebaseApp.getApps().isEmpty()) {
+                // Créer les credentials avec les scopes nécessaires pour Firestore
+                GoogleCredentials credentials = GoogleCredentials
+                        .fromStream(firebaseConfigPath.getInputStream())
+                        .createScoped(Arrays.asList(
+                                "https://www.googleapis.com/auth/cloud-platform",
+                                "https://www.googleapis.com/auth/datastore"));
+
                 FirebaseOptions options = FirebaseOptions.builder()
-                        .setCredentials(GoogleCredentials.fromStream(firebaseConfigPath.getInputStream()))
+                        .setCredentials(credentials)
                         .setDatabaseUrl(databaseUrl)
                         .build();
 
