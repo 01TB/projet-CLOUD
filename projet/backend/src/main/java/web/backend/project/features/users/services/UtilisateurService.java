@@ -67,7 +67,7 @@ public class UtilisateurService {
         utilisateur.setEmail(utilisateurDTO.getEmail().toLowerCase().trim());
         // Encodage du mot de passe
         utilisateur.setPassword(passwordEncoder.encode(utilisateurDTO.getPassword()));
-        utilisateur.setSynchro(utilisateurDTO.getSynchro() != null ? utilisateurDTO.getSynchro() : false);
+        utilisateur.setSynchro(false);
         utilisateur.setRole(role);
 
         return utilisateurRepository.save(utilisateur);
