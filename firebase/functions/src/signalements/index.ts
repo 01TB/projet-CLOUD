@@ -95,6 +95,22 @@ export const getSignalements = functions.https.onRequest(async (req, res) => {
           }),
         );
 
+        const photosSnapshot = await db
+          .collection("signalements_photos")
+          .where("id_signalement", "==", data.id)
+          .get();
+
+        const photos = await Promise.all(
+          photosSnapshot.docs.map(async (photoDoc) => {
+            const photoData = photoDoc.data();
+            return {
+              id: photoData.id,
+              date_ajout: photoData.date_ajout?.toDate().toISOString() || "",
+              photo: photoData.photo, // Taille en caractères
+            };
+          }),
+        );
+
         return {
           id: doc.id,
           description: data.description || "",
@@ -113,6 +129,7 @@ export const getSignalements = functions.https.onRequest(async (req, res) => {
             data.date_modification ||
             data.date_creation,
           id_utilisateur_createur: data.id_utilisateur_createur,
+          photos: photos,
           avancement_signalements: avancements,
         };
       }),
@@ -421,6 +438,22 @@ export const getSignalement = functions.https.onRequest(async (req, res) => {
       }),
     );
 
+    const photosSnapshot = await db
+      .collection("signalements_photos")
+      .where("id_signalement", "==", data.id)
+      .get();
+
+    const photos = await Promise.all(
+      photosSnapshot.docs.map(async (photoDoc) => {
+        const photoData = photoDoc.data();
+        return {
+          id: photoData.id,
+          date_ajout: photoData.date_ajout?.toDate().toISOString() || "",
+          photo: photoData.photo, // Taille en caractères
+        };
+      }),
+    );
+
     const response = successResponse({
       data: {
         id: doc.id,
@@ -440,6 +473,7 @@ export const getSignalement = functions.https.onRequest(async (req, res) => {
           data?.date_modification ||
           data?.date_creation,
         id_utilisateur_createur: data?.id_utilisateur_createur,
+        photos: photos,
         avancement_signalements: avancements,
       },
     });

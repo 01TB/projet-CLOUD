@@ -421,6 +421,13 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
       "date_creation": "2026-01-15T10:30:00Z",
       "date_modification": "2026-01-15T10:30:00.000Z",
       "id_utilisateur_createur": "user123",
+      "photos": [
+        {
+          "id": 1,
+          "date_ajout": "2026-02-07T10:30:45.000Z",
+          "photo": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ..."
+        }
+      ],
       "avancement_signalements": [
         {
           "id": "1",
@@ -605,6 +612,13 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
     "date_creation": "2026-01-15T10:30:00Z",
     "date_modification": "2026-01-15T10:30:00.000Z",
     "id_utilisateur_createur": "user123",
+    "photos": [
+      {
+        "id": 1,
+        "date_ajout": "2026-02-07T10:30:45.000Z",
+        "photo": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ..."
+      }
+    ],
     "avancement_signalements": [
       {
         "id": "1",
