@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SignalementService } from '../../services/signalement.service';
 import { Signalement } from '../../models/signalement.model';
+import photoData from '../../../assets/img/login_image_data.json';
 
 @Component({
   selector: 'app-signalement-detail',
@@ -84,7 +85,7 @@ export class SignalementDetailComponent implements OnInit, OnDestroy {
   }
 
   getDefaultPhoto(): string {
-    return 'assets/img/login.png';
+    return photoData.photo;
   }
 
   goBack(): void {
