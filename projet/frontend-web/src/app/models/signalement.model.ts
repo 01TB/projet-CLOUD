@@ -44,8 +44,10 @@ export interface Signalement {
   localisation: Localisation;
   entreprise: Entreprise;
   statut_actuel: StatutAvancement;
+  statut_affiche?: StatutAvancement; // Statut calculé à la date du filtre pour l'affichage
   id_utilisateur_createur: number;
   photos?: string[]; // URLs des photos - par défaut login.png
+  avancements?: AvancementResponseDTO[]; // Liste des avancements pour calcul du statut à une date donnée
 }
 
 export interface StatistiquesRecap {

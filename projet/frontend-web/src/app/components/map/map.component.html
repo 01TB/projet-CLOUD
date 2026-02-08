@@ -155,8 +155,8 @@
 
           <div class="form-group">
             <label>Statut actuel:</label>
-            <span class="badge" [ngClass]="'badge-status-' + selectedSignalement.statut_actuel.valeur">
-              {{ selectedSignalement.statut_actuel.nom }}
+            <span class="badge" [ngClass]="'badge-status-' + getStatutAffiche(selectedSignalement).valeur">
+              {{ getStatutAffiche(selectedSignalement).nom }}
             </span>
           </div>
 

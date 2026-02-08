@@ -110,7 +110,9 @@ export class SignalementService {
         nom: dto.nomEntreprise || 'Non assigné'
       },
       statut_actuel: statutActuel,
-      id_utilisateur_createur: dto.idUtilisateurCreateur
+      statut_affiche: statutActuel, // Initialiser avec le statut actuel, sera mis à jour par le filtre de date
+      id_utilisateur_createur: dto.idUtilisateurCreateur,
+      avancements: dto.avancements // Conserver la liste des avancements pour filtrage par date
     };
   }
 

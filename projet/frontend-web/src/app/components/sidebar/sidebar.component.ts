@@ -19,8 +19,7 @@ export class SidebarComponent implements OnInit {
   filters = {
     statuts: [] as number[],
     entreprises: [] as number[],
-    dateDebut: '',
-    dateFin: '',
+    date: new Date().toISOString().split('T')[0], // Date d'aujourd'hui par défaut (format YYYY-MM-DD)
     surfaceMin: null as number | null,
     surfaceMax: null as number | null,
     budgetMin: null as number | null,
@@ -34,6 +33,8 @@ export class SidebarComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadFilterOptions();
+    // Émettre les filtres initiaux (avec la date d'aujourd'hui)
+    this.emitFilters();
   }
 
   private loadFilterOptions(): void {
@@ -74,8 +75,7 @@ export class SidebarComponent implements OnInit {
     this.filters = {
       statuts: [],
       entreprises: [],
-      dateDebut: '',
-      dateFin: '',
+      date: new Date().toISOString().split('T')[0], // Réinitialiser à aujourd'hui
       surfaceMin: null,
       surfaceMax: null,
       budgetMin: null,
@@ -85,8 +85,18 @@ export class SidebarComponent implements OnInit {
   }
 
   private emitFilters(): void {
-    this.filtersChanged.emit(this.filters);
-    this.filterService.updateFilters(this.filters);
+    // Créer une copie de l'objet filters pour éviter les problèmes de référence
+    const filtersCopy = {
+      statuts: [...this.filters.statuts],
+      entreprises: [...this.filters.entreprises],
+      date: this.filters.date,
+      surfaceMin: this.filters.surfaceMin,
+      surfaceMax: this.filters.surfaceMax,
+      budgetMin: this.filters.budgetMin,
+      budgetMax: this.filters.budgetMax
+    };
+    this.filtersChanged.emit(filtersCopy);
+    this.filterService.updateFilters(filtersCopy);
   }
 
   isStatutChecked(statutId: number): boolean {

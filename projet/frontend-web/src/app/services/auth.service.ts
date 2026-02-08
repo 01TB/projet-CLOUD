@@ -64,21 +64,14 @@ export class AuthService {
 
   // Connexion avec le backend
   login(email: string, password: string): Observable<Utilisateur> {
-    console.log("Begin login process");
     return this.http.post(`${this.apiUrl}/auth/login`, { email, password }, { responseType: 'text' as const })
       .pipe(
         map(token => {
           // Le backend retourne juste le token JWT
           // On doit le décoder pour extraire les informations utilisateur
-          console.log("Received token:", token);
           const decodedToken = this.decodeToken(token);
           const decoded: any = jwtDecode(token);
-          // console.log("jwt decoded:", decoded);
-          console.log("Received token:", decodedToken);
-          console.log(">>>>>>>>>>>>>>>>>>");
-          console.log("role from token:", decodedToken.role);
           const role = this.roles.find(r => r.nom === decodedToken.role) || this.roles[2]; // VISITEUR par défaut
-          console.log("Mapped role:", role);
           
           const user: Utilisateur = {
             id: decodedToken.id,
