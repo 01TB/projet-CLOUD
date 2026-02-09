@@ -44,6 +44,9 @@ public class Signalement implements SyncableEntity<SignalementDTO> {
     @OneToMany(mappedBy = "signalement", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AvancementSignalement> avancements = new ArrayList<>();
 
+    @OneToMany(mappedBy = "signalement", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SignalementPhoto> photos = new ArrayList<>();
+
     // Constructeurs
     public Signalement() {
     }
@@ -165,6 +168,26 @@ public class Signalement implements SyncableEntity<SignalementDTO> {
 
     public void setAvancements(List<AvancementSignalement> avancements) {
         this.avancements = avancements;
+    }
+
+    public List<SignalementPhoto> getPhotos() {
+        return photos;
+    }
+
+    public void setPhotos(List<SignalementPhoto> photos) {
+        this.photos = photos;
+    }
+
+    // Helper method to add a photo
+    public void addPhoto(SignalementPhoto photo) {
+        photos.add(photo);
+        photo.setSignalement(this);
+    }
+
+    // Helper method to remove a photo
+    public void removePhoto(SignalementPhoto photo) {
+        photos.remove(photo);
+        photo.setSignalement(null);
     }
 
     // Helper method to add an avancement

@@ -13,7 +13,9 @@ import web.backend.project.entities.dto.AvancementSignalementDTO;
 import web.backend.project.entities.dto.EntrepriseDTO;
 import web.backend.project.entities.dto.ParametreDTO;
 import web.backend.project.entities.dto.RoleDTO;
+import web.backend.project.entities.SignalementPhoto;
 import web.backend.project.entities.dto.SignalementDTO;
+import web.backend.project.entities.dto.SignalementPhotoDTO;
 import web.backend.project.entities.dto.StatutAvancementDTO;
 import web.backend.project.entities.dto.UtilisateurBloqueDTO;
 import web.backend.project.entities.dto.UtilisateurDTO;
@@ -24,6 +26,7 @@ import web.backend.project.repositories.AvancementSignalementRepo;
 import web.backend.project.repositories.EntrepriseRepository;
 import web.backend.project.repositories.ParametreRepository;
 import web.backend.project.repositories.RoleRepository;
+import web.backend.project.repositories.SignalementPhotoRepo;
 import web.backend.project.repositories.SignalementRepository;
 import web.backend.project.repositories.StatutAvancementRepo;
 import web.backend.project.repositories.UtilisateurBloqueRepo;
@@ -69,6 +72,9 @@ public class SyncRepositoryConfig {
 	private RoleRepository roleRepository;
 
 	@Autowired
+	private SignalementPhotoRepo signalementPhotoRepo;
+
+	@Autowired
 	private ParametreRepository parametreRepository;
 
 	public SyncRepositoryConfig(SyncService syncService, EntitySyncRegistry syncRegistry) {
@@ -89,6 +95,8 @@ public class SyncRepositoryConfig {
 		syncService.registerRepository("entreprises", entrepriseRepository);
 		syncService.registerRepository("roles", roleRepository);
 		syncService.registerRepository("parametres", parametreRepository);
+
+		syncService.registerRepository("signalement_photos", signalementPhotoRepo);
 
 		// ========== Enregistrement dans le nouveau registre générique ==========
 		registerEntityHandlers();
@@ -182,6 +190,27 @@ public class SyncRepositoryConfig {
 					} else {
 						throw new RuntimeException(
 								"Signalement id is required for AvancementSignalement but was null. " +
+										"Firebase data must include 'id_signalement' field.");
+					}
+				}));
+
+		// Handler pour SignalementPhoto (avec relation Signalement)
+		syncRegistry.register(new EntityTypeHandler<>(
+				"signalement_photos",
+				signalementPhotoRepo,
+				SignalementPhoto::new,
+				SignalementPhotoDTO::new,
+				(entity, dto) -> {
+					// Résolution de la relation Signalement (obligatoire)
+					if (dto.getSignalementId() != null) {
+						Signalement signalement = signalementRepository.findById(dto.getSignalementId())
+								.orElseThrow(() -> new RuntimeException(
+										"Signalement with id " + dto.getSignalementId() + " not found. " +
+												"Ensure 'signalements' are synchronized before 'signalement_photos'."));
+						entity.setSignalement(signalement);
+					} else {
+						throw new RuntimeException(
+								"Signalement id is required for SignalementPhoto but was null. " +
 										"Firebase data must include 'id_signalement' field.");
 					}
 				}));

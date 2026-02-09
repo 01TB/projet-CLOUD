@@ -27,6 +27,7 @@ public class FirebaseSyncService {
     /**
      * Pousse une liste de DTOs vers Firebase
      */
+    @SuppressWarnings("null")
     public <T extends FirebaseSerializable> int pushToFirebase(String collectionName, List<T> dtos) {
         int pushed = 0;
         CollectionReference collection = firestore.collection(collectionName);
@@ -56,6 +57,7 @@ public class FirebaseSyncService {
     /**
      * Récupère les données depuis Firebase
      */
+    @SuppressWarnings("null")
     public <T extends FirebaseSerializable> List<Map<String, Object>> pullFromFirebase(String collectionName) {
         List<Map<String, Object>> results = new ArrayList<>();
         CollectionReference collection = firestore.collection(collectionName);
@@ -85,6 +87,7 @@ public class FirebaseSyncService {
     /**
      * Récupère un document spécifique depuis Firebase
      */
+    @SuppressWarnings("null")
     public Optional<Map<String, Object>> getDocument(String collectionName, Integer id) {
         try {
             DocumentReference docRef = firestore.collection(collectionName).document(id.toString());
@@ -107,6 +110,7 @@ public class FirebaseSyncService {
     /**
      * Supprime un document de Firebase
      */
+    @SuppressWarnings("null")
     public void deleteDocument(String collectionName, Integer id) {
         try {
             firestore.collection(collectionName).document(id.toString()).delete().get();
