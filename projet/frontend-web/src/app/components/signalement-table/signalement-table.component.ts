@@ -35,7 +35,9 @@ export class SignalementTableComponent implements OnInit, OnDestroy {
     termines: 0,
     surfaceTotale: 0,
     budgetTotal: 0,
-    avancementPct: 0
+    avancementPct: 0,
+    delaiEstimeGlobal: 0,  // Délai moyen estimé sans tenir compte du statut
+    delaiReelByStatus: 0   // Délai moyen réel pondéré par le statut
   };
   
   loading = false;
@@ -155,9 +157,9 @@ export class SignalementTableComponent implements OnInit, OnDestroy {
     const data = this.filteredSignalements;
     
     this.stats.total = data.length;
-    this.stats.nouveaux = data.filter(s => s.statut_affiche?.valeur === 0 || s.statut_actuel.valeur === 0).length;
-    this.stats.enCours = data.filter(s => s.statut_affiche?.valeur === 1 || s.statut_actuel.valeur === 1).length;
-    this.stats.termines = data.filter(s => s.statut_affiche?.valeur === 2 || s.statut_actuel.valeur === 2).length;
+    this.stats.nouveaux = data.filter(s => (s.statut_affiche?.valeur ?? s.statut_actuel.valeur) === 0).length;
+    this.stats.enCours = data.filter(s => (s.statut_affiche?.valeur ?? s.statut_actuel.valeur) === 1).length;
+    this.stats.termines = data.filter(s => (s.statut_affiche?.valeur ?? s.statut_actuel.valeur) === 2).length;
     this.stats.surfaceTotale = data.reduce((acc, s) => acc + (s.surface || 0), 0);
     this.stats.budgetTotal = data.reduce((acc, s) => acc + (s.budget || 0), 0);
     
@@ -169,8 +171,37 @@ export class SignalementTableComponent implements OnInit, OnDestroy {
         return acc + (val / maxStatVal) * 100;
       }, 0);
       this.stats.avancementPct = Math.round(totalPct / data.length);
+      
+      // Calcul des délais de traitement
+      const filterDateMs = new Date(this.filters.date + 'T23:59:59').getTime();
+      const msPerDay = 1000 * 60 * 60 * 24;
+      
+      let totalDelaiEstime = 0;
+      let totalDelaiReel = 0;
+      
+      data.forEach(s => {
+        const creationDateMs = new Date(s.date_creation).getTime();
+        const delaiJours = Math.max(0, (filterDateMs - creationDateMs) / msPerDay);
+        
+        // Délai estimé global (sans tenir compte du statut)
+        totalDelaiEstime += delaiJours;
+        
+        // Délai réel pondéré par le statut (0% nouveau, 50% en cours, 100% terminé)
+        const statutVal = s.statut_affiche?.valeur ?? s.statut_actuel.valeur;
+        let progressPct = 0;
+        if (statutVal === 0) progressPct = 0;      // Nouveau
+        else if (statutVal === 1) progressPct = 0.5; // En cours
+        else if (statutVal === 2) progressPct = 1;   // Terminé
+        
+        totalDelaiReel += delaiJours * progressPct;
+      });
+      
+      this.stats.delaiEstimeGlobal = Math.round(totalDelaiEstime / data.length);
+      this.stats.delaiReelByStatus = Math.round(totalDelaiReel / data.length);
     } else {
       this.stats.avancementPct = 0;
+      this.stats.delaiEstimeGlobal = 0;
+      this.stats.delaiReelByStatus = 0;
     }
   }
 
