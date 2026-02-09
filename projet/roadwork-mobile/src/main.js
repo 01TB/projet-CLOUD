@@ -17,9 +17,20 @@ import '@ionic/vue/css/text-alignment.css';
 import '@ionic/vue/css/text-transformation.css';
 import '@ionic/vue/css/flex-utils.css';
 import '@ionic/vue/css/display.css';
+import './styles/notifications.css';
 
-// Styles globaux
-import './assets/styles/global.css';
+// Enregistrer le Service Worker pour les notifications
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/firebase-messaging-sw.js')
+      .then((registration) => {
+        console.log('✅ Service Worker enregistré:', registration);
+      })
+      .catch((error) => {
+        console.error('❌ Erreur enregistrement Service Worker:', error);
+      });
+  });
+}
 
 const pinia = createPinia();
 pinia.use(piniaPluginPersistedstate);

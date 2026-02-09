@@ -245,16 +245,6 @@
                     <div v-if="signalement.photos.length > 3" class="more-photos">
                       +{{ signalement.photos.length - 3 }}
                     </div>
-                    <!-- Debug info -->
-                    <div style="font-size: 8px; color: #666; margin-top: 4px;">
-                      <small>DEBUG: Photos={{ signalement.photos?.length || 0 }}, 
-                        HasData={{ !!signalement.photos?.[0]?.photo }},
-                        DataLength={{ signalement.photos?.[0]?.photo?.length || 0 }}</small>
-                      <br/>
-                      <small>Photo0Keys={{ Object.keys(signalement.photos?.[0] || {}).join(',') }}</small>
-                      <br/>
-                      <small>Photo0Type={{ typeof signalement.photos?.[0] }}</small>
-                    </div>
                   </div>
                   <div v-else>
                     <p>Aucune photo</p>

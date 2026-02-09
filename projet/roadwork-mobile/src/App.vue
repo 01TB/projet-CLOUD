@@ -41,6 +41,23 @@
           </ion-item>
         </ion-list>
         
+        <!-- Notifications -->
+        <ion-list class="nav-section" v-if="isAuthenticated">
+          <ion-list-header>
+            <ion-label class="section-title">Notifications</ion-label>
+          </ion-list-header>
+          
+          <ion-item button @click="openNotifications" class="menu-item notification-item">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <ion-icon :icon="notificationsOutline" slot="start" class="menu-icon"></ion-icon>
+              <ion-note slot="end" color="medium">Mes notifications</ion-note>
+              <ion-badge v-if="unreadCount > 0" color="danger" class="notification-badge">
+                {{ unreadCount > 99 ? '99+' : unreadCount }}
+              </ion-badge>
+            </div>
+          </ion-item>
+        </ion-list>
+        
         <!-- Séparateur -->
         <div class="menu-divider"></div>
         
@@ -87,23 +104,41 @@
     </ion-menu>
 
     <ion-router-outlet id="main-content"></ion-router-outlet>
+    
+    <!-- Notifications Modal -->
+    <NotificationsModal 
+      :is-open="notificationsOpen" 
+      @dismiss="closeNotifications" 
+    />
   </ion-app>
 </template>
 
 <script setup>
 import { IonApp, IonMenu, IonHeader, IonToolbar, IonTitle, IonContent, 
          IonList, IonItem, IonIcon, IonLabel, IonNote, IonChip, IonAvatar,
-         IonListHeader, IonRouterOutlet } from '@ionic/vue';
-import { map, list, barChart, person, logIn, logOut, personAdd } from 'ionicons/icons';
+         IonListHeader, IonRouterOutlet, IonBadge } from '@ionic/vue';
+import { map, list, barChart, person, logIn, logOut, personAdd, notificationsOutline } from 'ionicons/icons';
 import { useRouter } from 'vue-router';
-import { computed } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { useAuthStore } from '@/store/modules/auth';
+import NotificationsModal from '@/components/NotificationsModal.vue';
+import { useNotifications } from '@/composables/useNotifications';
 
 const router = useRouter();
 const authStore = useAuthStore();
 
+// Notifications
+const notificationsOpen = ref(false);
+const { 
+  notifications, 
+  isLoading, 
+  unreadCount, 
+  requestPermission 
+} = useNotifications();
+
 const isAuthenticated = computed(() => authStore.isAuthenticated);
 
+// Navigation functions
 const navigateTo = async (path) => {
   console.log('Navigating to:', path);
   await router.push(path);
@@ -126,6 +161,21 @@ const logout = async () => {
   }
 };
 
+// Notifications functions
+const openNotifications = () => {
+  notificationsOpen.value = true;
+  
+  // Fermer le menu après ouverture des notifications
+  const menu = document.querySelector('ion-menu');
+  if (menu) {
+    menu.close();
+  }
+};
+
+const closeNotifications = () => {
+  notificationsOpen.value = false;
+};
+
 const getRoleLabel = (role) => {
   const roles = {
     1: 'Manager',
@@ -135,8 +185,16 @@ const getRoleLabel = (role) => {
   return roles[role] || 'Utilisateur';
 };
 
-// Vérifier l'authentification au démarrage
-authStore.checkAuth();
+// Initialisation
+onMounted(async () => {
+  // Vérifier l'authentification au démarrage
+  authStore.checkAuth();
+  
+  // Demander la permission de notifications si l'utilisateur est connecté
+  if (authStore.isAuthenticated) {
+    await requestPermission();
+  }
+});
 </script>
 
 <style>
@@ -296,6 +354,42 @@ ion-content {
   background: transparent;
   padding: 0;
   margin: 1rem 0;
+}
+
+/* Notification item styles */
+.notification-item {
+  --background: rgba(255, 255, 255, 0.9);
+  --border-radius: 12px;
+  margin: 0.5rem 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s ease;
+  min-height: 56px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.notification-item:hover {
+  --background: rgba(255, 255, 255, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+  border-color: rgba(49, 130, 206, 0.3);
+}
+
+.notification-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: bold;
+  border: 2px solid white;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
 }
 
 /* Menu footer */
