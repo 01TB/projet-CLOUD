@@ -418,6 +418,8 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
         "type": "Point",
         "coordinates": [47.5079, -18.8792]
       },
+      "id_entreprise": 1,
+      "nom_entreprise": "Entreprise A",
       "date_creation": "2026-01-15T10:30:00Z",
       "date_modification": "2026-01-15T10:30:00.000Z",
       "id_utilisateur_createur": "user123",
@@ -609,6 +611,8 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
       "type": "Point",
       "coordinates": [47.5079, -18.8792]
     },
+    "id_entreprise": 1,
+    "entreprise": "Entreprise A",
     "date_creation": "2026-01-15T10:30:00Z",
     "date_modification": "2026-01-15T10:30:00.000Z",
     "id_utilisateur_createur": "user123",
