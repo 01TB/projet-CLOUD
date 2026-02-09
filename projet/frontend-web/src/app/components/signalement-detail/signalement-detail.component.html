@@ -1,114 +1,94 @@
 <!-- src/app/components/signalement-detail/signalement-detail.component.html -->
-<div class="signalement-detail-container">
-  <!-- Header avec navigation -->
-  <div class="page-header">
-    <button class="btn-back" (click)="goBack()">
-      <span class="back-icon">←</span> Retour à la carte
+<div class="detail-container">
+  <!-- Header -->
+  <div class="detail-header">
+    <button class="btn-back" (click)="goBack()">← Retour</button>
+    <h2>Signalement #{{ signalement?.id }}</h2>
+    <button class="btn-edit" *ngIf="!isEditMode && canEdit && signalement" (click)="enableEditMode()">
+      ✏️ Modifier
     </button>
-    <h2>📋 Détails du signalement #{{ signalement?.id }}</h2>
   </div>
 
-  <!-- Message d'erreur -->
-  <div class="alert alert-danger" *ngIf="errorMessage">
-    ✗ {{ errorMessage }}
-  </div>
-
-  <!-- Loader -->
-  <div class="loader" *ngIf="loading">
-    <div class="spinner"></div>
-    <p>Chargement...</p>
-  </div>
+  <!-- Messages -->
+  <div class="alert alert-danger" *ngIf="errorMessage">{{ errorMessage }}</div>
+  <div class="loader" *ngIf="loading">Chargement...</div>
 
   <!-- Contenu principal -->
   <div class="detail-content" *ngIf="!loading && signalement">
-    <!-- Section Photos -->
-    <div class="detail-section photo-section">
-      <h3>📷 Photos</h3>
-      <div class="photos-grid">
-        <div class="photo-item">
-          <img [src]="getDefaultPhoto()" alt="Photo du signalement" class="signalement-photo">
+    
+    <!-- Mode Lecture -->
+    <div class="view-mode" *ngIf="!isEditMode">
+      <div class="compact-grid">
+        <!-- Photo -->
+        <div class="photo-card">
+          <img [src]="getDefaultPhoto()" alt="Photo" class="photo-img">
+        </div>
+
+        <!-- Informations principales -->
+        <div class="info-card">
+          <div class="card-header">
+            <span class="badge" [ngClass]="getStatutBadgeClass(signalement.statut_actuel.nom)">
+              {{ getStatutIcon(signalement.statut_actuel.nom) }} {{ signalement.statut_actuel.nom }}
+            </span>
+          </div>
+          <div class="info-row">
+            <span class="label">Date création:</span>
+            <span class="value">{{ formatDate(signalement.date_creation) }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Surface:</span>
+            <span class="value">{{ formatSurface(signalement.surface) }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Budget:</span>
+            <span class="value budget">{{ formatBudget(signalement.budget) }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Entreprise:</span>
+            <span class="value">{{ signalement.entreprise?.nom || 'Non assigné' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Position:</span>
+            <span class="value">{{ signalement.localisation.lat.toFixed(4) }}, {{ signalement.localisation.lng.toFixed(4) }}</span>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Grille de sections -->
-    <div class="sections-grid">
-      <!-- Section Informations générales -->
-      <div class="detail-section">
-        <h3>📋 Informations générales</h3>
-        <div class="info-grid">
-          <div class="info-item">
-            <span class="info-label">ID</span>
-            <span class="info-value id-value">#{{ signalement.id }}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">Date de création</span>
-            <span class="info-value">{{ formatDate(signalement.date_creation) }}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">Statut</span>
-            <span class="info-value">
-              <span class="badge" [ngClass]="getStatutBadgeClass(signalement.statut_actuel.nom)">
-                {{ getStatutIcon(signalement.statut_actuel.nom) }} {{ signalement.statut_actuel.nom }}
-              </span>
-            </span>
-          </div>
+    <!-- Mode Édition -->
+    <div class="edit-mode" *ngIf="isEditMode && editForm">
+      <div class="edit-form">
+        <div class="form-row">
+          <label>Surface (m²) <span class="required">*</span></label>
+          <input type="number" [(ngModel)]="editForm.surface" min="0" step="0.01" class="form-input">
         </div>
-      </div>
 
-      <!-- Section Entreprise -->
-      <div class="detail-section">
-        <h3>🏢 Entreprise</h3>
-        <div class="info-grid">
-          <div class="info-item">
-            <span class="info-label">Nom</span>
-            <span class="info-value">{{ signalement.entreprise?.nom || 'Non assigné' }}</span>
-          </div>
-          <div class="info-item" *ngIf="signalement.entreprise?.id">
-            <span class="info-label">ID Entreprise</span>
-            <span class="info-value">#{{ signalement.entreprise.id }}</span>
-          </div>
+        <div class="form-row">
+          <label>Budget (MGA) <span class="required">*</span></label>
+          <input type="number" [(ngModel)]="editForm.budget" min="0" step="1000" class="form-input">
         </div>
-      </div>
 
-      <!-- Section Dimensions et Budget -->
-      <div class="detail-section">
-        <h3>💰 Dimensions et Budget</h3>
-        <div class="info-grid">
-          <div class="info-item">
-            <span class="info-label">Surface</span>
-            <span class="info-value">{{ formatSurface(signalement.surface) }}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">Budget</span>
-            <span class="info-value budget-value">{{ formatBudget(signalement.budget) }}</span>
-          </div>
+        <div class="form-row">
+          <label>Nouveau statut (optionnel)</label>
+          <select [(ngModel)]="editForm.idNouveauStatut" class="form-select">
+            <option [ngValue]="null">-- Aucun changement --</option>
+            <option *ngFor="let statut of statuts" [ngValue]="statut.id">{{ statut.nom }}</option>
+          </select>
         </div>
-      </div>
 
-      <!-- Section Localisation -->
-      <div class="detail-section">
-        <h3>📍 Localisation</h3>
-        <div class="info-grid">
-          <div class="info-item">
-            <span class="info-label">Latitude</span>
-            <span class="info-value">{{ signalement.localisation.lat }}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">Longitude</span>
-            <span class="info-value">{{ signalement.localisation.lng }}</span>
-          </div>
+        <div class="form-row" *ngIf="editForm.idNouveauStatut">
+          <label>Date modification statut</label>
+          <input type="datetime-local" [(ngModel)]="editForm.dateModificationStatut" class="form-input">
+          <small class="hint">Date d'application du nouveau statut</small>
         </div>
-      </div>
 
-      <!-- Section Créateur -->
-      <div class="detail-section">
-        <h3>👤 Créateur</h3>
-        <div class="info-grid">
-          <div class="info-item">
-            <span class="info-label">ID Utilisateur</span>
-            <span class="info-value">#{{ signalement.id_utilisateur_createur }}</span>
-          </div>
+        <div class="info-message" *ngIf="editForm.idNouveauStatut && editForm.idNouveauStatut !== signalement.statut_actuel.id">
+          ℹ️ Un nouvel avancement sera créé avec ce statut
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-cancel" (click)="cancelEdit()">Annuler</button>
+          <button class="btn btn-save" (click)="saveChanges()">💾 Enregistrer</button>
         </div>
       </div>
     </div>

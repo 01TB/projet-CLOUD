@@ -34,8 +34,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .cors(cors -> {
-                })
+                .cors(cors -> cors.disable())
                 .authorizeHttpRequests(auth -> auth
                         // // Explicitly allow auth endpoints and all API routes
                         // .requestMatchers("/api/auth", "/api/auth/**").permitAll()

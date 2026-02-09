@@ -45,6 +45,14 @@ export class FilterService {
       // Utiliser le statut déjà calculé
       const statutALaDate = signalement.statut_affiche!;
       
+      // Filtre par date : ne garder que les signalements créés avant ou à la date sélectionnée
+      const dateCreation = new Date(signalement.date_creation).getTime();
+      const dateFiltre = new Date(filters.date + 'T23:59:59').getTime();
+      if (dateCreation > dateFiltre) {
+        // Le signalement n'existe pas encore à cette date
+        return false;
+      }
+      
       // console.log(`\n--- Traitement Signalement #${signalement.id} ---`);
       // console.log('Statut à la date:', statutALaDate);
       // console.log('filters.statuts.length:', filters.statuts.length);

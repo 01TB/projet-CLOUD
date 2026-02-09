@@ -64,6 +64,7 @@ export class AuthService {
 
   // Connexion avec le backend
   login(email: string, password: string): Observable<Utilisateur> {
+    console.log("efa miova ny api ahhhhhhh");
     return this.http.post(`${this.apiUrl}/auth/login`, { email, password }, { responseType: 'text' as const })
       .pipe(
         map(token => {
