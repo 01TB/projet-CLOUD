@@ -93,6 +93,13 @@ export class SignalementService {
   }
 
   /**
+   * Récupère les noms de photos d'un signalement
+   */
+  getSignalementPhotos(id: number): Observable<string[]> {
+    return this.http.get<string[]>(`${this.apiUrl}/${id}/photos`);
+  }
+
+  /**
    * Convertit un SignalementResponseDTO en Signalement
    */
   private convertDtoToSignalement(dto: SignalementResponseDTO): Signalement {

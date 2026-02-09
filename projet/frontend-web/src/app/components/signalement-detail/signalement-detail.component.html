@@ -19,9 +19,18 @@
     <!-- Mode Lecture -->
     <div class="view-mode" *ngIf="!isEditMode">
       <div class="compact-grid">
-        <!-- Photo -->
+        <!-- Photos -->
         <div class="photo-card">
-          <img [src]="getDefaultPhoto()" alt="Photo" class="photo-img">
+          <div class="photos-container" *ngIf="photoNames.length > 0">
+            <div class="photo-item" *ngFor="let photoName of photoNames">
+              <img [src]="imageBaseUrl + photoName" [alt]="photoName" class="photo-img">
+              <div class="photo-label">{{ photoName }}</div>
+            </div>
+          </div>
+          <div class="no-photo" *ngIf="photoNames.length === 0">
+            <div class="no-photo-icon">📷</div>
+            <p>Aucune photo</p>
+          </div>
         </div>
 
         <!-- Informations principales -->

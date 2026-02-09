@@ -20,6 +20,8 @@ export class SignalementDetailComponent implements OnInit, OnDestroy {
   editForm: any = null;
   statuts: StatutAvancement[] = [];
   canEdit = false;
+  photoNames: string[] = [];
+  imageBaseUrl = '/api/images/';
   
   private subscriptions = new Subscription();
 
@@ -55,6 +57,8 @@ export class SignalementDetailComponent implements OnInit, OnDestroy {
       next: (signalement) => {
         this.signalement = signalement;
         this.loading = false;
+        // Charger les photos du signalement
+        this.loadPhotos(id);
       },
       error: (error) => {
         this.errorMessage = 'Erreur lors du chargement du signalement';
@@ -63,6 +67,20 @@ export class SignalementDetailComponent implements OnInit, OnDestroy {
     });
 
     this.subscriptions.add(sub);
+  }
+
+  private loadPhotos(id: number): void {
+    const photoSub = this.signalementService.getSignalementPhotos(id).subscribe({
+      next: (photoNames) => {
+        this.photoNames = photoNames;
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement des photos:', error);
+        this.photoNames = [];
+      }
+    });
+
+    this.subscriptions.add(photoSub);
   }
 
   getStatutBadgeClass(statutNom: string): string {
