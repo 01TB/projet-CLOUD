@@ -40,6 +40,17 @@ export const useSignalementsStore = defineStore('signalements', {
       } catch (error) {
         console.error('Error fetching signalements:', error);
         this.error = 'Erreur lors du chargement des signalements';
+        
+        // En cas d'erreur 500, ne pas vider la liste des signalements existants
+        if (error.response && error.response.status === 500) {
+          console.warn('🚨 ERREUR 500 DETECTEE - Conservation des données existantes');
+          console.warn('📊 Signalements actuels conservés:', this.signalements.length);
+          // Ne pas vider this.signalements pour garder les données déjà chargées
+        } else {
+          console.warn('🔴 Autre erreur - Vidage de la liste');
+          // Pour les autres erreurs, vider la liste
+          this.signalements = [];
+        }
       } finally {
         this.loading = false;
       }
@@ -58,6 +69,58 @@ export const useSignalementsStore = defineStore('signalements', {
       } catch (error) {
         console.error('Error creating signalement:', error);
         this.error = 'Erreur lors de la création du signalement';
+        return { success: false, error: this.error };
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async createSignalementWithPhotos(signalementData, photos = []) {
+      this.loading = true;
+      try {
+        console.log('🏪 Store - Création avec photos, photos reçues:', photos.length);
+        console.log('🏪 Store - Données photos:', photos.map(p => ({
+          hasData: !!p.data,
+          dataLength: p.data?.length || 0,
+          name: p.name
+        })));
+        
+        const result = await signalementService.createSignalementWithPhotos(signalementData, photos);
+        
+        console.log('🏪 Store - Résultat service:', result);
+        console.log('🏪 Store - Signalement retourné:', result.data);
+        console.log('🏪 Store - Photos dans signalement:', result.data?.photos?.length || 0);
+        
+        if (result.success || result.data) {
+          // Ajouter le signalement complet avec photos au début de la liste
+          const signalementToAdd = result.data || result;
+          console.log('🏪 Store - Ajout du signalement:', signalementToAdd);
+          console.log('🏪 Store - Photos dans signalement à ajouter:', signalementToAdd.photos);
+          
+          // Analyse spécifique de l'entreprise
+          console.log('🏢 ANALYSE SIGNEMENT CRÉÉ:');
+          console.log('  - ID:', signalementToAdd.id);
+          console.log('  - id_entreprise:', signalementToAdd.id_entreprise);
+          console.log('  - Type id_entreprise:', typeof signalementToAdd.id_entreprise);
+          console.log('  - Description:', signalementToAdd.description?.substring(0, 50) + '...');
+          
+          this.signalements.unshift(signalementToAdd);
+          this.calculateStats(); // Recalculer les stats après création
+          
+          return { success: true, data: signalementToAdd };
+        }
+        return { success: false, error: result.error?.message || 'Erreur lors de la création avec photos' };
+      } catch (error) {
+        console.error('Error creating signalement with photos:', error);
+        
+        // Gérer spécifiquement les erreurs 500
+        if (error.response?.status === 500) {
+          console.warn('⚠️ Erreur serveur 500 lors de la création avec photos');
+          this.error = 'Erreur serveur temporaire, veuillez réessayer plus tard';
+        } else {
+          this.error = 'Erreur lors de la création du signalement avec photos';
+        }
+        
         return { success: false, error: this.error };
       } finally {
         this.loading = false;

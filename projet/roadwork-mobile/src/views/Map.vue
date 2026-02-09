@@ -59,9 +59,10 @@
             <l-popup>
               <div class="signalement-popup">
                 <h3>{{ signalement.description }}</h3>
-                <p><strong>Surface:</strong> {{ signalement.surface }} m²</p>
-                <p><strong>Statut:</strong> {{ getCurrentStatus(signalement) }}</p>
+                <p><strong>Surface:</strong> {{ signalement.surface ? signalement.surface + ' m²' : 'Non spécifiée' }}</p>
                 <p><strong>Budget:</strong> {{ formatBudget(signalement.budget) }}</p>
+                <p><strong>Adresse:</strong> {{ signalement.adresse || 'Non spécifiée' }}</p>
+                <p><strong>Entreprise responsable:</strong> {{ getEntrepriseInfo(signalement) }}</p>
                 <p><strong>Date:</strong> {{ formatDate(signalement.date_creation) }}</p>
                 
                 <!-- Photos -->
@@ -71,15 +72,28 @@
                     <img 
                       v-for="(photo, index) in signalement.photos.slice(0, 3)" 
                       :key="index"
-                      :src="photo.data" 
+                      :src="photo.photo" 
                       :alt="`Photo ${index + 1}`"
                       class="popup-photo"
                       @click="viewPhoto(photo)"
+                      @error="console.error('❌ Erreur chargement photo:', photo)"
+                      @load="console.log('✅ Photo chargée:', photo.id)"
                     />
                     <div v-if="signalement.photos.length > 3" class="more-photos">
                       +{{ signalement.photos.length - 3 }}
                     </div>
                   </div>
+                </div>
+                
+                <!-- Debug info -->
+                <div style="font-size: 10px; color: #666; margin-top: 8px;">
+                  <small>DEBUG: Photos={{ signalement.photos?.length || 0 }}, 
+                    HasData={{ !!signalement.photos?.[0]?.photo }},
+                    DataLength={{ signalement.photos?.[0]?.photo?.length || 0 }}</small>
+                  <br/>
+                  <small>Photo0Keys={{ Object.keys(signalement.photos?.[0] || {}).join(',') }}</small>
+                  <br/>
+                  <small>Photo0Type={{ typeof signalement.photos?.[0] }}</small>
                 </div>
                 
                 <!-- Actions CRUD pour utilisateur connecté -->
@@ -260,8 +274,8 @@ import { LMap, LTileLayer, LMarker, LIcon, LPopup } from '@vue-leaflet/vue-leafl
 import 'leaflet/dist/leaflet.css';
 import { Geolocation } from '@capacitor/geolocation';
 import { useAuthStore } from '@/store/modules/auth';
-
 import { useSignalementsStore } from '@/store/modules/signalements';
+import { useEntreprisesStore } from '@/store/modules/entreprises';
 import { useAuthCheck } from '@/composables/useAuthCheck';
 import SignalementModal from '@/components/SignalementModal.vue';
 import L from 'leaflet';
@@ -278,6 +292,7 @@ const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
 const signalementsStore = useSignalementsStore();
+const entreprisesStore = useEntreprisesStore();
 const { checkAuthAndRedirect } = useAuthCheck();
 
 // Références
@@ -376,6 +391,23 @@ const validMarkers = computed(() => {
   console.log('🏷️ Tous les statuts trouvés:', allStatuses);
   console.log('🔍 Filtres actuels:', filters.value.statuts);
   
+  // Log détaillé des photos pour chaque signalement
+  markers.forEach(signalement => {
+    console.log(`📸 Signalement ${signalement.id}:`, {
+      hasPhotos: !!signalement.photos,
+      photosLength: signalement.photos?.length || 0,
+      photos: signalement.photos?.map(p => ({
+        id: p.id,
+        hasData: !!p.data,
+        dataLength: p.data?.length || 0,
+        dataPreview: p.data?.substring(0, 50) + '...' || 'NO_DATA'
+      })),
+      entreprise: signalement.id_entreprise,
+      entrepriseType: typeof signalement.id_entreprise,
+      fullSignalement: signalement
+    });
+  });
+  
   return markers;
 });
 
@@ -443,12 +475,31 @@ const onSignalementCreated = () => {
 
 const loadInitialData = async () => {
   try {
+    console.log('🔄 Chargement des données initiales...');
     await signalementsStore.fetchSignalements();
     // fetchStats n'existe plus dans le store, les stats sont déjà dans le state
     await signalementsStore.fetchStatuts();
-    console.log('Statuts loaded:', signalementsStore.statuts);
+    await entreprisesStore.fetchEntreprises(); // Charger les entreprises dynamiquement
+    console.log('✅ Statuts loaded:', signalementsStore.statuts);
+    console.log('📊 Signalements chargés:', signalementsStore.signalements.length);
+    console.log('🏢 Entreprises chargées:', entreprisesStore.entreprises.length);
+    
+    // Log détaillé des entreprises chargées
+    console.log('🏢 Liste des entreprises disponibles:');
+    entreprisesStore.entreprises.forEach((entreprise, index) => {
+      console.log(`  ${index + 1}. ID: ${entreprise.id}, Nom: "${entreprise.nom}"`);
+    });
   } catch (error) {
-    console.error('Erreur chargement données:', error);
+    console.error('❌ Erreur chargement données:', error);
+    
+    // En cas d'erreur 500, afficher un message plus informatif
+    if (error.response && error.response.status === 500) {
+      console.warn('🚨 ERREUR SERVEUR 500 SUR LA MAP - Les données existantes sont conservées');
+      console.warn('📊 Signalements actuellement visibles:', signalementsStore.signalements.length);
+      // Ne pas afficher d'erreur critique à l'utilisateur
+    } else {
+      console.error('🔴 Erreur critique lors du chargement des données');
+    }
   }
 };
 
@@ -563,6 +614,21 @@ const formatBudget = (budget) => {
 
 const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString('fr-MG');
+};
+
+const getEntrepriseInfo = (signalement) => {
+  if (!signalement.id_entreprise) {
+    return 'Non spécifiée';
+  }
+  
+  // Chercher l'entreprise dans le store (le getter gère la conversion string/number)
+  const entreprise = entreprisesStore.getEntrepriseById(signalement.id_entreprise);
+  
+  if (entreprise) {
+    return entreprise.nom;
+  }
+  
+  return `Entreprise #${signalement.id_entreprise}`;
 };
 
 const createSignalement = () => {

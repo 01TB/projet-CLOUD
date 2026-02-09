@@ -213,6 +213,11 @@
                 </div>
                 
                 <div class="detail-row">
+                  <strong>Entreprise responsable:</strong>
+                  <p>{{ getEntrepriseInfo(signalement) }}</p>
+                </div>
+                
+                <div class="detail-row">
                   <strong>Date de création:</strong>
                   <p>{{ formatDate(signalement.date_creation) }}</p>
                 </div>
@@ -226,13 +231,13 @@
                   </p>
                 </div>
                 
-                <div v-if="signalement.photos && signalement.photos.length > 0" class="detail-row">
+                <div class="detail-row">
                   <strong>Photos:</strong>
-                  <div class="photo-gallery">
+                  <div v-if="signalement.photos && signalement.photos.length > 0" class="photo-preview">
                     <img 
                       v-for="(photo, index) in signalement.photos.slice(0, 3)" 
                       :key="index"
-                      :src="photo.data" 
+                      :src="photo.photo" 
                       :alt="`Photo ${index + 1}`"
                       class="detail-photo"
                       @click="viewPhoto(photo)"
@@ -240,10 +245,23 @@
                     <div v-if="signalement.photos.length > 3" class="more-photos">
                       +{{ signalement.photos.length - 3 }}
                     </div>
+                    <!-- Debug info -->
+                    <div style="font-size: 8px; color: #666; margin-top: 4px;">
+                      <small>DEBUG: Photos={{ signalement.photos?.length || 0 }}, 
+                        HasData={{ !!signalement.photos?.[0]?.photo }},
+                        DataLength={{ signalement.photos?.[0]?.photo?.length || 0 }}</small>
+                      <br/>
+                      <small>Photo0Keys={{ Object.keys(signalement.photos?.[0] || {}).join(',') }}</small>
+                      <br/>
+                      <small>Photo0Type={{ typeof signalement.photos?.[0] }}</small>
+                    </div>
+                  </div>
+                  <div v-else>
+                    <p>Aucune photo</p>
                   </div>
                 </div>
                 
-                <div class="detail-actions">
+                <div class="detail-row">
                   <ion-button 
                     size="small" 
                     fill="outline" 
@@ -355,24 +373,16 @@ import {
 import {
 
   filter, refresh, documentText, map, shareSocial,
-
   add, alertCircle, checkmarkCircle, time, warning
-
 } from 'ionicons/icons';
-
 import { useAuthStore } from '@/store/modules/auth';
-
 import { useSignalementsStore } from '@/store/modules/signalements';
-
-
+import { useEntreprisesStore } from '@/store/modules/entreprises';
 
 const router = useRouter();
-
 const authStore = useAuthStore();
-
 const signalementsStore = useSignalementsStore();
-
-
+const entreprisesStore = useEntreprisesStore();
 
 // États
 
@@ -480,6 +490,23 @@ const getProblemIcon = (signalement) => {
 
   return alertCircle;
 
+};
+
+
+
+const getEntrepriseInfo = (signalement) => {
+  if (!signalement.id_entreprise) {
+    return 'Non spécifiée';
+  }
+  
+  // Chercher l'entreprise dans le store (le getter gère la conversion string/number)
+  const entreprise = entreprisesStore.getEntrepriseById(signalement.id_entreprise);
+  
+  if (entreprise) {
+    return entreprise.nom;
+  }
+  
+  return `Entreprise #${signalement.id_entreprise}`;
 };
 
 
@@ -731,11 +758,9 @@ const viewPhoto = async (photo) => {
 
 
 onMounted(async () => {
-
   await loadSignalements();
-
   await signalementsStore.fetchStatuts();
-
+  await entreprisesStore.fetchEntreprises(); // Charger les entreprises dynamiquement
 });
 
 </script>
