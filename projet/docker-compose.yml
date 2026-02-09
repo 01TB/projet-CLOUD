@@ -52,6 +52,8 @@ services:
       # Montage du code source pour hot reload
       - ./backend/src:/app/src
       - ./backend/pom.xml:/app/pom.xml
+      # Persistance des images uploadées (accessible depuis l'hôte)
+      - ./backend/uploads/images:/app/uploads/images
       # Cache Maven pour accélérer les recompilations
       - maven-cache:/root/.m2
     depends_on:

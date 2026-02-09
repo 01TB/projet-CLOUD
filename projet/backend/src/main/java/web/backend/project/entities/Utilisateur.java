@@ -11,7 +11,6 @@ import java.util.Objects;
 })
 public class Utilisateur implements SyncableEntity<UtilisateurDTO> {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Integer id;
 

@@ -15,6 +15,7 @@ public class SignalementResponseDTO {
     private Integer idEntreprise;
     private String nomEntreprise;
     private List<AvancementResponseDTO> avancements; // Liste des avancements du signalement
+    private List<SignalementPhotoResponseDTO> photos; // Liste des photos du signalement
 
     // Constructeurs
     public SignalementResponseDTO() {
@@ -23,7 +24,8 @@ public class SignalementResponseDTO {
     public SignalementResponseDTO(Integer id, String dateCreation, Double surface,
             Integer budget, String localisation, Boolean synchro,
             Integer idUtilisateurCreateur, String emailUtilisateurCreateur,
-            Integer idEntreprise, String nomEntreprise, List<AvancementResponseDTO> avancements) {
+            Integer idEntreprise, String nomEntreprise, List<AvancementResponseDTO> avancements,
+            List<SignalementPhotoResponseDTO> photos) {
         this.id = id;
         this.dateCreation = dateCreation;
         this.surface = surface;
@@ -35,6 +37,7 @@ public class SignalementResponseDTO {
         this.idEntreprise = idEntreprise;
         this.nomEntreprise = nomEntreprise;
         this.avancements = avancements;
+        this.photos = photos;
     }
 
     // Getters et Setters
@@ -124,5 +127,13 @@ public class SignalementResponseDTO {
 
     public void setAvancements(List<AvancementResponseDTO> avancements) {
         this.avancements = avancements;
+    }
+
+    public List<SignalementPhotoResponseDTO> getPhotos() {
+        return photos;
+    }
+
+    public void setPhotos(List<SignalementPhotoResponseDTO> photos) {
+        this.photos = photos;
     }
 }

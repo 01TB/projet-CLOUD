@@ -35,6 +35,7 @@ public class SyncController {
             "utilisateurs",
             "signalements",
             "avancements_signalement",
+            "signalements_photos",
             "utilisateurs_bloques");
 
     public SyncController(SyncService syncService) {
@@ -47,7 +48,7 @@ public class SyncController {
      * 
      * Body exemple:
      * {
-     * "entityTypes": ["Signalement", "StatutAvancement"],
+     * "entityTypes": ["Signalement", "StatutAvancement", "SignalementPhoto"],
      * "direction": "PUSH",
      * "forceSync": false
      * }

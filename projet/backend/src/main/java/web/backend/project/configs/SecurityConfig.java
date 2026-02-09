@@ -40,6 +40,8 @@ public class SecurityConfig {
                         // // Explicitly allow auth endpoints and all API routes
                         // .requestMatchers("/api/auth", "/api/auth/**").permitAll()
                         .requestMatchers("/api/**").permitAll()
+                        // Allow serving images without authentication
+                        .requestMatchers("/images/**").permitAll()
                         // Allow actuator health
                         .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info").permitAll()
                         .anyRequest().authenticated())
