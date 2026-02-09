@@ -63,7 +63,9 @@ public class SignalementPhotoDTO implements FirebaseSerializable {
     public Map<String, Object> toFirebaseMap() {
         Map<String, Object> map = new HashMap<>();
         map.put("id", id);
-        map.put("firebase_url", pathPhoto);
+        map.put("photo_backend_url", pathPhoto);
+        // Re-pousser le base64 de la photo vers Firebase
+        map.put("photo", photoBase64 != null ? photoBase64 : "");
         // Lors du push vers Firebase, synchro est toujours true (donnée synchronisée)
         map.put("synchro", true);
         map.put("date_ajout", dateCreation != null ? dateCreation.toString() : null);

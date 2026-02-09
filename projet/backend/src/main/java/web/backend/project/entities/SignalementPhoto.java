@@ -26,6 +26,13 @@ public class SignalementPhoto implements SyncableEntity<SignalementPhotoDTO> {
     @JoinColumn(name = "id_signalement", nullable = false)
     private Signalement signalement;
 
+    /**
+     * Champ transitoire (non persisté en base) pour conserver le base64 de la photo
+     * durant le cycle pull → push-back vers Firebase.
+     */
+    @Transient
+    private String photoBase64;
+
     // Constructeurs
     public SignalementPhoto() {
     }
@@ -46,6 +53,8 @@ public class SignalementPhoto implements SyncableEntity<SignalementPhotoDTO> {
         dto.setDateCreation(this.dateCreation != null ? this.dateCreation : LocalDateTime.now());
         dto.setSignalementId(this.signalement != null ? this.signalement.getId() : null);
         dto.setLastModified(this.dateCreation != null ? this.dateCreation : LocalDateTime.now());
+        // Propager le base64 pour le push-back vers Firebase
+        dto.setPhotoBase64(this.photoBase64);
         return dto;
     }
 
@@ -106,6 +115,14 @@ public class SignalementPhoto implements SyncableEntity<SignalementPhotoDTO> {
 
     public void setSignalement(Signalement signalement) {
         this.signalement = signalement;
+    }
+
+    public String getPhotoBase64() {
+        return photoBase64;
+    }
+
+    public void setPhotoBase64(String photoBase64) {
+        this.photoBase64 = photoBase64;
     }
 
     // equals et hashCode

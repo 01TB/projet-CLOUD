@@ -239,6 +239,9 @@ public class SyncRepositoryConfig {
 							} else {
 								logger.warn("Décodage base64 retourné null pour SignalementPhoto id={}", dto.getId());
 							}
+
+							// Conserver le base64 dans l'entité pour le push-back vers Firebase
+							entity.setPhotoBase64(dto.getPhotoBase64());
 						} catch (IOException e) {
 							throw new RuntimeException(
 									"Échec du décodage/stockage de la photo pour SignalementPhoto id=" + dto.getId(),
