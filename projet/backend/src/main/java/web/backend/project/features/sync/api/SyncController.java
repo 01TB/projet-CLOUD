@@ -35,7 +35,7 @@ public class SyncController {
             "utilisateurs",
             "signalements",
             "avancements_signalement",
-            "signalement_photos",
+            "signalements_photos",
             "utilisateurs_bloques");
 
     public SyncController(SyncService syncService) {

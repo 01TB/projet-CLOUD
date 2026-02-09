@@ -3,7 +3,7 @@ package web.backend.project.features.signalements.dto;
 public class SignalementPhotoResponseDTO {
 
     private Integer id;
-    private String firebaseUrl;
+    private String pathPhoto;
     private Boolean synchro;
     private String dateCreation;
     private Integer idSignalement;
@@ -12,10 +12,10 @@ public class SignalementPhotoResponseDTO {
     public SignalementPhotoResponseDTO() {
     }
 
-    public SignalementPhotoResponseDTO(Integer id, String firebaseUrl, Boolean synchro,
+    public SignalementPhotoResponseDTO(Integer id, String pathPhoto, Boolean synchro,
             String dateCreation, Integer idSignalement) {
         this.id = id;
-        this.firebaseUrl = firebaseUrl;
+        this.pathPhoto = pathPhoto;
         this.synchro = synchro;
         this.dateCreation = dateCreation;
         this.idSignalement = idSignalement;
@@ -30,12 +30,12 @@ public class SignalementPhotoResponseDTO {
         this.id = id;
     }
 
-    public String getFirebaseUrl() {
-        return firebaseUrl;
+    public String getPathPhoto() {
+        return pathPhoto;
     }
 
-    public void setFirebaseUrl(String firebaseUrl) {
-        this.firebaseUrl = firebaseUrl;
+    public void setPathPhoto(String pathPhoto) {
+        this.pathPhoto = pathPhoto;
     }
 
     public Boolean getSynchro() {

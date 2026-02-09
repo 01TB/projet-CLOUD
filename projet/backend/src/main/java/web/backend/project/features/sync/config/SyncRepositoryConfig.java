@@ -21,6 +21,7 @@ import web.backend.project.entities.dto.UtilisateurBloqueDTO;
 import web.backend.project.entities.dto.UtilisateurDTO;
 import web.backend.project.features.sync.services.EntitySyncRegistry;
 import web.backend.project.features.sync.services.EntityTypeHandler;
+import web.backend.project.features.sync.services.Base64ImageStorageService;
 import web.backend.project.features.sync.services.SyncService;
 import web.backend.project.repositories.AvancementSignalementRepo;
 import web.backend.project.repositories.EntrepriseRepository;
@@ -36,6 +37,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+
+import java.io.IOException;
 
 /**
  * Configuration pour enregistrer les handlers d'entités dans le registre de
@@ -77,6 +80,9 @@ public class SyncRepositoryConfig {
 	@Autowired
 	private ParametreRepository parametreRepository;
 
+	@Autowired
+	private Base64ImageStorageService base64ImageStorageService;
+
 	public SyncRepositoryConfig(SyncService syncService, EntitySyncRegistry syncRegistry) {
 		this.syncService = syncService;
 		this.syncRegistry = syncRegistry;
@@ -96,7 +102,7 @@ public class SyncRepositoryConfig {
 		syncService.registerRepository("roles", roleRepository);
 		syncService.registerRepository("parametres", parametreRepository);
 
-		syncService.registerRepository("signalement_photos", signalementPhotoRepo);
+		syncService.registerRepository("signalements_photos", signalementPhotoRepo);
 
 		// ========== Enregistrement dans le nouveau registre générique ==========
 		registerEntityHandlers();
@@ -194,9 +200,9 @@ public class SyncRepositoryConfig {
 					}
 				}));
 
-		// Handler pour SignalementPhoto (avec relation Signalement)
+		// Handler pour SignalementPhoto (avec relation Signalement + décodage base64)
 		syncRegistry.register(new EntityTypeHandler<>(
-				"signalement_photos",
+				"signalements_photos",
 				signalementPhotoRepo,
 				SignalementPhoto::new,
 				SignalementPhotoDTO::new,
@@ -206,12 +212,41 @@ public class SyncRepositoryConfig {
 						Signalement signalement = signalementRepository.findById(dto.getSignalementId())
 								.orElseThrow(() -> new RuntimeException(
 										"Signalement with id " + dto.getSignalementId() + " not found. " +
-												"Ensure 'signalements' are synchronized before 'signalement_photos'."));
+												"Ensure 'signalements' are synchronized before 'signalements_photos'."));
 						entity.setSignalement(signalement);
 					} else {
 						throw new RuntimeException(
 								"Signalement id is required for SignalementPhoto but was null. " +
 										"Firebase data must include 'id_signalement' field.");
+					}
+
+					// Décodage de la photo base64 et stockage local
+					if (dto.getPhotoBase64() != null && !dto.getPhotoBase64().isBlank()) {
+						try {
+							// Supprimer l'ancienne image si elle existe (cas de mise à jour)
+							base64ImageStorageService.deleteIfExists(entity.getPathPhoto());
+
+							// Décoder le base64 et sauvegarder le fichier
+							String savedPath = base64ImageStorageService.decodeAndStore(
+									dto.getPhotoBase64(),
+									dto.getId(),
+									dto.getSignalementId());
+
+							if (savedPath != null) {
+								entity.setPathPhoto(savedPath);
+								logger.info("Photo décodée et stockée pour SignalementPhoto id={}: {}",
+										dto.getId(), savedPath);
+							} else {
+								logger.warn("Décodage base64 retourné null pour SignalementPhoto id={}", dto.getId());
+							}
+						} catch (IOException e) {
+							throw new RuntimeException(
+									"Échec du décodage/stockage de la photo pour SignalementPhoto id=" + dto.getId(),
+									e);
+						}
+					} else {
+						logger.debug("Pas de données base64 dans le pull Firebase pour SignalementPhoto id={}",
+								dto.getId());
 					}
 				}));
 

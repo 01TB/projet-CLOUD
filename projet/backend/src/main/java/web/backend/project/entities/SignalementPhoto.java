@@ -10,12 +10,11 @@ import web.backend.project.entities.dto.SignalementPhotoDTO;
 @Table(name = "signalements_photos")
 public class SignalementPhoto implements SyncableEntity<SignalementPhotoDTO> {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Integer id;
 
-    @Column(name = "firebase_url", nullable = false, unique = true, length = 255)
-    private String firebaseUrl;
+    @Column(name = "path_photo", nullable = false, unique = true, length = 255)
+    private String pathPhoto;
 
     @Column(name = "synchro", nullable = false)
     private Boolean synchro = false;
@@ -31,8 +30,8 @@ public class SignalementPhoto implements SyncableEntity<SignalementPhotoDTO> {
     public SignalementPhoto() {
     }
 
-    public SignalementPhoto(String firebaseUrl, Boolean synchro, LocalDateTime dateCreation, Signalement signalement) {
-        this.firebaseUrl = firebaseUrl;
+    public SignalementPhoto(String pathPhoto, Boolean synchro, LocalDateTime dateCreation, Signalement signalement) {
+        this.pathPhoto = pathPhoto;
         this.synchro = synchro;
         this.dateCreation = dateCreation != null ? dateCreation : LocalDateTime.now();
         this.signalement = signalement;
@@ -42,7 +41,7 @@ public class SignalementPhoto implements SyncableEntity<SignalementPhotoDTO> {
     public SignalementPhotoDTO toDTO() {
         SignalementPhotoDTO dto = new SignalementPhotoDTO();
         dto.setId(this.id);
-        dto.setFirebaseUrl(this.firebaseUrl);
+        dto.setPathPhoto(this.pathPhoto);
         dto.setSynchro(this.synchro);
         dto.setDateCreation(this.dateCreation != null ? this.dateCreation : LocalDateTime.now());
         dto.setSignalementId(this.signalement != null ? this.signalement.getId() : null);
@@ -55,11 +54,17 @@ public class SignalementPhoto implements SyncableEntity<SignalementPhotoDTO> {
         if (dto == null)
             return;
 
-        this.firebaseUrl = dto.getFirebaseUrl();
+        // Ne pas écraser pathPhoto avec null quand la donnée vient de Firebase (base64)
+        // Le path sera défini après décodage par Base64ImageStorageService
+        if (dto.getPathPhoto() != null) {
+            this.pathPhoto = dto.getPathPhoto();
+        }
         this.synchro = dto.getSynchro();
         this.dateCreation = dto.getDateCreation();
 
         // Note: La relation signalement est résolue séparément via RelationResolver
+        // Note: Le décodage base64 → fichier est géré dans le RelationResolver
+        // (SyncRepositoryConfig)
     }
 
     // Getters et Setters
@@ -71,12 +76,12 @@ public class SignalementPhoto implements SyncableEntity<SignalementPhotoDTO> {
         this.id = id;
     }
 
-    public String getFirebaseUrl() {
-        return firebaseUrl;
+    public String getPathPhoto() {
+        return pathPhoto;
     }
 
-    public void setFirebaseUrl(String firebaseUrl) {
-        this.firebaseUrl = firebaseUrl;
+    public void setPathPhoto(String pathPhoto) {
+        this.pathPhoto = pathPhoto;
     }
 
     public Boolean getSynchro() {
@@ -112,19 +117,19 @@ public class SignalementPhoto implements SyncableEntity<SignalementPhotoDTO> {
             return false;
         SignalementPhoto that = (SignalementPhoto) o;
         return Objects.equals(id, that.id) &&
-                Objects.equals(firebaseUrl, that.firebaseUrl);
+                Objects.equals(pathPhoto, that.pathPhoto);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, firebaseUrl);
+        return Objects.hash(id, pathPhoto);
     }
 
     @Override
     public String toString() {
         return "SignalementPhoto{" +
                 "id=" + id +
-                ", firebaseUrl='" + firebaseUrl + '\'' +
+                ", pathPhoto='" + pathPhoto + '\'' +
                 ", synchro=" + synchro +
                 ", dateCreation=" + dateCreation +
                 ", signalementId=" + (signalement != null ? signalement.getId() : null) +

@@ -143,7 +143,7 @@ public class CrudSignalementMapper {
         for (SignalementPhoto photo : photos) {
             SignalementPhotoResponseDTO photoDTO = new SignalementPhotoResponseDTO();
             photoDTO.setId(photo.getId());
-            photoDTO.setFirebaseUrl(photo.getFirebaseUrl());
+            photoDTO.setPathPhoto(photo.getPathPhoto());
             photoDTO.setSynchro(photo.getSynchro());
             photoDTO.setDateCreation(photo.getDateCreation() != null
                     ? photo.getDateCreation().format(dateFormatter)
