@@ -95,6 +95,12 @@ export const getSignalements = functions.https.onRequest(async (req, res) => {
           }),
         );
 
+        const entrepriseSnapshot = await db
+          .collection("entreprises")
+          .where("id", "==", data.id_entreprise)
+          .limit(1)
+          .get();
+
         const photosSnapshot = await db
           .collection("signalements_photos")
           .where("id_signalement", "==", data.id)
@@ -105,7 +111,7 @@ export const getSignalements = functions.https.onRequest(async (req, res) => {
             const photoData = photoDoc.data();
             return {
               id: photoData.id,
-              date_ajout: photoData.date_ajout?.toDate().toISOString() || "",
+              date_ajout: photoData.date_ajout || "",
               photo: photoData.photo, // Taille en caractères
             };
           }),
@@ -124,6 +130,8 @@ export const getSignalements = functions.https.onRequest(async (req, res) => {
               data.localisation.latitude,
             ],
           },
+          id_entreprise: data.id_entreprise,
+          nom_entreprise: entrepriseSnapshot.docs[0].data().nom || "",
           date_creation: data.date_creation,
           date_modification:
             data.date_modification ||
@@ -438,6 +446,12 @@ export const getSignalement = functions.https.onRequest(async (req, res) => {
       }),
     );
 
+    const entrepriseSnapshot = await db
+          .collection("entreprises")
+          .where("id", "==", data.id_entreprise)
+          .limit(1)
+          .get();
+
     const photosSnapshot = await db
       .collection("signalements_photos")
       .where("id_signalement", "==", data.id)
@@ -448,7 +462,7 @@ export const getSignalement = functions.https.onRequest(async (req, res) => {
         const photoData = photoDoc.data();
         return {
           id: photoData.id,
-          date_ajout: photoData.date_ajout?.toDate().toISOString() || "",
+          date_ajout: photoData.date_ajout || "",
           photo: photoData.photo, // Taille en caractères
         };
       }),
@@ -468,6 +482,8 @@ export const getSignalement = functions.https.onRequest(async (req, res) => {
             data?.localisation.latitude,
           ],
         },
+        id_entreprise: data.id_entreprise,
+        entreprise: entrepriseSnapshot.docs[0].data().nom || "",
         date_creation: data?.date_creation,
         date_modification:
           data?.date_modification ||

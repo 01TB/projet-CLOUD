@@ -13,6 +13,9 @@ export { register, login, logout, me, update } from "./auth";
 // Trigger: Synchronisation utilisateur → Firebase Auth
 export { syncUserToAuth } from "./auth/syncUserToAuth";
 
+// Trigger: Notification push sur avancement de signalement
+export { notifyUserOnAvancement } from "./signalements/notifyUserOnAvancement";
+
 // Signalements
 export {
   getSignalements,
