@@ -7,6 +7,7 @@ import { LoginComponent } from './components/auth/login/login.component';
 import { UserManagementComponent } from './components/admin/user-management/user-management.component';
 import { SignalementManagementComponent } from './components/admin/signalement-management/signalement-management.component';
 import { SignalementDetailComponent } from './components/signalement-detail/signalement-detail.component';
+import { SignalementTableComponent } from './components/signalement-table/signalement-table.component';
 import { AuthGuard } from './guards/auth.guard';
 
 const routes: Routes = [
@@ -30,6 +31,11 @@ const routes: Routes = [
   { 
     path: 'signalement/:id', 
     component: SignalementDetailComponent,
+    canActivate: [AuthGuard]
+  },
+  { 
+    path: 'signalements', 
+    component: SignalementTableComponent,
     canActivate: [AuthGuard]
   },
   { path: '**', redirectTo: '/map' }

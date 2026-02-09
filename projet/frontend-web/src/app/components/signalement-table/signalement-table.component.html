@@ -1,0 +1,125 @@
+<div class="table-page">
+  <!-- Header -->
+  <header class="page-header">
+    <a routerLink="/map" class="back-link">← Retour carte</a>
+    <h1>Tableau des Signalements</h1>
+    <span class="count-badge">{{ filteredSignalements.length }} / {{ signalements.length }}</span>
+  </header>
+
+  <!-- Filtres -->
+  <section class="filters-section">
+    <div class="filter-row">
+      <!-- Date -->
+      <div class="filter-group">
+        <label>📅 Date</label>
+        <input type="date" [(ngModel)]="filters.date" (change)="applyFilters()">
+      </div>
+
+      <!-- Recherche -->
+      <div class="filter-group search-group">
+        <label>🔍 Recherche</label>
+        <input type="text" [(ngModel)]="filters.searchTerm" 
+               (input)="applyFilters()" placeholder="ID ou entreprise...">
+      </div>
+
+      <!-- Reset bouton -->
+      <button class="btn-reset" (click)="resetFilters()">↺ Réinitialiser</button>
+    </div>
+
+    <div class="filter-row">
+      <!-- Statuts -->
+      <div class="filter-group filter-chips">
+        <label>Statuts</label>
+        <div class="chips">
+          <button *ngFor="let statut of statuts" 
+                  class="chip" 
+                  [class.active]="filters.statuts.includes(statut.id)"
+                  (click)="toggleStatut(statut.id)">
+            {{ getStatutIcon(statut.valeur) }} {{ statut.nom }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Entreprises -->
+      <div class="filter-group filter-chips">
+        <label>Entreprises</label>
+        <div class="chips">
+          <button *ngFor="let ent of entreprises" 
+                  class="chip" 
+                  [class.active]="filters.entreprises.includes(ent.id)"
+                  (click)="toggleEntreprise(ent.id)">
+            {{ ent.nom }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Statistiques -->
+  <section class="stats-bar">
+    <div class="stat">
+      <span class="stat-value">{{ stats.total }}</span>
+      <span class="stat-label">Total</span>
+    </div>
+    <div class="stat stat-nouveau">
+      <span class="stat-value">{{ stats.nouveaux }}</span>
+      <span class="stat-label">Nouveaux</span>
+    </div>
+    <div class="stat stat-encours">
+      <span class="stat-value">{{ stats.enCours }}</span>
+      <span class="stat-label">En cours</span>
+    </div>
+    <div class="stat stat-termine">
+      <span class="stat-value">{{ stats.termines }}</span>
+      <span class="stat-label">Terminés</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value">{{ formatSurface(stats.surfaceTotale) }}</span>
+      <span class="stat-label">Surface totale</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value">{{ stats.avancementPct }}%</span>
+      <span class="stat-label">Avancement</span>
+    </div>
+  </section>
+
+  <!-- Tableau -->
+  <section class="table-section">
+    <div *ngIf="loading" class="loading">Chargement...</div>
+    
+    <table *ngIf="!loading" class="data-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Date création</th>
+          <th>Entreprise</th>
+          <th>Surface</th>
+          <th>Budget</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let sig of filteredSignalements">
+          <td class="id-cell">#{{ sig.id }}</td>
+          <td>{{ formatDate(sig.date_creation) }}</td>
+          <td>{{ sig.entreprise?.nom || 'N/A' }}</td>
+          <td class="num-cell">{{ formatSurface(sig.surface) }}</td>
+          <td class="num-cell">{{ formatBudget(sig.budget) }}</td>
+          <td>
+            <span class="badge" [ngClass]="getStatutBadgeClass(sig.statut_affiche || sig.statut_actuel)">
+              {{ getStatutIcon((sig.statut_affiche || sig.statut_actuel).valeur) }}
+              {{ (sig.statut_affiche || sig.statut_actuel).nom }}
+            </span>
+          </td>
+          <td class="actions-cell">
+            <a [routerLink]="['/signalement', sig.id]" class="btn-detail" title="Voir détails">📄</a>
+          </td>
+        </tr>
+        <tr *ngIf="filteredSignalements.length === 0">
+          <td colspan="7" class="empty-row">Aucun signalement trouvé</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</div>

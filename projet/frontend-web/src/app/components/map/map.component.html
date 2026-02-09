@@ -11,7 +11,7 @@
     <button class="control-btn" (click)="resetView()" title="Réinitialiser la vue">
       <span class="control-icon">🏠</span>
     </button>
-    <button class="control-btn recap-btn" (click)="toggleRecap()" title="Tableau récapitulatif">
+    <button class="control-btn recap-btn" (click)="toggleRecap()" title="Tableau récap simple">
       <span class="control-icon">📊</span>
     </button>
     <button class="control-btn sync-btn" (click)="onSync()" title="Synchroniser" *ngIf="isManager">
@@ -52,7 +52,7 @@
   <div class="modal-overlay" *ngIf="showRecapModal" (click)="toggleRecap()">
     <div class="modal-content recap-modal" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h3>📊 Tableau Récapitulatif</h3>
+        <h3>📊 Tableau Récap simple</h3>
         <button class="modal-close" (click)="toggleRecap()">✖</button>
       </div>
       <div class="modal-body" *ngIf="statistiques">
@@ -95,9 +95,9 @@
           <div class="recap-card">
             <div class="recap-icon">🔗</div>
             <div class="recap-content">
-              <div class="recap-label">Détails</div>
-              <a class="recap-link" [routerLink]="['/admin/signalements']" title="Voir les détails des signalements">
-                Voir les détails
+              <div class="recap-label">Tableau détaillé</div>
+              <a class="recap-link" [routerLink]="['/signalements']" title="Voir le tableau détaillé des signalements">
+                Voir le tableau
               </a>
             </div>
           </div>
