@@ -4,35 +4,7 @@ import api from '@/services/api';
 
 export const useEntreprisesStore = defineStore('entreprises', {
   state: () => ({
-    entreprises: [
-      {
-        id: 1,
-        nom: "Entreprise Routière Madagascar",
-        description: "Spécialisée dans les travaux routiers",
-        telephone: "+261340000001",
-        email: "contact@erm.mg",
-        date_creation: "2026-01-15T10:30:00.000Z",
-        date_modification: "2026-01-15T10:30:00.000Z"
-      },
-      {
-        id: 2,
-        nom: "BTP Construction",
-        description: "Construction et travaux publics",
-        telephone: "+261340000002",
-        email: "info@btp.mg",
-        date_creation: "2026-01-16T14:20:00.000Z",
-        date_modification: "2026-01-16T14:20:00.000Z"
-      },
-      {
-        id: 3,
-        nom: "Infrastructure SARL",
-        description: "Développement d'infrastructures",
-        telephone: "+261340000003",
-        email: "contact@infra.mg",
-        date_creation: "2026-01-17T09:15:00.000Z",
-        date_modification: "2026-01-17T09:15:00.000Z"
-      }
-    ],
+    entreprises: [],
     loading: false,
     error: null,
     pagination: null
@@ -44,7 +16,9 @@ export const useEntreprisesStore = defineStore('entreprises', {
     
     // Récupérer une entreprise par son ID
     getEntrepriseById: (state) => (id) => {
-      return state.entreprises.find(entreprise => entreprise.id === parseInt(id));
+      // Accepter à la fois les strings et les numbers
+      const searchId = typeof id === 'string' ? parseInt(id) : id;
+      return state.entreprises.find(entreprise => entreprise.id === searchId);
     },
     
     // Compter le nombre total d'entreprises

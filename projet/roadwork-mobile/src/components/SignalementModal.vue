@@ -90,10 +90,14 @@
                 {{ entreprise.nom }}
               </ion-select-option>
             </ion-select>
+            <!-- Debug info -->
+            <small style="color: #666; font-size: 10px;">
+              DEBUG: {{ entreprises.length }} entreprises disponibles
+            </small>
           </ion-item>
 
-          <!-- Photos (temporairement désactivé) -->
-          <!-- <ion-label position="floating">Photos</ion-label>
+          <!-- Photos -->
+          <ion-label position="floating">Photos</ion-label>
           <ion-item>
             <div class="photo-section">
               <div class="photo-preview" v-if="form.photos.length > 0">
@@ -102,7 +106,7 @@
                   :key="index"
                   class="photo-item"
                 >
-                  <img :src="photo.data" :alt="`Photo ${index + 1}`" />
+                  <img :src="photo.data" :alt="photo.name" class="photo-thumbnail" />
                   <ion-button 
                     size="small" 
                     fill="clear" 
@@ -110,7 +114,7 @@
                     @click="removePhoto(index)"
                     class="remove-photo-btn"
                   >
-                    <ion-icon :icon="close" slot="icon-only"></ion-icon>
+                    <ion-icon :icon="close"></ion-icon>
                   </ion-button>
                 </div>
               </div>
@@ -120,9 +124,9 @@
                   size="small" 
                   fill="outline" 
                   @click="selectFromGallery"
-                  class="photo-action-btn"
+                  color="primary"
                 >
-                  <ion-icon :icon="images" slot="start"></ion-icon>
+                  <ion-icon :icon="image" slot="start"></ion-icon>
                   Galerie
                 </ion-button>
                 
@@ -130,10 +134,10 @@
                   size="small" 
                   fill="outline" 
                   @click="takePhoto"
-                  class="photo-action-btn"
+                  color="secondary"
                 >
                   <ion-icon :icon="camera" slot="start"></ion-icon>
-                  Appareil photo
+                  Appareil
                 </ion-button>
               </div>
               
@@ -141,7 +145,7 @@
                 <small>Maximum 3 photos atteint</small>
               </ion-text>
             </div>
-          </ion-item> -->
+          </ion-item>
 
           <!-- Adresse -->
           <ion-label position="floating">Adresse</ion-label>
@@ -200,7 +204,7 @@ import {
   IonFooter, IonListHeader, toastController, IonButtons, IonBackButton, IonNote,
   IonSelect, IonSelectOption
 } from '@ionic/vue';
-import { pin, /* camera, images, */ close } from 'ionicons/icons';
+import { pin, camera, image, close } from 'ionicons/icons';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useSignalementsStore } from '@/store/modules/signalements';
@@ -325,6 +329,10 @@ const initMiniMap = () => {
     });
     
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      keepBuffer: 2,
+      updateWhenIdle: true,
+      updateWhenZooming: false,
       attribution: '© OpenStreetMap contributors',
       maxZoom: 18
     }).addTo(miniMap);
@@ -370,30 +378,64 @@ const handleSubmit = async () => {
       surface: parseFloat(form.value.surface),
       budget: parseFloat(form.value.budget),
       adresse: form.value.adresse.trim() || undefined,
-      id_entreprise: form.value.id_entreprise ? { id: parseInt(form.value.id_entreprise) } : undefined,
-      // photos: form.value.photos.map(photo => ({ // Temporairement désactivé
-      //   data: photo.data,
-      //   name: photo.name,
-      //   type: photo.type
-      // })),
+      id_entreprise: form.value.id_entreprise ? String(form.value.id_entreprise) : null,
       localisation: {
         type: 'Point',
         coordinates: [props.coordinates.lng, props.coordinates.lat]
       }
     };
 
-    console.log('Données du signalement:', signalementData);
+    console.log('📝 Données du signalement:', signalementData);
+    console.log('🏢 ID Entreprise brut:', form.value.id_entreprise);
+    console.log('🏢 ID Entreprise parsé:', parseInt(form.value.id_entreprise));
+    console.log('📸 Photos à ajouter:', form.value.photos.length);
+    console.log('📸 Données photos:', form.value.photos.map(p => ({
+      hasData: !!p.data,
+      dataLength: p.data?.length || 0,
+      name: p.name,
+      type: p.type
+    })));
+    
+    // Vérifier que la méthode existe
+    console.log('🔍 Méthodes disponibles dans le store:', Object.getOwnPropertyNames(Object.getPrototypeOf(signalementsStore)));
+    console.log('🔍 createSignalementWithPhotos disponible:', typeof signalementsStore.createSignalementWithPhotos);
     
     // Vérifier le token d'authentification
     const token = localStorage.getItem('token') || localStorage.getItem('idToken');
     console.log('Token présent:', !!token);
     console.log('Token preview:', token ? token.substring(0, 20) + '...' : 'none');
     
-    const result = await signalementsStore.createSignalement(signalementData);
-    console.log('Result:', result);
+    // Utiliser la nouvelle méthode avec photos
+    let result;
+    if (typeof signalementsStore.createSignalementWithPhotos === 'function') {
+      console.log('🚀 Utilisation de createSignalementWithPhotos');
+      result = await signalementsStore.createSignalementWithPhotos(signalementData, form.value.photos);
+    } else {
+      console.log('⚠️ createSignalementWithPhotos non disponible, utilisation de la méthode standard');
+      // Solution de secours : créer d'abord le signalement, puis ajouter les photos
+      result = await signalementsStore.createSignalement(signalementData);
+      
+      // Ajouter les photos une par une si le signalement est créé
+      if (result.success && form.value.photos.length > 0) {
+        console.log('📸 Ajout des photos après création du signalement');
+        try {
+          const { signalementService } = await import('@/services/signalements');
+          for (const photo of form.value.photos) {
+            await signalementService.addPhotoToSignalement(result.data.id, photo.data);
+          }
+          console.log('✅ Photos ajoutées avec succès');
+        } catch (photoError) {
+          console.error('❌ Erreur ajout photos:', photoError);
+        }
+      }
+    }
+    
+    console.log('✅ Result:', result);
     
     const toast = await toastController.create({
-      message: 'Signalement créé avec succès !',
+      message: form.value.photos.length > 0 
+        ? `Signalement créé avec ${form.value.photos.length} photo(s) !`
+        : 'Signalement créé avec succès !',
       duration: 2000,
       color: 'success',
       position: 'top'
@@ -434,9 +476,12 @@ const onDismiss = () => {
 // Charger les entreprises
 const loadEntreprises = async () => {
   try {
+    console.log('🏢 Modal - Chargement des entreprises...');
     await entreprisesStore.fetchEntreprises();
+    console.log('🏢 Modal - Entreprises chargées:', entreprisesStore.entreprises.length);
+    console.log('🏢 Modal - Liste entreprises:', entreprisesStore.entreprises);
   } catch (error) {
-    console.error('Error loading entreprises:', error);
+    console.error('🏢 Modal - Error loading entreprises:', error);
   }
 };
 
@@ -474,8 +519,7 @@ watch(() => props.isOpen, (newValue) => {
   }
 }, { deep: true });
 
-// Fonctions de gestion des photos (temporairement désactivées)
-/*
+// Fonctions de gestion des photos
 const selectFromGallery = async () => {
   try {
     const input = document.createElement('input');
@@ -583,7 +627,6 @@ const removePhoto = (index) => {
   form.value.photos.splice(index, 1);
   showToast('Photo supprimée', 'success');
 };
-*/
 
 const showToast = async (message, color = 'primary') => {
   const toast = await toastController.create({

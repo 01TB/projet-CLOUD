@@ -118,9 +118,117 @@ class SignalementService {
     try {
       const params = { page, limit, ...filters };
       const response = await api.get('/getSignalements', { params });
+      
+      // Si le backend ne retourne pas id_entreprise, essayer de récupérer les détails complets
+      if (response.data.success && response.data.data) {
+        const signalementsWithEntreprise = await Promise.all(
+          response.data.data.map(async (signalement) => {
+            if (!signalement.id_entreprise) {
+              try {
+                console.log(`🔍 Récupération id_entreprise pour signalement ${signalement.id}`);
+                const details = await this.getSignalementById(signalement.id);
+                if (details.success && details.data.id_entreprise) {
+                  console.log(`✅ id_entreprise trouvé: ${details.data.id_entreprise}`);
+                  return { ...signalement, id_entreprise: details.data.id_entreprise };
+                }
+              } catch (error) {
+                console.warn(`⚠️ Impossible de récupérer id_entreprise pour ${signalement.id}`);
+              }
+            }
+            return signalement;
+          })
+        );
+        
+        response.data.data = signalementsWithEntreprise;
+      }
+      
       return response.data;
     } catch (error) {
       console.error('Error fetching paginated signalements:', error);
+      throw error;
+    }
+  }
+
+  // Ajouter une photo à un signalement
+  async addPhotoToSignalement(signalementId, photoData) {
+    try {
+      console.log('📸 Service - Appel addSignalementPhoto avec params:', { id_signalement: signalementId, photo: photoData });
+      const response = await api.post('/addSignalementPhoto', {
+        id_signalement: signalementId,
+        photo: photoData
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error adding photo to signalement:', error);
+      throw error;
+    }
+  }
+
+  // Créer un signalement avec photos (méthode complète)
+  async createSignalementWithPhotos(signalementData, photos = []) {
+    try {
+      // 1. Créer le signalement
+      console.log('📝 Création du signalement:', signalementData);
+      const signalementResponse = await this.createSignalement(signalementData);
+      const createdSignalement = signalementResponse.data;
+      
+      console.log('✅ Signalement créé:', createdSignalement.id);
+      
+      // 2. Ajouter les photos si présentes
+      if (photos && photos.length > 0) {
+        console.log(`📸 Ajout de ${photos.length} photo(s) au signalement ${createdSignalement.id}`);
+        
+        const photoPromises = photos.map(async (photo, index) => {
+          try {
+            const photoResponse = await this.addPhotoToSignalement(createdSignalement.id, photo.data);
+            console.log(`✅ Photo ${index + 1} ajoutée:`, photoResponse.data);
+            return {
+              ...photoResponse.data,
+              // Garder les données originales de la photo
+              data: photo.data,
+              name: photo.name || `photo_${photoResponse.data.id}.jpg`,
+              type: photo.type || 'image/jpeg'
+            };
+          } catch (error) {
+            console.error(`❌ Erreur ajout photo ${index + 1}:`, error);
+            throw error;
+          }
+        });
+        
+        const photoResults = await Promise.all(photoPromises);
+        console.log('🎉 Toutes les photos ajoutées:', photoResults);
+        
+        // 3. Récupérer le signalement mis à jour avec les photos (avec fallback)
+        try {
+          const updatedSignalement = await this.getSignalementById(createdSignalement.id);
+          console.log('🔄 Signalement mis à jour récupéré:', updatedSignalement);
+          
+          // Si le backend ne retourne pas id_entreprise, l'ajouter depuis les données originales
+          if (!updatedSignalement.data.id_entreprise && signalementData.id_entreprise) {
+            console.log('🏢 Ajout id_entreprise manquant:', signalementData.id_entreprise);
+            updatedSignalement.data.id_entreprise = signalementData.id_entreprise;
+          }
+          
+          return updatedSignalement;
+        } catch (fetchError) {
+          console.warn('⚠️ Impossible de récupérer le signalement mis à jour, retour du signalement original avec photos:', fetchError);
+          // Retourner le signalement original avec les photos complètes
+          return {
+            ...createdSignalement,
+            photos: photoResults,
+            // S'assurer que id_entreprise est préservé
+            id_entreprise: signalementData.id_entreprise
+          };
+        }
+      }
+      
+      // S'assurer que id_entreprise est préservé même sans photos
+      return {
+        ...createdSignalement,
+        id_entreprise: signalementData.id_entreprise
+      };
+    } catch (error) {
+      console.error('❌ Erreur création signalement avec photos:', error);
       throw error;
     }
   }
