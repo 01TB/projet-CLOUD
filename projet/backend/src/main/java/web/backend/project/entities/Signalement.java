@@ -1,6 +1,7 @@
 package web.backend.project.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.GenericGenerator;
 import web.backend.project.entities.dto.SignalementDTO;
 import web.backend.project.utils.GeometryUtils;
 
@@ -15,6 +16,8 @@ import java.util.Objects;
 @Table(name = "signalements")
 public class Signalement implements SyncableEntity<SignalementDTO> {
     @Id
+    @GeneratedValue(generator = "use-existing-or-generate")
+    @GenericGenerator(name = "use-existing-or-generate", type = UseExistingOrGenerateId.class)
     @Column(name = "id")
     private Integer id;
 

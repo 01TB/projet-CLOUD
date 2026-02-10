@@ -1,6 +1,7 @@
 package web.backend.project.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.GenericGenerator;
 import web.backend.project.entities.dto.ParametreDTO;
 
 import java.util.Objects;
@@ -9,6 +10,8 @@ import java.util.Objects;
 @Table(name = "parametres")
 public class Parametre implements SyncableEntity<ParametreDTO> {
     @Id
+    @GeneratedValue(generator = "use-existing-or-generate")
+    @GenericGenerator(name = "use-existing-or-generate", type = UseExistingOrGenerateId.class)
     @Column(name = "id")
     private Integer id;
 
