@@ -148,29 +148,27 @@ public class SyncRepositoryConfig {
 								"UtilisateurCreateur id is required for Signalement but was null. " +
 										"Firebase data must include 'id_utilisateur_createur' field.");
 					}
-					// Résolution de la relation Entreprise (obligatoire)
+					// Résolution de la relation Entreprise (optionnelle - null pour les nouveaux
+					// signalements)
 					if (dto.getEntrepriseId() != null) {
 						Entreprise entreprise = entrepriseRepository.findById(dto.getEntrepriseId())
 								.orElseThrow(() -> new RuntimeException(
 										"Entreprise with id " + dto.getEntrepriseId() + " not found. " +
 												"Ensure 'entreprises' are synchronized before 'signalements'."));
 						entity.setEntreprise(entreprise);
-					} else {
-						throw new RuntimeException(
-								"Entreprise id is required for Signalement but was null. " +
-										"Firebase data must include 'id_entreprise' field.");
-					} // Résolution de la relation SignalementNiveaux (obligatoire)
+					}
+					// else: entreprise reste null (signalement non affecté)
+
+					// Résolution de la relation SignalementNiveaux (optionnelle - null pour les
+					// nouveaux signalements)
 					if (dto.getIdNiveaux() != null) {
 						SignalementNiveaux niveaux = signalisationNiveauxRepo.findById(dto.getIdNiveaux())
 								.orElseThrow(() -> new RuntimeException(
 										"SignalementNiveaux with id " + dto.getIdNiveaux() + " not found. " +
 												"Ensure 'signalements_niveaux' are synchronized before 'signalements'."));
 						entity.setNiveaux(niveaux);
-					} else {
-						throw new RuntimeException(
-								"SignalementNiveaux id is required for Signalement but was null. " +
-										"Firebase data must include 'id_niveaux' field.");
 					}
+					// else: niveaux reste null (signalement non affecté)
 				}));
 
 		// Handler pour AvancementSignalement (avec relations obligatoires)

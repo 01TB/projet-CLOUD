@@ -25,7 +25,7 @@ public class Signalement implements SyncableEntity<SignalementDTO> {
     private Double surface;
 
     @Column(name = "budget", nullable = false)
-    private Float budget;
+    private Float budget = 0.0f;
 
     @Column(name = "localisation", nullable = false, columnDefinition = "geography")
     private Geometry localisation;
@@ -38,11 +38,11 @@ public class Signalement implements SyncableEntity<SignalementDTO> {
     private Utilisateur utilisateurCreateur;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_entreprise", nullable = false)
+    @JoinColumn(name = "id_entreprise")
     private Entreprise entreprise;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_niveaux", nullable = false)
+    @JoinColumn(name = "id_niveaux")
     private SignalementNiveaux niveaux;
 
     @OneToMany(mappedBy = "signalement", cascade = CascadeType.ALL, orphanRemoval = true)

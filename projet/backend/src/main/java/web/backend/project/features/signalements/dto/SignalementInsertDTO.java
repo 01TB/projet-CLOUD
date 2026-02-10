@@ -14,8 +14,6 @@ public class SignalementInsertDTO {
     @Positive(message = "La surface doit être positive")
     private Double surface;
 
-    @NotNull(message = "Le budget est obligatoire")
-    @Positive(message = "Le budget doit être positif")
     private Float budget;
 
     @NotNull(message = "La localisation est obligatoire")
@@ -24,10 +22,12 @@ public class SignalementInsertDTO {
     @NotNull(message = "L'ID de l'utilisateur créateur est obligatoire")
     private Integer idUtilisateurCreateur;
 
-    @NotNull(message = "L'ID de l'entreprise est obligatoire")
+    // Nullable: non assigné depuis Firebase (nouveaux signalements)
+    // Affecté lors de la modification via l'API
     private Integer idEntreprise;
 
-    @NotNull(message = "L'ID du niveau est obligatoire")
+    // Nullable: non assigné depuis Firebase (nouveaux signalements)
+    // Affecté lors de la modification via l'API
     private Integer idNiveaux;
 
     private Boolean synchro = false;

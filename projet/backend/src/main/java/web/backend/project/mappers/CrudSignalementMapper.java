@@ -44,11 +44,11 @@ public class CrudSignalementMapper {
         Signalement signalement = new Signalement();
         signalement.setDateCreation(dto.getDateCreation());
         signalement.setSurface(dto.getSurface());
-        signalement.setBudget(dto.getBudget());
+        signalement.setBudget(dto.getBudget() != null ? dto.getBudget() : 0.0f);
         signalement.setSynchro(dto.getSynchro() != null ? dto.getSynchro() : false);
         signalement.setUtilisateurCreateur(utilisateur);
-        signalement.setEntreprise(entreprise);
-        signalement.setNiveaux(niveaux);
+        signalement.setEntreprise(entreprise); // peut être null
+        signalement.setNiveaux(niveaux); // peut être null
 
         // Conversion WKT vers Geometry
         try {
@@ -69,11 +69,20 @@ public class CrudSignalementMapper {
             Utilisateur utilisateur, Entreprise entreprise, SignalementNiveaux niveaux) {
         signalement.setDateCreation(dto.getDateCreation());
         signalement.setSurface(dto.getSurface());
-        signalement.setBudget(dto.getBudget());
         signalement.setSynchro(dto.getSynchro() != null ? dto.getSynchro() : signalement.getSynchro());
         signalement.setUtilisateurCreateur(utilisateur);
-        signalement.setEntreprise(entreprise);
-        signalement.setNiveaux(niveaux);
+        signalement.setEntreprise(entreprise); // peut être null
+        signalement.setNiveaux(niveaux); // peut être null
+
+        // Calcul du budget dénormalisé : si niveaux est assigné, budget = prixM2 *
+        // surface
+        // Sinon, on garde le budget fourni ou celui existant
+        if (niveaux != null && dto.getSurface() != null) {
+            signalement.setBudget(niveaux.getPrixM2() * dto.getSurface().floatValue());
+        } else if (dto.getBudget() != null) {
+            signalement.setBudget(dto.getBudget());
+        }
+        // Si aucun budget n'est fourni et pas de niveaux, on garde le budget existant
 
         // Conversion WKT vers Geometry
         try {

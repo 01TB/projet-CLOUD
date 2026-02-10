@@ -52,15 +52,21 @@ public class SignalementService {
 				.orElseThrow(() -> new ResourceNotFoundException("Utilisateur", "id",
 						signalementDTO.getIdUtilisateurCreateur()));
 
-		// Vérifier que l'entreprise existe
-		Entreprise entreprise = entrepriseRepository.findById(signalementDTO.getIdEntreprise())
-				.orElseThrow(() -> new ResourceNotFoundException("Entreprise", "id",
-						signalementDTO.getIdEntreprise()));
+		// Entreprise optionnelle (null pour les nouveaux signalements non affectés)
+		Entreprise entreprise = null;
+		if (signalementDTO.getIdEntreprise() != null) {
+			entreprise = entrepriseRepository.findById(signalementDTO.getIdEntreprise())
+					.orElseThrow(() -> new ResourceNotFoundException("Entreprise", "id",
+							signalementDTO.getIdEntreprise()));
+		}
 
-		// Vérifier que le niveau existe
-		SignalementNiveaux niveaux = signalisationNiveauxRepo.findById(signalementDTO.getIdNiveaux())
-				.orElseThrow(() -> new ResourceNotFoundException("SignalementNiveaux", "id",
-						signalementDTO.getIdNiveaux()));
+		// Niveau optionnel (null pour les nouveaux signalements non affectés)
+		SignalementNiveaux niveaux = null;
+		if (signalementDTO.getIdNiveaux() != null) {
+			niveaux = signalisationNiveauxRepo.findById(signalementDTO.getIdNiveaux())
+					.orElseThrow(() -> new ResourceNotFoundException("SignalementNiveaux", "id",
+							signalementDTO.getIdNiveaux()));
+		}
 
 		// Convertir DTO vers entité
 		Signalement signalement = crudSignalementMapper.toEntity(signalementDTO, utilisateur, entreprise, niveaux);
@@ -106,15 +112,26 @@ public class SignalementService {
 				.orElseThrow(() -> new ResourceNotFoundException("Utilisateur", "id",
 						signalementDTO.getIdUtilisateurCreateur()));
 
-		// Vérifier que l'entreprise existe
-		Entreprise entreprise = entrepriseRepository.findById(signalementDTO.getIdEntreprise())
-				.orElseThrow(() -> new ResourceNotFoundException("Entreprise", "id",
-						signalementDTO.getIdEntreprise()));
+		// Entreprise optionnelle (affectation lors de la modification)
+		Entreprise entreprise = null;
+		if (signalementDTO.getIdEntreprise() != null) {
+			entreprise = entrepriseRepository.findById(signalementDTO.getIdEntreprise())
+					.orElseThrow(() -> new ResourceNotFoundException("Entreprise", "id",
+							signalementDTO.getIdEntreprise()));
+		}
 
-		// Vérifier que le niveau existe
-		SignalementNiveaux niveaux = signalisationNiveauxRepo.findById(signalementDTO.getIdNiveaux())
-				.orElseThrow(() -> new ResourceNotFoundException("SignalementNiveaux", "id",
-						signalementDTO.getIdNiveaux()));
+		// Niveau optionnel (affectation lors de la modification)
+		SignalementNiveaux niveaux = null;
+		if (signalementDTO.getIdNiveaux() != null) {
+			niveaux = signalisationNiveauxRepo.findById(signalementDTO.getIdNiveaux())
+					.orElseThrow(() -> new ResourceNotFoundException("SignalementNiveaux", "id",
+							signalementDTO.getIdNiveaux()));
+			
+			Double newBudget = niveaux.getPrixM2() * signalementDTO.getSurface() * signalementDTO.getIdNiveaux();
+			signalementDTO.setBudget(newBudget.floatValue());
+
+
+		}
 
 		// Si un nouveau statut est fourni, créer un nouvel AvancementSignalement
 		if (signalementDTO.getIdNouveauStatut() != null) {
