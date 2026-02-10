@@ -64,6 +64,14 @@ public class SignalementService {
 		// Convertir DTO vers entité
 		Signalement signalement = crudSignalementMapper.toEntity(signalementDTO, utilisateur, entreprise);
 
+		AvancementSignalement avancementInitial = new AvancementSignalement();
+		avancementInitial.setDateModification(LocalDateTime.now());
+		avancementInitial.setStatutAvancement(statutAvancementRepo.findById(1) // Statut initial (ex: "Nouveau")
+				.orElseThrow(() -> new ResourceNotFoundException("StatutAvancement", "id", 1)));
+		avancementInitial.setUtilisateur(utilisateur);
+		avancementInitial.setSignalement(signalement);
+		signalement.addAvancement(avancementInitial);
+
 		// Sauvegarder
 		Signalement savedSignalement = signalementRepository.save(signalement);
 

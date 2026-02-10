@@ -1,36 +1,39 @@
--- -- 1. Insertion des Rôles
--- INSERT INTO roles (nom, synchro) VALUES 
--- ('MANAGER', false),
--- ('UTILISATEUR', false);
+-- 1. Insertion des Rôles
+INSERT INTO roles (nom, synchro) VALUES 
+('MANAGER', false),
+('UTILISATEUR', false);
 
--- -- 2. Insertion des Entreprises
--- INSERT INTO entreprises (nom, synchro) VALUES 
--- ('BTP Rénovation', false),
--- ('Eco-Construction', false),
--- ('Travaux Express', false);
+-- 2. Insertion des Entreprises
+INSERT INTO entreprises (nom, synchro) VALUES 
+('BTP Rénovation', false),
+('Eco-Construction', false),
+('Travaux Express', false);
 
--- -- 3. Insertion des Statuts d''avancement
--- INSERT INTO statuts_avancement (nom, valeur, synchro) VALUES 
--- ('NOUVEAU', 0, false),
--- ('EN_COURS', 50, false),
--- ('TERMINE', 100, false);
+-- 3. Insertion des Statuts d''avancement
+INSERT INTO statuts_avancement (nom, valeur, synchro) VALUES 
+('NOUVEAU', 0, false),
+('EN_COURS', 1, false),
+('TERMINE', 2, false);
+    
+-- 4. Insertion des Paramètres globaux
+INSERT INTO parametres (nb_tentatives_connexion, duree_session, synchro) VALUES 
+(5, 3600, false);
 
--- -- 4. Insertion des Paramètres globaux
--- INSERT INTO parametres (nb_tentatives_connexion, duree_session, synchro) VALUES 
--- (5, 3600, false);
+-- 5. Insertion des Utilisateurs
+-- Note: Les mots de passe sont en clair ici pour l'exemple, mais devraient être hachés en prod.
+INSERT INTO utilisateurs (email, password, synchro, id_role) VALUES 
+('admin@signalement.com', 'admin123', false, 1), -- ID 1 (Admin)
+('jean.dupont@email.com', 'user123', false, 2), -- ID 2 (User)
+('marie.curie@email.com', 'user456', false, 2), -- ID 3 (User)
+('contact@btp-renovation.com', 'entr123', false, 2), -- ID 2
+('spammeur@bad.com', 'badpass', false, 2); -- ID 5 (A bloquer)
 
--- -- 5. Insertion des Utilisateurs
--- -- Note: Les mots de passe sont en clair ici pour l'exemple, mais devraient être hachés en prod.
--- INSERT INTO utilisateurs (email, password, synchro, id_role) VALUES 
--- ('admin@signalement.com', 'admin123', false, 1), -- ID 1 (Admin)
--- ('jean.dupont@email.com', 'user123', false, 2), -- ID 2 (User)
--- ('marie.curie@email.com', 'user456', false, 2), -- ID 3 (User)
--- ('contact@btp-renovation.com', 'entr123', false, 2), -- ID 2
--- ('spammeur@bad.com', 'badpass', false, 2); -- ID 5 (A bloquer)
+INSERT INTO mvt_prix_signalements (date_creation, montant) VALUES 
+('2026-11-01', 15000);
 
--- -- 6. Insertion d'un Utilisateur bloqué
--- INSERT INTO utilisateurs_bloques (date_blocage, synchro, id_utilisateur) VALUES 
--- ('2026-10-25 14:00:00', false, 5);
+-- 6. Insertion d'un Utilisateur bloqué
+INSERT INTO utilisateurs_bloques (date_blocage, synchro, id_utilisateur) VALUES 
+('2026-10-25 14:00:00', false, 5);
 
 -- -- 7. Insertion des Signalements
 -- -- Note: Localisation utilise la syntaxe PostGIS (Longitude, Latitude). 
@@ -75,5 +78,3 @@
 -- (NOW() - INTERVAL '4 days', false, 1, 2, 2), -- En analyse
 -- (NOW() - INTERVAL '1 day', false, 4, 3, 2);  -- Terminé)
 
-INSERT INTO mvt_prix_signalements (date_creation, montant) VALUES 
-('2026-11-01', 15000);
