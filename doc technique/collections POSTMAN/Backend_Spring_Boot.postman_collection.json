@@ -1,0 +1,707 @@
+{
+	"info": {
+		"_postman_id": "backend-spring-boot-collection",
+		"name": "Backend Spring Boot",
+		"description": "Collection Postman pour l'API backend Spring Boot - localhost:8080",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"motdepasse123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "login"]
+						},
+						"description": "Connexion d'un utilisateur avec email et mot de passe"
+					}
+				},
+				{
+					"name": "Sign In",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "\"données d'inscription\""
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/sign-in",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "sign-in"]
+						},
+						"description": "Inscription d'un utilisateur (TODO)"
+					}
+				},
+				{
+					"name": "Test Auth",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/auth",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth"]
+						},
+						"description": "Vérifier que le contrôleur Auth fonctionne"
+					}
+				}
+			]
+		},
+		{
+			"name": "Utilisateurs",
+			"item": [
+				{
+					"name": "Créer un utilisateur",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"nouveau@example.com\",\n    \"password\": \"motdepasse123\",\n    \"synchro\": false,\n    \"id_role\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/utilisateurs",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "utilisateurs"]
+						},
+						"description": "Créer un nouvel utilisateur"
+					}
+				},
+				{
+					"name": "Récupérer tous les utilisateurs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/utilisateurs",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "utilisateurs"]
+						},
+						"description": "Récupérer la liste de tous les utilisateurs"
+					}
+				},
+				{
+					"name": "Récupérer un utilisateur par ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/utilisateurs/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "utilisateurs", "1"]
+						},
+						"description": "Récupérer un utilisateur par son ID"
+					}
+				},
+				{
+					"name": "Rechercher un utilisateur par email",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/utilisateurs/search?email=user@example.com",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "utilisateurs", "search"],
+							"query": [
+								{
+									"key": "email",
+									"value": "user@example.com"
+								}
+							]
+						},
+						"description": "Rechercher un utilisateur par son adresse email"
+					}
+				},
+				{
+					"name": "Modifier un utilisateur",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"modifie@example.com\",\n    \"password\": \"nouveaumotdepasse\",\n    \"synchro\": true,\n    \"id_role\": 2\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/utilisateurs/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "utilisateurs", "1"]
+						},
+						"description": "Modifier un utilisateur existant"
+					}
+				},
+				{
+					"name": "Supprimer un utilisateur",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/utilisateurs/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "utilisateurs", "1"]
+						},
+						"description": "Supprimer un utilisateur par son ID"
+					}
+				},
+				{
+					"name": "Bloquer un utilisateur",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/utilisateurs/1/bloquer",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "utilisateurs", "1", "bloquer"]
+						},
+						"description": "Bloquer un utilisateur"
+					}
+				},
+				{
+					"name": "Débloquer un utilisateur",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/utilisateurs/1/bloquer",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "utilisateurs", "1", "bloquer"]
+						},
+						"description": "Débloquer un utilisateur"
+					}
+				},
+				{
+					"name": "Vérifier si utilisateur bloqué",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/utilisateurs/1/est-bloque",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "utilisateurs", "1", "est-bloque"]
+						},
+						"description": "Vérifier si un utilisateur est bloqué"
+					}
+				}
+			]
+		},
+		{
+			"name": "Rôles",
+			"item": [
+				{
+					"name": "Récupérer tous les rôles",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/roles",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "roles"]
+						},
+						"description": "Récupérer la liste de tous les rôles"
+					}
+				}
+			]
+		},
+		{
+			"name": "Signalements",
+			"item": [
+				{
+					"name": "Créer un signalement",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"dateCreation\": \"2026-02-10\",\n    \"surface\": 250.5,\n    \"budget\": 5000.0,\n    \"localisation\": \"POINT(2.3522 48.8566)\",\n    \"idUtilisateurCreateur\": 1,\n    \"idEntreprise\": 1,\n    \"niveaux\": 3,\n    \"synchro\": false,\n    \"idNouveauStatut\": 1,\n    \"dateModificationStatut\": \"2026-02-10\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/signalements",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "signalements"]
+						},
+						"description": "Créer un nouveau signalement"
+					}
+				},
+				{
+					"name": "Récupérer tous les signalements",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/signalements",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "signalements"]
+						},
+						"description": "Récupérer la liste de tous les signalements"
+					}
+				},
+				{
+					"name": "Récupérer un signalement par ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/signalements/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "signalements", "1"]
+						},
+						"description": "Récupérer un signalement par son ID"
+					}
+				},
+				{
+					"name": "Modifier un signalement",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"dateCreation\": \"2026-02-10\",\n    \"surface\": 300.0,\n    \"budget\": 7500.0,\n    \"localisation\": \"POINT(2.3522 48.8566)\",\n    \"idUtilisateurCreateur\": 1,\n    \"idEntreprise\": 1,\n    \"niveaux\": 4,\n    \"synchro\": true,\n    \"idNouveauStatut\": 2,\n    \"dateModificationStatut\": \"2026-02-10\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/signalements/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "signalements", "1"]
+						},
+						"description": "Mettre à jour un signalement existant"
+					}
+				},
+				{
+					"name": "Supprimer un signalement",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/signalements/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "signalements", "1"]
+						},
+						"description": "Supprimer un signalement par son ID"
+					}
+				},
+				{
+					"name": "Signalements par entreprise",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/signalements/entreprise/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "signalements", "entreprise", "1"]
+						},
+						"description": "Récupérer les signalements d'une entreprise"
+					}
+				},
+				{
+					"name": "Signalements par utilisateur",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/signalements/utilisateur/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "signalements", "utilisateur", "1"]
+						},
+						"description": "Récupérer les signalements créés par un utilisateur"
+					}
+				},
+				{
+					"name": "Signalements par statut synchro",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/signalements/synchro/false",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "signalements", "synchro", "false"]
+						},
+						"description": "Récupérer les signalements par statut de synchronisation (true/false)"
+					}
+				},
+				{
+					"name": "Signalements par budget minimum",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/signalements/budget/min/1000",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "signalements", "budget", "min", "1000"]
+						},
+						"description": "Récupérer les signalements avec un budget minimum"
+					}
+				},
+				{
+					"name": "Signalements par surface minimum",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/signalements/surface/min/100.0",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "signalements", "surface", "min", "100.0"]
+						},
+						"description": "Récupérer les signalements avec une surface minimum"
+					}
+				},
+				{
+					"name": "Signalements par plage de budget",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/signalements/budget/range?min=1000&max=5000",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "signalements", "budget", "range"],
+							"query": [
+								{
+									"key": "min",
+									"value": "1000"
+								},
+								{
+									"key": "max",
+									"value": "5000"
+								}
+							]
+						},
+						"description": "Récupérer les signalements dans une plage de budget"
+					}
+				},
+				{
+					"name": "Signalements par plage de surface",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/signalements/surface/range?min=100.0&max=500.0",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "signalements", "surface", "range"],
+							"query": [
+								{
+									"key": "min",
+									"value": "100.0"
+								},
+								{
+									"key": "max",
+									"value": "500.0"
+								}
+							]
+						},
+						"description": "Récupérer les signalements dans une plage de surface"
+					}
+				},
+				{
+					"name": "Mettre à jour statut synchro",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/signalements/1/synchro?synchro=true",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "signalements", "1", "synchro"],
+							"query": [
+								{
+									"key": "synchro",
+									"value": "true"
+								}
+							]
+						},
+						"description": "Mettre à jour uniquement le statut de synchronisation d'un signalement"
+					}
+				},
+				{
+					"name": "Ajouter mouvement prix",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "1500.50"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/signalements/prix",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "signalements", "prix"]
+						},
+						"description": "Ajouter un mouvement de prix à un signalement"
+					}
+				}
+			]
+		},
+		{
+			"name": "Photos Signalements",
+			"item": [
+				{
+					"name": "Photos d'un signalement",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/signalements/1/photos",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "signalements", "1", "photos"]
+						},
+						"description": "Récupérer la liste des noms de fichiers photo pour un signalement"
+					}
+				},
+				{
+					"name": "Servir une image",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/images/photo_1_sig_1.jpg",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "images", "photo_1_sig_1.jpg"]
+						},
+						"description": "Récupérer/afficher un fichier image par son nom"
+					}
+				}
+			]
+		},
+		{
+			"name": "Entreprises",
+			"item": [
+				{
+					"name": "Récupérer toutes les entreprises",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/entreprises",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "entreprises"]
+						},
+						"description": "Récupérer la liste de toutes les entreprises"
+					}
+				},
+				{
+					"name": "Récupérer une entreprise par ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/entreprises/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "entreprises", "1"]
+						},
+						"description": "Récupérer une entreprise par son ID"
+					}
+				}
+			]
+		},
+		{
+			"name": "Statuts Avancement",
+			"item": [
+				{
+					"name": "Récupérer tous les statuts",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/statutAvancements",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "statutAvancements"]
+						},
+						"description": "Récupérer la liste de tous les statuts d'avancement"
+					}
+				},
+				{
+					"name": "Récupérer un statut par ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/statutAvancements/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "statutAvancements", "1"]
+						},
+						"description": "Récupérer un statut d'avancement par son ID"
+					}
+				}
+			]
+		},
+		{
+			"name": "Synchronisation",
+			"item": [
+				{
+					"name": "Synchronisation principale",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"entityTypes\": [\"signalements\", \"utilisateurs\", \"statuts_avancement\"],\n    \"direction\": \"PUSH\",\n    \"forceSync\": false\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/sync",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "sync"]
+						},
+						"description": "Endpoint principal de synchronisation (PUSH, PULL ou BIDIRECTIONAL)"
+					}
+				},
+				{
+					"name": "Push sync",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/sync/push?entities=signalements,utilisateurs&forceSync=false",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "sync", "push"],
+							"query": [
+								{
+									"key": "entities",
+									"value": "signalements,utilisateurs"
+								},
+								{
+									"key": "forceSync",
+									"value": "false"
+								}
+							]
+						},
+						"description": "Push simplifié - Backend → Firebase"
+					}
+				},
+				{
+					"name": "Pull sync",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/sync/pull?entities=signalements,utilisateurs",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "sync", "pull"],
+							"query": [
+								{
+									"key": "entities",
+									"value": "signalements,utilisateurs"
+								}
+							]
+						},
+						"description": "Pull simplifié - Firebase → Backend"
+					}
+				},
+				{
+					"name": "Bidirectional sync",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/sync/bidirectional?entities=signalements,utilisateurs&forceSync=false",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "sync", "bidirectional"],
+							"query": [
+								{
+									"key": "entities",
+									"value": "signalements,utilisateurs"
+								},
+								{
+									"key": "forceSync",
+									"value": "false"
+								}
+							]
+						},
+						"description": "Synchronisation bidirectionnelle"
+					}
+				},
+				{
+					"name": "Statut sync d'une entité",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/sync/status/signalements",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "sync", "status", "signalements"]
+						},
+						"description": "Obtenir le statut de synchronisation d'un type d'entité"
+					}
+				},
+				{
+					"name": "Entités supportées",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/sync/supported-entities",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "sync", "supported-entities"]
+						},
+						"description": "Obtenir la liste des types d'entités supportés pour la synchronisation"
+					}
+				},
+				{
+					"name": "Health check sync",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/sync/health",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "sync", "health"]
+						},
+						"description": "Vérifier l'état du service de synchronisation"
+					}
+				}
+			]
+		}
+	]
+}
