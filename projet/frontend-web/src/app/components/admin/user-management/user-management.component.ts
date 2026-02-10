@@ -1,5 +1,6 @@
 // src/app/components/admin/user-management/user-management.component.ts
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { UserManagementService } from '../../../services/user-management.service';
 import { Utilisateur, Role } from '../../../models/signalement.model';
@@ -50,7 +51,10 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   
   private subscriptions = new Subscription();
 
-  constructor(private userManagementService: UserManagementService) {}
+  constructor(
+    private userManagementService: UserManagementService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     this.loadData();
@@ -294,6 +298,10 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   private clearMessages(): void {
     this.errorMessage = '';
     this.successMessage = '';
+  }
+
+  viewUserDetails(userId: number): void {
+    this.router.navigate(['/admin/users', userId]);
   }
 
   ngOnDestroy(): void {

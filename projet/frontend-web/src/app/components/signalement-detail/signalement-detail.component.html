@@ -57,6 +57,10 @@
             <span class="value">{{ signalement.entreprise?.nom || 'Non assigné' }}</span>
           </div>
           <div class="info-row">
+            <span class="label">Créé par:</span>
+            <span class="value">👤 {{ signalement.email_utilisateur_createur || 'Email inconnu' }} (ID: {{ signalement.id_utilisateur_createur }})</span>
+          </div>
+          <div class="info-row">
             <span class="label">Position:</span>
             <span class="value">{{ signalement.localisation.lat.toFixed(4) }}, {{ signalement.localisation.lng.toFixed(4) }}</span>
           </div>
