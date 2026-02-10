@@ -91,15 +91,25 @@ export const updateFcmToken = functions.https.onRequest(async (req, res) => {
       return;
     }
 
-    const utilisateurDoc = utilisateurSnapshot.docs[0];
+    // Mettre à jour le token FCM dans la collection dédiée
+    // ✅ Utilisation d'une collection séparée pour éviter les conflits avec la synchronisation PostgreSQL
+    const fcmTokenRef = db
+      .collection("utilisateurs_fcm_tokens")
+      .doc(userInfo.id.toString());
 
-    // Mettre à jour le token FCM
-    await utilisateurDoc.ref.update({
-      fcm_token: fcm_token,
-      fcm_token_updated_at: admin.firestore.FieldValue.serverTimestamp(),
-    });
+    await fcmTokenRef.set(
+      {
+        id_utilisateur: userInfo.id,
+        fcm_token: fcm_token,
+        fcm_token_updated_at: admin.firestore.FieldValue.serverTimestamp(),
+        last_updated: new Date().toISOString(),
+      },
+      { merge: true },
+    );
 
-    console.log(`✅ Token FCM mis à jour pour l'utilisateur ${userInfo.id}`);
+    console.log(
+      `✅ Token FCM mis à jour pour l'utilisateur ${userInfo.id} dans utilisateurs_fcm_tokens`,
+    );
 
     const response = successResponse({
       message: "Token FCM enregistré avec succès",
@@ -187,14 +197,16 @@ export const deleteFcmToken = functions.https.onRequest(async (req, res) => {
       return;
     }
 
-    const utilisateurDoc = utilisateurSnapshot.docs[0];
+    // Supprimer le token FCM de la collection dédiée
+    const fcmTokenRef = db
+      .collection("utilisateurs_fcm_tokens")
+      .doc(userInfo.id.toString());
 
-    // Supprimer le token FCM
-    await utilisateurDoc.ref.update({
-      fcm_token: admin.firestore.FieldValue.delete(),
-    });
+    await fcmTokenRef.delete();
 
-    console.log(`✅ Token FCM supprimé pour l'utilisateur ${userInfo.id}`);
+    console.log(
+      `✅ Token FCM supprimé pour l'utilisateur ${userInfo.id} de utilisateurs_fcm_tokens`,
+    );
 
     const response = successResponse({
       message: "Token FCM supprimé avec succès",

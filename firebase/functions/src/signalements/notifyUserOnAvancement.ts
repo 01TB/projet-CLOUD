@@ -42,19 +42,34 @@ export const notifyUserOnAvancement = functions.firestore
 
       const utilisateurDoc = utilisateurSnapshot.docs[0];
       const utilisateurData = utilisateurDoc.data();
+
       const firebaseAuthUid =
         utilisateurData.firebase_auth_uid || utilisateurData.id.toString();
 
-      // Récupérer le token FCM de l'utilisateur
-      // Le token FCM est généralement stocké dans le document utilisateur
-      const fcmToken = utilisateurData.fcm_token;
+      // Récupérer le token FCM depuis la collection dédiée utilisateurs_fcm_tokens
+      // ✅ Collection séparée pour éviter les conflits avec la synchronisation PostgreSQL
+      const fcmTokenDoc = await admin
+        .firestore()
+        .collection("utilisateurs_fcm_tokens")
+        .doc(idUtilisateur.toString())
+        .get();
 
-      if (!fcmToken) {
+      if (!fcmTokenDoc.exists) {
         console.warn(
-          `⚠️  Utilisateur ${idUtilisateur} n'a pas de token FCM enregistré`,
+          `⚠️  Utilisateur ${idUtilisateur} n'a pas de token FCM enregistré dans utilisateurs_fcm_tokens`,
         );
         return;
       }
+
+      const fcmTokenData = fcmTokenDoc.data();
+      const fcmToken = fcmTokenData?.fcm_token;
+
+      if (!fcmToken) {
+        console.warn(`⚠️  Token FCM vide pour l'utilisateur ${idUtilisateur}`);
+        return;
+      }
+
+      console.log(`✅ Token FCM récupéré pour l'utilisateur ${idUtilisateur}`);
 
       // Récupérer les informations du signalement
       const idSignalement = avancementData.id_signalement;
@@ -155,22 +170,6 @@ export const notifyUserOnAvancement = functions.firestore
         console.error(
           `⚠️  Token FCM invalide pour l'utilisateur ${idUtilisateur}`,
         );
-        // Optionnel : Supprimer le token invalide du document utilisateur
-        const utilisateurSnapshot = await admin
-          .firestore()
-          .collection("utilisateurs")
-          .where("id", "==", Number(idUtilisateur))
-          .limit(1)
-          .get();
-
-        if (!utilisateurSnapshot.empty) {
-          await utilisateurSnapshot.docs[0].ref.update({
-            fcm_token: admin.firestore.FieldValue.delete(),
-          });
-          console.log(
-            `✅ Token FCM invalide supprimé pour l'utilisateur ${idUtilisateur}`,
-          );
-        }
       } else if (error.code === "messaging/registration-token-not-registered") {
         console.error(
           `⚠️  Token FCM non enregistré pour l'utilisateur ${idUtilisateur}`,
