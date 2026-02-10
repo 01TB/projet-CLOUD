@@ -175,7 +175,7 @@ public class UtilisateurController {
                     .body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Erreur lors du blocage de l'utilisateur"));
+                    .body(Map.of("error", "Erreur inconnue lors du blocage de l'utilisateur: "+ e.getMessage()));
         }
     }
 

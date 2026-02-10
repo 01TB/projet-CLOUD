@@ -18,6 +18,8 @@ export class UserDetailsComponent implements OnInit, OnDestroy {
   loading = false;
   loadingSignalements = false;
   errorMessage = '';
+  successMessage = '';
+  showBlockModal = false;
   
   // Statistiques des signalements
   stats = {
@@ -136,6 +138,57 @@ export class UserDetailsComponent implements OnInit, OnDestroy {
 
   viewSignalement(id: number): void {
     this.router.navigate(['/signalement', id]);
+  }
+
+  openBlockModal(): void {
+    this.showBlockModal = true;
+    this.clearMessages();
+  }
+
+  closeBlockModal(): void {
+    this.showBlockModal = false;
+  }
+
+  toggleBlockUser(): void {
+    if (!this.user) {
+      return;
+    }
+
+    this.loading = true;
+    const action = this.user.est_bloque ? 'unblockUser' : 'blockUser';
+    
+    this.userManagementService[action](this.user.id).subscribe({
+      next: (updatedUser) => {
+        const status = updatedUser.est_bloque ? 'bloqué' : 'débloqué';
+        this.showSuccess(`Utilisateur ${status} avec succès`);
+        this.closeBlockModal();
+        this.loadUser(this.user!.id);
+      },
+      error: (error) => {
+        console.error('Erreur lors de l\'opération:', error);
+        this.showError(error.message || 'Erreur lors de l\'opération');
+        this.loading = false;
+        this.closeBlockModal();
+      }
+    });
+  }
+
+  private showSuccess(message: string): void {
+    this.successMessage = message;
+    this.errorMessage = '';
+    setTimeout(() => {
+      this.successMessage = '';
+    }, 5000);
+  }
+
+  private showError(message: string): void {
+    this.errorMessage = message;
+    this.successMessage = '';
+  }
+
+  private clearMessages(): void {
+    this.errorMessage = '';
+    this.successMessage = '';
   }
 
   ngOnDestroy(): void {

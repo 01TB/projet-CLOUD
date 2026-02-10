@@ -6,9 +6,21 @@
       <button class="btn-back" (click)="goBack()">← Retour</button>
       <h2>👤 Détails Utilisateur</h2>
     </div>
+    <button 
+      class="btn"
+      *ngIf="user && user.role.nom !== 'Manager'"
+      [class.btn-block]="!user.est_bloque"
+      [class.btn-unblock]="user.est_bloque"
+      (click)="openBlockModal()"
+    >
+      {{ user.est_bloque ? '🔓 Débloquer' : '🔒 Bloquer' }}
+    </button>
   </div>
 
-  <!-- Messages d'erreur -->
+  <!-- Messages -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    ✓ {{ successMessage }}
+  </div>
   <div class="alert alert-danger" *ngIf="errorMessage">
     ✗ {{ errorMessage }}
   </div>
@@ -143,6 +155,43 @@
         <div class="empty-state" *ngIf="signalements.length === 0">
           <div class="empty-icon">📭</div>
           <p>Cet utilisateur n'a créé aucun signalement</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de blocage/déblocage -->
+  <div class="modal-overlay" *ngIf="showBlockModal" (click)="closeBlockModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ user?.est_bloque ? '🔓 Débloquer' : '🔒 Bloquer' }} l'utilisateur</h3>
+        <button class="modal-close" (click)="closeBlockModal()">✖</button>
+      </div>
+      <div class="modal-body" *ngIf="user">
+        <div class="confirmation-message">
+          <p *ngIf="!user.est_bloque">
+            Êtes-vous sûr de vouloir <strong>bloquer</strong> l'utilisateur <strong>{{ user.email }}</strong> ?
+          </p>
+          <p *ngIf="user.est_bloque">
+            Êtes-vous sûr de vouloir <strong>débloquer</strong> l'utilisateur <strong>{{ user.email }}</strong> ?
+          </p>
+          <div class="warning-box" *ngIf="!user.est_bloque">
+            ⚠️ Cet utilisateur ne pourra plus se connecter à l'application.
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-secondary" (click)="closeBlockModal()">
+            Annuler
+          </button>
+          <button 
+            class="btn" 
+            [class.btn-danger]="!user.est_bloque"
+            [class.btn-success]="user.est_bloque"
+            (click)="toggleBlockUser()"
+          >
+            {{ user.est_bloque ? 'Débloquer' : 'Bloquer' }}
+          </button>
         </div>
       </div>
     </div>
