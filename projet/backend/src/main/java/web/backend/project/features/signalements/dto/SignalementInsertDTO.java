@@ -14,9 +14,8 @@ public class SignalementInsertDTO {
     @Positive(message = "La surface doit être positive")
     private Double surface;
 
-    @NotNull(message = "Le budget est obligatoire")
     @Positive(message = "Le budget doit être positif")
-    private Integer budget;
+    private Float budget;
 
     @NotNull(message = "La localisation est obligatoire")
     private String localisation; // Format WKT (Well-Known Text) pour la géométrie
@@ -24,12 +23,14 @@ public class SignalementInsertDTO {
     @NotNull(message = "L'ID de l'utilisateur créateur est obligatoire")
     private Integer idUtilisateurCreateur;
 
-    @NotNull(message = "L'ID de l'entreprise est obligatoire")
     private Integer idEntreprise;
+
+    private Integer niveaux;
 
     private Boolean synchro = false;
 
-    // Nouveau statut (optionnel, utilisé lors de la mise à jour pour changer le statut)
+    // Nouveau statut (optionnel, utilisé lors de la mise à jour pour changer le
+    // statut)
     private Integer idNouveauStatut;
 
     // Date de modification du statut (optionnel, par défaut la date actuelle)
@@ -39,15 +40,16 @@ public class SignalementInsertDTO {
     public SignalementInsertDTO() {
     }
 
-    public SignalementInsertDTO(String dateCreation, Double surface, Integer budget,
+    public SignalementInsertDTO(String dateCreation, Double surface, Float budget,
             String localisation, Integer idUtilisateurCreateur,
-            Integer idEntreprise, Boolean synchro) {
+            Integer idEntreprise, Integer niveaux, Boolean synchro) {
         this.dateCreation = dateCreation;
         this.surface = surface;
         this.budget = budget;
         this.localisation = localisation;
         this.idUtilisateurCreateur = idUtilisateurCreateur;
         this.idEntreprise = idEntreprise;
+        this.niveaux = niveaux;
         this.synchro = synchro;
     }
 
@@ -68,11 +70,11 @@ public class SignalementInsertDTO {
         this.surface = surface;
     }
 
-    public Integer getBudget() {
+    public Float getBudget() {
         return budget;
     }
 
-    public void setBudget(Integer budget) {
+    public void setBudget(Float budget) {
         this.budget = budget;
     }
 
@@ -98,6 +100,14 @@ public class SignalementInsertDTO {
 
     public void setIdEntreprise(Integer idEntreprise) {
         this.idEntreprise = idEntreprise;
+    }
+
+    public Integer getNiveaux() {
+        return niveaux;
+    }
+
+    public void setNiveaux(Integer niveaux) {
+        this.niveaux = niveaux;
     }
 
     public Boolean getSynchro() {

@@ -21,7 +21,6 @@ public class SignalementController {
     @Autowired
     private SignalementService signalementService;
 
-
     /**
      * CREATE - Créer un nouveau signalement
      * POST /api/signalements
@@ -117,7 +116,7 @@ public class SignalementController {
      */
     @GetMapping("/budget/min/{budgetMin}")
     public ResponseEntity<List<SignalementResponseDTO>> getSignalementsByBudgetMin(
-            @PathVariable Integer budgetMin) {
+            @PathVariable Float budgetMin) {
         List<SignalementResponseDTO> signalements = signalementService.getSignalementsByBudgetMin(budgetMin);
         return ResponseEntity.ok(signalements);
     }
@@ -139,8 +138,8 @@ public class SignalementController {
      */
     @GetMapping("/budget/range")
     public ResponseEntity<List<SignalementResponseDTO>> getSignalementsByBudgetRange(
-            @RequestParam Integer min,
-            @RequestParam Integer max) {
+            @RequestParam Float min,
+            @RequestParam Float max) {
         List<SignalementResponseDTO> signalements = signalementService.getSignalementsByBudgetRange(min, max);
         return ResponseEntity.ok(signalements);
     }

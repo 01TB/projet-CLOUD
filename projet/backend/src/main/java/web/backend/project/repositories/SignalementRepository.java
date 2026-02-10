@@ -12,31 +12,31 @@ import java.util.List;
 @Repository
 public interface SignalementRepository extends JpaRepository<Signalement, Integer> {
 
-    // Recherche par entreprise
-    List<Signalement> findByEntrepriseId(Integer entrepriseId);
+        // Recherche par entreprise
+        List<Signalement> findByEntrepriseId(Integer entrepriseId);
 
-    // Recherche par utilisateur créateur
-    List<Signalement> findByUtilisateurCreateurId(Integer utilisateurId);
+        // Recherche par utilisateur créateur
+        List<Signalement> findByUtilisateurCreateurId(Integer utilisateurId);
 
-    // Recherche par statut de synchronisation
-    List<Signalement> findBySynchro(Boolean synchro);
+        // Recherche par statut de synchronisation
+        List<Signalement> findBySynchro(Boolean synchro);
 
-    // Recherche par budget minimum
-    List<Signalement> findByBudgetGreaterThanEqual(Integer budgetMin);
+        // Recherche par budget minimum
+        List<Signalement> findByBudgetGreaterThanEqual(Float budgetMin);
 
-    // Recherche par surface minimum
-    List<Signalement> findBySurfaceGreaterThanEqual(Double surfaceMin);
+        // Recherche par surface minimum
+        List<Signalement> findBySurfaceGreaterThanEqual(Double surfaceMin);
 
-    // Recherche par entreprise et synchro
-    List<Signalement> findByEntrepriseIdAndSynchro(Integer entrepriseId, Boolean synchro);
+        // Recherche par entreprise et synchro
+        List<Signalement> findByEntrepriseIdAndSynchro(Integer entrepriseId, Boolean synchro);
 
-    // Recherche avec budget entre deux valeurs
-    @Query("SELECT s FROM Signalement s WHERE s.budget BETWEEN :minBudget AND :maxBudget")
-    List<Signalement> findByBudgetBetween(@Param("minBudget") Integer minBudget,
-            @Param("maxBudget") Integer maxBudget);
+        // Recherche avec budget entre deux valeurs
+        @Query("SELECT s FROM Signalement s WHERE s.budget BETWEEN :minBudget AND :maxBudget")
+        List<Signalement> findByBudgetBetween(@Param("minBudget") Float minBudget,
+                        @Param("maxBudget") Float maxBudget);
 
-    // Recherche avec surface entre deux valeurs
-    @Query("SELECT s FROM Signalement s WHERE s.surface BETWEEN :minSurface AND :maxSurface")
-    List<Signalement> findBySurfaceBetween(@Param("minSurface") Double minSurface,
-            @Param("maxSurface") Double maxSurface);
+        // Recherche avec surface entre deux valeurs
+        @Query("SELECT s FROM Signalement s WHERE s.surface BETWEEN :minSurface AND :maxSurface")
+        List<Signalement> findBySurfaceBetween(@Param("minSurface") Double minSurface,
+                        @Param("maxSurface") Double maxSurface);
 }

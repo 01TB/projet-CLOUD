@@ -21,7 +21,7 @@ public class SignalementDTO implements FirebaseSerializable {
     private Double surface;
 
     @JsonProperty("budget")
-    private Integer budget;
+    private Float budget;
 
     @JsonProperty("localisation")
     private String localisationWkt; // Format WKT pour la géométrie
@@ -34,6 +34,9 @@ public class SignalementDTO implements FirebaseSerializable {
 
     @JsonProperty("id_entreprise")
     private Integer entrepriseId;
+
+    @JsonProperty("niveaux")
+    private Integer niveaux;
 
     @JsonProperty("last_modified")
     private LocalDateTime lastModified;
@@ -50,11 +53,13 @@ public class SignalementDTO implements FirebaseSerializable {
         this.id = FirebaseSerializable.extractInteger(data, "id");
         this.dateCreation = FirebaseSerializable.extractString(data, "date_creation");
         this.surface = FirebaseSerializable.extractDouble(data, "surface");
-        this.budget = FirebaseSerializable.extractInteger(data, "budget");
+        Double budgetVal = FirebaseSerializable.extractDouble(data, "budget");
+        this.budget = budgetVal != null ? budgetVal.floatValue() : null;
         this.localisationWkt = extractGeoPointToWkt(data, "localisation");
         this.synchro = FirebaseSerializable.extractBoolean(data, "synchro");
         this.utilisateurCreateurId = FirebaseSerializable.extractInteger(data, "id_utilisateur_createur");
         this.entrepriseId = FirebaseSerializable.extractInteger(data, "id_entreprise");
+        this.niveaux = FirebaseSerializable.extractInteger(data, "niveaux");
         this.lastModified = FirebaseSerializable.extractLocalDateTime(data, "last_modified");
         return this;
     }
@@ -71,6 +76,7 @@ public class SignalementDTO implements FirebaseSerializable {
         map.put("synchro", true);
         map.put("id_utilisateur_createur", utilisateurCreateurId);
         map.put("id_entreprise", entrepriseId);
+        map.put("niveaux", niveaux);
         map.put("last_modified", lastModified != null ? lastModified.toString() : null);
         return map;
     }
@@ -215,11 +221,11 @@ public class SignalementDTO implements FirebaseSerializable {
         this.surface = surface;
     }
 
-    public Integer getBudget() {
+    public Float getBudget() {
         return budget;
     }
 
-    public void setBudget(Integer budget) {
+    public void setBudget(Float budget) {
         this.budget = budget;
     }
 
@@ -255,6 +261,14 @@ public class SignalementDTO implements FirebaseSerializable {
 
     public void setEntrepriseId(Integer entrepriseId) {
         this.entrepriseId = entrepriseId;
+    }
+
+    public Integer getNiveaux() {
+        return niveaux;
+    }
+
+    public void setNiveaux(Integer niveaux) {
+        this.niveaux = niveaux;
     }
 
     @Override

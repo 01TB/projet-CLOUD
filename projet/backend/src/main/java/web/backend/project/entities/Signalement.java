@@ -25,7 +25,7 @@ public class Signalement implements SyncableEntity<SignalementDTO> {
     private Double surface;
 
     @Column(name = "budget", nullable = false)
-    private Integer budget;
+    private Float budget = 0f;
 
     @Column(name = "localisation", nullable = false, columnDefinition = "geography")
     private Geometry localisation;
@@ -33,12 +33,15 @@ public class Signalement implements SyncableEntity<SignalementDTO> {
     @Column(name = "synchro", nullable = false)
     private Boolean synchro;
 
+    @Column(name = "niveaux")
+    private Integer niveaux;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_utilisateur_createur", nullable = false)
     private Utilisateur utilisateurCreateur;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_entreprise", nullable = false)
+    @JoinColumn(name = "id_entreprise")
     private Entreprise entreprise;
 
     @OneToMany(mappedBy = "signalement", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -51,16 +54,17 @@ public class Signalement implements SyncableEntity<SignalementDTO> {
     public Signalement() {
     }
 
-    public Signalement(String dateCreation, Double surface, Integer budget,
+    public Signalement(String dateCreation, Double surface, Float budget,
             Geometry localisation, Boolean synchro,
-            Utilisateur utilisateurCreateur, Entreprise entreprise) {
+            Utilisateur utilisateurCreateur, Entreprise entreprise, Integer niveaux) {
         this.dateCreation = dateCreation;
         this.surface = surface;
-        this.budget = budget;
+        this.budget = budget != null ? budget : 0f;
         this.localisation = localisation;
         this.synchro = synchro;
         this.utilisateurCreateur = utilisateurCreateur;
         this.entreprise = entreprise;
+        this.niveaux = niveaux;
     }
 
     @Override
@@ -74,6 +78,7 @@ public class Signalement implements SyncableEntity<SignalementDTO> {
         s.setSynchro(this.synchro);
         s.setUtilisateurCreateurId(this.utilisateurCreateur != null ? this.utilisateurCreateur.getId() : null);
         s.setEntrepriseId(this.entreprise != null ? this.entreprise.getId() : null);
+        s.setNiveaux(this.niveaux);
         s.setLastModified(LocalDateTime.now());
         return s;
     }
@@ -85,8 +90,9 @@ public class Signalement implements SyncableEntity<SignalementDTO> {
 
         this.dateCreation = dto.getDateCreation();
         this.surface = dto.getSurface();
-        this.budget = dto.getBudget();
+        this.budget = dto.getBudget() != null ? dto.getBudget() : 0f;
         this.synchro = dto.getSynchro();
+        this.niveaux = dto.getNiveaux();
 
         // Conversion WKT → Geometry
         if (dto.getLocalisationWkt() != null) {
@@ -122,11 +128,11 @@ public class Signalement implements SyncableEntity<SignalementDTO> {
         this.surface = surface;
     }
 
-    public Integer getBudget() {
+    public Float getBudget() {
         return budget;
     }
 
-    public void setBudget(Integer budget) {
+    public void setBudget(Float budget) {
         this.budget = budget;
     }
 
@@ -160,6 +166,14 @@ public class Signalement implements SyncableEntity<SignalementDTO> {
 
     public void setEntreprise(Entreprise entreprise) {
         this.entreprise = entreprise;
+    }
+
+    public Integer getNiveaux() {
+        return niveaux;
+    }
+
+    public void setNiveaux(Integer niveaux) {
+        this.niveaux = niveaux;
     }
 
     public List<AvancementSignalement> getAvancements() {

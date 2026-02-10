@@ -7,13 +7,14 @@ public class SignalementResponseDTO {
     private Integer id;
     private String dateCreation;
     private Double surface;
-    private Integer budget;
+    private Float budget;
     private String localisation; // Format WKT
     private Boolean synchro;
     private Integer idUtilisateurCreateur;
     private String emailUtilisateurCreateur;
     private Integer idEntreprise;
     private String nomEntreprise;
+    private Integer niveaux;
     private List<AvancementResponseDTO> avancements; // Liste des avancements du signalement
     private List<SignalementPhotoResponseDTO> photos; // Liste des photos du signalement
 
@@ -22,9 +23,10 @@ public class SignalementResponseDTO {
     }
 
     public SignalementResponseDTO(Integer id, String dateCreation, Double surface,
-            Integer budget, String localisation, Boolean synchro,
+            Float budget, String localisation, Boolean synchro,
             Integer idUtilisateurCreateur, String emailUtilisateurCreateur,
-            Integer idEntreprise, String nomEntreprise, List<AvancementResponseDTO> avancements,
+            Integer idEntreprise, String nomEntreprise, Integer niveaux,
+            List<AvancementResponseDTO> avancements,
             List<SignalementPhotoResponseDTO> photos) {
         this.id = id;
         this.dateCreation = dateCreation;
@@ -36,6 +38,7 @@ public class SignalementResponseDTO {
         this.emailUtilisateurCreateur = emailUtilisateurCreateur;
         this.idEntreprise = idEntreprise;
         this.nomEntreprise = nomEntreprise;
+        this.niveaux = niveaux;
         this.avancements = avancements;
         this.photos = photos;
     }
@@ -65,11 +68,11 @@ public class SignalementResponseDTO {
         this.surface = surface;
     }
 
-    public Integer getBudget() {
+    public Float getBudget() {
         return budget;
     }
 
-    public void setBudget(Integer budget) {
+    public void setBudget(Float budget) {
         this.budget = budget;
     }
 
@@ -119,6 +122,14 @@ public class SignalementResponseDTO {
 
     public void setNomEntreprise(String nomEntreprise) {
         this.nomEntreprise = nomEntreprise;
+    }
+
+    public Integer getNiveaux() {
+        return niveaux;
+    }
+
+    public void setNiveaux(Integer niveaux) {
+        this.niveaux = niveaux;
     }
 
     public List<AvancementResponseDTO> getAvancements() {
