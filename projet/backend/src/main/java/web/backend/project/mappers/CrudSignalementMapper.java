@@ -42,10 +42,11 @@ public class CrudSignalementMapper {
         Signalement signalement = new Signalement();
         signalement.setDateCreation(dto.getDateCreation());
         signalement.setSurface(dto.getSurface());
-        signalement.setBudget(dto.getBudget());
+        signalement.setBudget(dto.getBudget() != null ? dto.getBudget() : 0f);
         signalement.setSynchro(dto.getSynchro() != null ? dto.getSynchro() : false);
         signalement.setUtilisateurCreateur(utilisateur);
-        signalement.setEntreprise(entreprise);
+        signalement.setEntreprise(entreprise); // peut être null
+        signalement.setNiveaux(dto.getNiveaux());
 
         // Conversion WKT vers Geometry
         try {
@@ -66,10 +67,11 @@ public class CrudSignalementMapper {
             Utilisateur utilisateur, Entreprise entreprise) {
         signalement.setDateCreation(dto.getDateCreation());
         signalement.setSurface(dto.getSurface());
-        signalement.setBudget(dto.getBudget());
+        signalement.setBudget(dto.getBudget() != null ? dto.getBudget() : signalement.getBudget());
         signalement.setSynchro(dto.getSynchro() != null ? dto.getSynchro() : signalement.getSynchro());
         signalement.setUtilisateurCreateur(utilisateur);
-        signalement.setEntreprise(entreprise);
+        signalement.setEntreprise(entreprise); // peut être null
+        signalement.setNiveaux(dto.getNiveaux() != null ? dto.getNiveaux() : signalement.getNiveaux());
 
         // Conversion WKT vers Geometry
         try {
@@ -91,6 +93,7 @@ public class CrudSignalementMapper {
         dto.setSurface(signalement.getSurface());
         dto.setBudget(signalement.getBudget());
         dto.setSynchro(signalement.getSynchro());
+        dto.setNiveaux(signalement.getNiveaux());
 
         // Conversion Geometry vers WKT
         if (signalement.getLocalisation() != null) {

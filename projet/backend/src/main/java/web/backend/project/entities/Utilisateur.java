@@ -1,6 +1,7 @@
 package web.backend.project.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.GenericGenerator;
 import web.backend.project.entities.dto.UtilisateurDTO;
 
 import java.util.Objects;
@@ -11,7 +12,8 @@ import java.util.Objects;
 })
 public class Utilisateur implements SyncableEntity<UtilisateurDTO> {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(generator = "use-existing-or-generate")
+    @GenericGenerator(name = "use-existing-or-generate", type = UseExistingOrGenerateId.class)
     @Column(name = "id")
     private Integer id;
 

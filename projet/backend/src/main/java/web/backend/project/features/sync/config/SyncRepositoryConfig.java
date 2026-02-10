@@ -141,7 +141,8 @@ public class SyncRepositoryConfig {
 								"UtilisateurCreateur id is required for Signalement but was null. " +
 										"Firebase data must include 'id_utilisateur_createur' field.");
 					}
-					// Résolution de la relation Entreprise (obligatoire)
+					// Résolution de la relation Entreprise (optionnelle - peut être null depuis
+					// Firebase)
 					if (dto.getEntrepriseId() != null) {
 						Entreprise entreprise = entrepriseRepository.findById(dto.getEntrepriseId())
 								.orElseThrow(() -> new RuntimeException(
@@ -149,9 +150,8 @@ public class SyncRepositoryConfig {
 												"Ensure 'entreprises' are synchronized before 'signalements'."));
 						entity.setEntreprise(entreprise);
 					} else {
-						throw new RuntimeException(
-								"Entreprise id is required for Signalement but was null. " +
-										"Firebase data must include 'id_entreprise' field.");
+						// Entreprise non affectée (nouveau signalement depuis Firebase)
+						entity.setEntreprise(null);
 					}
 				}));
 

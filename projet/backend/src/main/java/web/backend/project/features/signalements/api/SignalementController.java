@@ -1,6 +1,7 @@
 package web.backend.project.features.signalements.api;
 
 import jakarta.validation.Valid;
+import web.backend.project.entities.MvtPrixSignalement;
 import web.backend.project.features.signalements.dto.SignalementInsertDTO;
 import web.backend.project.features.signalements.dto.SignalementResponseDTO;
 import web.backend.project.features.signalements.services.SignalementService;
@@ -20,7 +21,6 @@ public class SignalementController {
 
     @Autowired
     private SignalementService signalementService;
-
 
     /**
      * CREATE - Créer un nouveau signalement
@@ -117,7 +117,7 @@ public class SignalementController {
      */
     @GetMapping("/budget/min/{budgetMin}")
     public ResponseEntity<List<SignalementResponseDTO>> getSignalementsByBudgetMin(
-            @PathVariable Integer budgetMin) {
+            @PathVariable Float budgetMin) {
         List<SignalementResponseDTO> signalements = signalementService.getSignalementsByBudgetMin(budgetMin);
         return ResponseEntity.ok(signalements);
     }
@@ -139,8 +139,8 @@ public class SignalementController {
      */
     @GetMapping("/budget/range")
     public ResponseEntity<List<SignalementResponseDTO>> getSignalementsByBudgetRange(
-            @RequestParam Integer min,
-            @RequestParam Integer max) {
+            @RequestParam Float min,
+            @RequestParam Float max) {
         List<SignalementResponseDTO> signalements = signalementService.getSignalementsByBudgetRange(min, max);
         return ResponseEntity.ok(signalements);
     }
@@ -168,4 +168,12 @@ public class SignalementController {
         SignalementResponseDTO updated = signalementService.updateSynchroStatus(id, synchro);
         return ResponseEntity.ok(updated);
     }
+
+    @PostMapping("/prix")
+    public ResponseEntity<MvtPrixSignalement> addMvtPrixToSignalement(
+            @RequestBody Double montant) {
+        MvtPrixSignalement updated = signalementService.addMvtPrix(montant);
+        return ResponseEntity.ok(updated);
+    }
+
 }

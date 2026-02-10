@@ -95,11 +95,14 @@ export const getSignalements = functions.https.onRequest(async (req, res) => {
           }),
         );
 
-        const entrepriseSnapshot = await db
+        let entrepriseSnapshot = null;
+        if(data.id_entreprise != null) {
+          entrepriseSnapshot = await db
           .collection("entreprises")
           .where("id", "==", data.id_entreprise)
           .limit(1)
           .get();
+        }
 
         const photosSnapshot = await db
           .collection("signalements_photos")
@@ -121,7 +124,7 @@ export const getSignalements = functions.https.onRequest(async (req, res) => {
           id: doc.id,
           description: data.description || "",
           surface: data.surface,
-          budget: data.budget,
+          budget: data?.budget,
           adresse: data.adresse || "",
           localisation: {
             type: "Point",
@@ -130,8 +133,8 @@ export const getSignalements = functions.https.onRequest(async (req, res) => {
               data.localisation.latitude,
             ],
           },
-          id_entreprise: data.id_entreprise,
-          nom_entreprise: entrepriseSnapshot.docs[0].data().nom || "",
+          id_entreprise: data?.id_entreprise || null,
+          nom_entreprise: entrepriseSnapshot ? entrepriseSnapshot.docs[0].data().nom || "" : "",
           date_creation: data.date_creation,
           date_modification:
             data.date_modification ||
@@ -285,7 +288,7 @@ export const createSignalement = functions.https.onRequest(async (req, res) => {
       id: signalementNumericId,
       description: description || "",
       surface,
-      budget: null,
+      budget: 0, // Valeur par défaut
       adresse: adresse || "",
       localisation: new admin.firestore.GeoPoint(
         localisation.coordinates[1], // latitude
@@ -328,6 +331,7 @@ export const createSignalement = functions.https.onRequest(async (req, res) => {
           id: signalementNumericId,
           description: signalementData.description,
           surface: signalementData.surface,
+          budget: signalementData.budget,
           adresse: signalementData.adresse,
           localisation: {
             type: "Point",
@@ -442,11 +446,14 @@ export const getSignalement = functions.https.onRequest(async (req, res) => {
       }),
     );
 
-    const entrepriseSnapshot = await db
-          .collection("entreprises")
-          .where("id", "==", data.id_entreprise)
-          .limit(1)
-          .get();
+    let entrepriseSnapshot = null;
+      if(data.id_entreprise != null) {
+        entrepriseSnapshot = await db
+        .collection("entreprises")
+        .where("id", "==", data.id_entreprise)
+        .limit(1)
+        .get();
+      }
 
     const photosSnapshot = await db
       .collection("signalements_photos")
@@ -479,7 +486,7 @@ export const getSignalement = functions.https.onRequest(async (req, res) => {
           ],
         },
         id_entreprise: data.id_entreprise,
-        entreprise: entrepriseSnapshot.docs[0].data().nom || "",
+        entreprise: entrepriseSnapshot ? entrepriseSnapshot.docs[0].data().nom || "" : "",
         date_creation: data?.date_creation,
         date_modification:
           data?.date_modification ||
