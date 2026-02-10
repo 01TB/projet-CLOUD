@@ -74,13 +74,18 @@ public class SignalementPhotoController {
      * 
      * Usage Angular : <img [src]="'http://localhost:8080/images/' + imageName">
      */
-    @GetMapping("/images/{fileName:.+}")
+    @GetMapping("/api/images/{fileName:.+}")
     public ResponseEntity<Resource> serveImage(@PathVariable String fileName) {
         try {
-            Path filePath = Paths.get(imagesDirPath).toAbsolutePath().resolve(fileName).normalize();
+            Path baseDir = Paths.get(imagesDirPath).toAbsolutePath().normalize();
+            Path filePath = baseDir.resolve(fileName).normalize();
+            
+            logger.info("Recherche image - Répertoire de base: {}", baseDir);
+            logger.info("Recherche image - Chemin complet: {}", filePath);
+            logger.info("Recherche image - Fichier existe: {}", Files.exists(filePath));
 
             // Sécurité : vérifier que le fichier est bien dans le répertoire autorisé
-            if (!filePath.startsWith(Paths.get(imagesDirPath).toAbsolutePath())) {
+            if (!filePath.startsWith(baseDir)) {
                 logger.warn("Tentative d'accès à un fichier hors du répertoire d'images : {}", fileName);
                 return ResponseEntity.badRequest().build();
             }
@@ -88,7 +93,8 @@ public class SignalementPhotoController {
             Resource resource = new UrlResource(filePath.toUri());
 
             if (!resource.exists() || !resource.isReadable()) {
-                logger.warn("Image non trouvée : {}", fileName);
+                logger.warn("Image non trouvée - Chemin: {} - Existe: {} - Lisible: {}", 
+                    filePath, resource.exists(), resource.isReadable());
                 return ResponseEntity.notFound().build();
             }
 

@@ -12,6 +12,9 @@ RUN mvn dependency:resolve -B -q
 # Copier le code source
 COPY src ./src
 
+# Créer le répertoire pour les uploads (point de montage pour le volume)
+RUN mkdir -p /app/uploads/images
+
 # Exposer les ports
 EXPOSE 8080
 EXPOSE 35729
