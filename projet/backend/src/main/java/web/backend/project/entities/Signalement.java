@@ -25,7 +25,7 @@ public class Signalement implements SyncableEntity<SignalementDTO> {
     private Double surface;
 
     @Column(name = "budget", nullable = false)
-    private Integer budget;
+    private Float budget;
 
     @Column(name = "localisation", nullable = false, columnDefinition = "geography")
     private Geometry localisation;
@@ -41,6 +41,10 @@ public class Signalement implements SyncableEntity<SignalementDTO> {
     @JoinColumn(name = "id_entreprise", nullable = false)
     private Entreprise entreprise;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_niveaux", nullable = false)
+    private SignalementNiveaux niveaux;
+
     @OneToMany(mappedBy = "signalement", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AvancementSignalement> avancements = new ArrayList<>();
 
@@ -51,7 +55,7 @@ public class Signalement implements SyncableEntity<SignalementDTO> {
     public Signalement() {
     }
 
-    public Signalement(String dateCreation, Double surface, Integer budget,
+    public Signalement(String dateCreation, Double surface, Float budget,
             Geometry localisation, Boolean synchro,
             Utilisateur utilisateurCreateur, Entreprise entreprise) {
         this.dateCreation = dateCreation;
@@ -74,6 +78,7 @@ public class Signalement implements SyncableEntity<SignalementDTO> {
         s.setSynchro(this.synchro);
         s.setUtilisateurCreateurId(this.utilisateurCreateur != null ? this.utilisateurCreateur.getId() : null);
         s.setEntrepriseId(this.entreprise != null ? this.entreprise.getId() : null);
+        s.setIdNiveaux(this.niveaux != null ? this.niveaux.getId() : null);
         s.setLastModified(LocalDateTime.now());
         return s;
     }
@@ -122,11 +127,11 @@ public class Signalement implements SyncableEntity<SignalementDTO> {
         this.surface = surface;
     }
 
-    public Integer getBudget() {
+    public Float getBudget() {
         return budget;
     }
 
-    public void setBudget(Integer budget) {
+    public void setBudget(Float budget) {
         this.budget = budget;
     }
 
@@ -160,6 +165,14 @@ public class Signalement implements SyncableEntity<SignalementDTO> {
 
     public void setEntreprise(Entreprise entreprise) {
         this.entreprise = entreprise;
+    }
+
+    public SignalementNiveaux getNiveaux() {
+        return niveaux;
+    }
+
+    public void setNiveaux(SignalementNiveaux niveaux) {
+        this.niveaux = niveaux;
     }
 
     public List<AvancementSignalement> getAvancements() {

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import web.backend.project.entities.AvancementSignalement;
 import web.backend.project.entities.Entreprise;
 import web.backend.project.entities.Signalement;
+import web.backend.project.entities.SignalementNiveaux;
 import web.backend.project.entities.SignalementPhoto;
 import web.backend.project.entities.Utilisateur;
 import web.backend.project.features.signalements.dto.SignalementInsertDTO;
@@ -38,7 +39,8 @@ public class CrudSignalementMapper {
     /**
      * Convertit un SignalementDTO en entité Signalement
      */
-    public Signalement toEntity(SignalementInsertDTO dto, Utilisateur utilisateur, Entreprise entreprise) {
+    public Signalement toEntity(SignalementInsertDTO dto, Utilisateur utilisateur, Entreprise entreprise,
+            SignalementNiveaux niveaux) {
         Signalement signalement = new Signalement();
         signalement.setDateCreation(dto.getDateCreation());
         signalement.setSurface(dto.getSurface());
@@ -46,6 +48,7 @@ public class CrudSignalementMapper {
         signalement.setSynchro(dto.getSynchro() != null ? dto.getSynchro() : false);
         signalement.setUtilisateurCreateur(utilisateur);
         signalement.setEntreprise(entreprise);
+        signalement.setNiveaux(niveaux);
 
         // Conversion WKT vers Geometry
         try {
@@ -63,13 +66,14 @@ public class CrudSignalementMapper {
      * Met à jour une entité Signalement existante avec les données du DTO
      */
     public void updateEntity(Signalement signalement, SignalementInsertDTO dto,
-            Utilisateur utilisateur, Entreprise entreprise) {
+            Utilisateur utilisateur, Entreprise entreprise, SignalementNiveaux niveaux) {
         signalement.setDateCreation(dto.getDateCreation());
         signalement.setSurface(dto.getSurface());
         signalement.setBudget(dto.getBudget());
         signalement.setSynchro(dto.getSynchro() != null ? dto.getSynchro() : signalement.getSynchro());
         signalement.setUtilisateurCreateur(utilisateur);
         signalement.setEntreprise(entreprise);
+        signalement.setNiveaux(niveaux);
 
         // Conversion WKT vers Geometry
         try {
@@ -107,6 +111,13 @@ public class CrudSignalementMapper {
         if (signalement.getEntreprise() != null) {
             dto.setIdEntreprise(signalement.getEntreprise().getId());
             dto.setNomEntreprise(signalement.getEntreprise().getNom());
+        }
+
+        // Informations niveaux
+        if (signalement.getNiveaux() != null) {
+            dto.setIdNiveaux(signalement.getNiveaux().getId());
+            dto.setLibelleNiveaux(signalement.getNiveaux().getLibelles());
+            dto.setPrixM2Niveaux(signalement.getNiveaux().getPrixM2());
         }
 
         // Récupérer et convertir les avancements

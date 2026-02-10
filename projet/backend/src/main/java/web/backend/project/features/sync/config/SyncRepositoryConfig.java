@@ -6,6 +6,7 @@ import web.backend.project.entities.Entreprise;
 import web.backend.project.entities.Parametre;
 import web.backend.project.entities.Role;
 import web.backend.project.entities.Signalement;
+import web.backend.project.entities.SignalementNiveaux;
 import web.backend.project.entities.StatutAvancement;
 import web.backend.project.entities.Utilisateur;
 import web.backend.project.entities.UtilisateurBloque;
@@ -15,6 +16,7 @@ import web.backend.project.entities.dto.ParametreDTO;
 import web.backend.project.entities.dto.RoleDTO;
 import web.backend.project.entities.SignalementPhoto;
 import web.backend.project.entities.dto.SignalementDTO;
+import web.backend.project.entities.dto.SignalementNiveauxDTO;
 import web.backend.project.entities.dto.SignalementPhotoDTO;
 import web.backend.project.entities.dto.StatutAvancementDTO;
 import web.backend.project.entities.dto.UtilisateurBloqueDTO;
@@ -29,6 +31,7 @@ import web.backend.project.repositories.ParametreRepository;
 import web.backend.project.repositories.RoleRepository;
 import web.backend.project.repositories.SignalementPhotoRepo;
 import web.backend.project.repositories.SignalementRepository;
+import web.backend.project.repositories.SignalisationNiveauxRepo;
 import web.backend.project.repositories.StatutAvancementRepo;
 import web.backend.project.repositories.UtilisateurBloqueRepo;
 import web.backend.project.repositories.UtilisateurRepository;
@@ -78,6 +81,9 @@ public class SyncRepositoryConfig {
 	private SignalementPhotoRepo signalementPhotoRepo;
 
 	@Autowired
+	private SignalisationNiveauxRepo signalisationNiveauxRepo;
+
+	@Autowired
 	private ParametreRepository parametreRepository;
 
 	@Autowired
@@ -103,6 +109,7 @@ public class SyncRepositoryConfig {
 		syncService.registerRepository("parametres", parametreRepository);
 
 		syncService.registerRepository("signalements_photos", signalementPhotoRepo);
+		syncService.registerRepository("signalements_niveaux", signalisationNiveauxRepo);
 
 		// ========== Enregistrement dans le nouveau registre générique ==========
 		registerEntityHandlers();
@@ -152,6 +159,17 @@ public class SyncRepositoryConfig {
 						throw new RuntimeException(
 								"Entreprise id is required for Signalement but was null. " +
 										"Firebase data must include 'id_entreprise' field.");
+					} // Résolution de la relation SignalementNiveaux (obligatoire)
+					if (dto.getIdNiveaux() != null) {
+						SignalementNiveaux niveaux = signalisationNiveauxRepo.findById(dto.getIdNiveaux())
+								.orElseThrow(() -> new RuntimeException(
+										"SignalementNiveaux with id " + dto.getIdNiveaux() + " not found. " +
+												"Ensure 'signalements_niveaux' are synchronized before 'signalements'."));
+						entity.setNiveaux(niveaux);
+					} else {
+						throw new RuntimeException(
+								"SignalementNiveaux id is required for Signalement but was null. " +
+										"Firebase data must include 'id_niveaux' field.");
 					}
 				}));
 
@@ -299,6 +317,13 @@ public class SyncRepositoryConfig {
 				"entreprises", entrepriseRepository,
 				Entreprise::new,
 				EntrepriseDTO::new));
+
+		// Handler pour SignalementNiveaux (pas de relations)
+		syncRegistry.register(new EntityTypeHandler<>(
+				"signalements_niveaux",
+				signalisationNiveauxRepo,
+				SignalementNiveaux::new,
+				SignalementNiveauxDTO::new));
 
 		syncRegistry.register(new EntityTypeHandler<>(
 				"parametres", parametreRepository,

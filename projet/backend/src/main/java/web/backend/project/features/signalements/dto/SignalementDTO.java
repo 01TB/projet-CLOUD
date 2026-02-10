@@ -27,9 +27,13 @@ public class SignalementDTO {
     @NotNull(message = "L'ID de l'entreprise est obligatoire")
     private Integer idEntreprise;
 
+    @NotNull(message = "L'ID de niveaux est obligatoire")
+    private Integer idNiveaux;
+
     private Boolean synchro = false;
 
-    // Nouveau statut (optionnel, utilisé lors de la mise à jour pour changer le statut)
+    // Nouveau statut (optionnel, utilisé lors de la mise à jour pour changer le
+    // statut)
     private Integer idNouveauStatut;
 
     // Constructeurs
@@ -38,13 +42,14 @@ public class SignalementDTO {
 
     public SignalementDTO(String dateCreation, Double surface, Integer budget,
             String localisation, Integer idUtilisateurCreateur,
-            Integer idEntreprise, Boolean synchro) {
+            Integer idEntreprise, Integer idNiveaux, Boolean synchro) {
         this.dateCreation = dateCreation;
         this.surface = surface;
         this.budget = budget;
         this.localisation = localisation;
         this.idUtilisateurCreateur = idUtilisateurCreateur;
         this.idEntreprise = idEntreprise;
+        this.idNiveaux = idNiveaux;
         this.synchro = synchro;
     }
 
@@ -111,5 +116,13 @@ public class SignalementDTO {
 
     public void setIdNouveauStatut(Integer idNouveauStatut) {
         this.idNouveauStatut = idNouveauStatut;
+    }
+
+    public Integer getIdNiveaux() {
+        return idNiveaux;
+    }
+
+    public void setIdNiveaux(Integer idNiveaux) {
+        this.idNiveaux = idNiveaux;
     }
 }

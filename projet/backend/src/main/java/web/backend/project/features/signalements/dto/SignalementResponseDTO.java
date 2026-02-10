@@ -7,13 +7,16 @@ public class SignalementResponseDTO {
     private Integer id;
     private String dateCreation;
     private Double surface;
-    private Integer budget;
+    private Float budget;
     private String localisation; // Format WKT
     private Boolean synchro;
     private Integer idUtilisateurCreateur;
     private String emailUtilisateurCreateur;
     private Integer idEntreprise;
     private String nomEntreprise;
+    private Integer idNiveaux;
+    private String libelleNiveaux;
+    private Float prixM2Niveaux;
     private List<AvancementResponseDTO> avancements; // Liste des avancements du signalement
     private List<SignalementPhotoResponseDTO> photos; // Liste des photos du signalement
 
@@ -22,9 +25,11 @@ public class SignalementResponseDTO {
     }
 
     public SignalementResponseDTO(Integer id, String dateCreation, Double surface,
-            Integer budget, String localisation, Boolean synchro,
+            Float budget, String localisation, Boolean synchro,
             Integer idUtilisateurCreateur, String emailUtilisateurCreateur,
-            Integer idEntreprise, String nomEntreprise, List<AvancementResponseDTO> avancements,
+            Integer idEntreprise, String nomEntreprise,
+            Integer idNiveaux, String libelleNiveaux, Float prixM2Niveaux,
+            List<AvancementResponseDTO> avancements,
             List<SignalementPhotoResponseDTO> photos) {
         this.id = id;
         this.dateCreation = dateCreation;
@@ -36,6 +41,9 @@ public class SignalementResponseDTO {
         this.emailUtilisateurCreateur = emailUtilisateurCreateur;
         this.idEntreprise = idEntreprise;
         this.nomEntreprise = nomEntreprise;
+        this.idNiveaux = idNiveaux;
+        this.libelleNiveaux = libelleNiveaux;
+        this.prixM2Niveaux = prixM2Niveaux;
         this.avancements = avancements;
         this.photos = photos;
     }
@@ -65,11 +73,11 @@ public class SignalementResponseDTO {
         this.surface = surface;
     }
 
-    public Integer getBudget() {
+    public Float getBudget() {
         return budget;
     }
 
-    public void setBudget(Integer budget) {
+    public void setBudget(Float budget) {
         this.budget = budget;
     }
 
@@ -119,6 +127,30 @@ public class SignalementResponseDTO {
 
     public void setNomEntreprise(String nomEntreprise) {
         this.nomEntreprise = nomEntreprise;
+    }
+
+    public Integer getIdNiveaux() {
+        return idNiveaux;
+    }
+
+    public void setIdNiveaux(Integer idNiveaux) {
+        this.idNiveaux = idNiveaux;
+    }
+
+    public String getLibelleNiveaux() {
+        return libelleNiveaux;
+    }
+
+    public void setLibelleNiveaux(String libelleNiveaux) {
+        this.libelleNiveaux = libelleNiveaux;
+    }
+
+    public Float getPrixM2Niveaux() {
+        return prixM2Niveaux;
+    }
+
+    public void setPrixM2Niveaux(Float prixM2Niveaux) {
+        this.prixM2Niveaux = prixM2Niveaux;
     }
 
     public List<AvancementResponseDTO> getAvancements() {

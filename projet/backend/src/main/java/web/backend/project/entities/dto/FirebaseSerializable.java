@@ -75,6 +75,22 @@ public interface FirebaseSerializable {
         return null;
     }
 
+    static Float extractFloat(Map<String, Object> data, String key) {
+        Object value = data.get(key);
+        if (value == null)
+            return null;
+        if (value instanceof Number)
+            return ((Number) value).floatValue();
+        if (value instanceof String) {
+            try {
+                return Float.parseFloat((String) value);
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+        return null;
+    }
+
     static Boolean extractBoolean(Map<String, Object> data, String key) {
         Object value = data.get(key);
         if (value == null)

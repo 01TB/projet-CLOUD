@@ -21,7 +21,6 @@ public class SignalementController {
     @Autowired
     private SignalementService signalementService;
 
-
     /**
      * CREATE - Créer un nouveau signalement
      * POST /api/signalements
@@ -117,7 +116,7 @@ public class SignalementController {
      */
     @GetMapping("/budget/min/{budgetMin}")
     public ResponseEntity<List<SignalementResponseDTO>> getSignalementsByBudgetMin(
-            @PathVariable Integer budgetMin) {
+            @PathVariable Float budgetMin) {
         List<SignalementResponseDTO> signalements = signalementService.getSignalementsByBudgetMin(budgetMin);
         return ResponseEntity.ok(signalements);
     }
@@ -139,8 +138,8 @@ public class SignalementController {
      */
     @GetMapping("/budget/range")
     public ResponseEntity<List<SignalementResponseDTO>> getSignalementsByBudgetRange(
-            @RequestParam Integer min,
-            @RequestParam Integer max) {
+            @RequestParam Float min,
+            @RequestParam Float max) {
         List<SignalementResponseDTO> signalements = signalementService.getSignalementsByBudgetRange(min, max);
         return ResponseEntity.ok(signalements);
     }
@@ -167,5 +166,23 @@ public class SignalementController {
             @RequestParam Boolean synchro) {
         SignalementResponseDTO updated = signalementService.updateSynchroStatus(id, synchro);
         return ResponseEntity.ok(updated);
+    }
+
+    /**
+     * UPDATE - Mettre à jour le prix au m² d'un niveau et recalculer les budgets
+     * des signalements NOUVEAUX concernés
+     * PUT /api/signalements/niveaux/{niveauxId}/prix
+     */
+    @PutMapping("/niveaux/{niveauxId}/prix")
+    public ResponseEntity<Map<String, Object>> updateNiveauxPrix(
+            @PathVariable Integer niveauxId,
+            @RequestParam Float prixM2) {
+        web.backend.project.entities.SignalementNiveaux updatedNiveaux = signalementService
+                .updateNiveauxPrix(niveauxId, prixM2);
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Prix du niveau mis à jour et budgets recalculés pour les signalements NOUVEAUX");
+        response.put("niveauxId", updatedNiveaux.getId());
+        response.put("nouveauPrixM2", updatedNiveaux.getPrixM2());
+        return ResponseEntity.ok(response);
     }
 }
