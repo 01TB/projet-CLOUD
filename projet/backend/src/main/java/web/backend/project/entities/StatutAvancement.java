@@ -13,6 +13,7 @@ import java.util.Objects;
         @UniqueConstraint(columnNames = { "valeur" })
 })
 public class StatutAvancement implements SyncableEntity<StatutAvancementDTO> {
+    @SuppressWarnings("deprecation")
     @Id
     @GeneratedValue(generator = "use-existing-or-generate")
     @GenericGenerator(name = "use-existing-or-generate", type = UseExistingOrGenerateId.class)

@@ -15,6 +15,7 @@ import java.util.Objects;
 @Entity
 @Table(name = "signalements")
 public class Signalement implements SyncableEntity<SignalementDTO> {
+    @SuppressWarnings("deprecation")
     @Id
     @GeneratedValue(generator = "use-existing-or-generate")
     @GenericGenerator(name = "use-existing-or-generate", type = UseExistingOrGenerateId.class)

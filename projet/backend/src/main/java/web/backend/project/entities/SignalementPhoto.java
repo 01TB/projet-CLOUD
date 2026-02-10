@@ -10,6 +10,7 @@ import web.backend.project.entities.dto.SignalementPhotoDTO;
 @Entity
 @Table(name = "signalements_photos")
 public class SignalementPhoto implements SyncableEntity<SignalementPhotoDTO> {
+    @SuppressWarnings("deprecation")
     @Id
     @GeneratedValue(generator = "use-existing-or-generate")
     @GenericGenerator(name = "use-existing-or-generate", type = UseExistingOrGenerateId.class)

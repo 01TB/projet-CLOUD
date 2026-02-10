@@ -10,6 +10,7 @@ import web.backend.project.entities.dto.AvancementSignalementDTO;
 @Entity
 @Table(name = "avancements_signalement")
 public class AvancementSignalement implements SyncableEntity<AvancementSignalementDTO> {
+    @SuppressWarnings("deprecation")
     @Id
     @GeneratedValue(generator = "use-existing-or-generate")
     @GenericGenerator(name = "use-existing-or-generate", type = UseExistingOrGenerateId.class)

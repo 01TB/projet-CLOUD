@@ -11,6 +11,7 @@ import java.util.Objects;
         @UniqueConstraint(columnNames = { "email" })
 })
 public class Utilisateur implements SyncableEntity<UtilisateurDTO> {
+    @SuppressWarnings("deprecation")
     @Id
     @GeneratedValue(generator = "use-existing-or-generate")
     @GenericGenerator(name = "use-existing-or-generate", type = UseExistingOrGenerateId.class)

@@ -16,6 +16,7 @@ import web.backend.project.entities.dto.RoleDTO;
         @UniqueConstraint(columnNames = { "nom" })
 })
 public class Role implements SyncableEntity<RoleDTO> {
+    @SuppressWarnings("deprecation")
     @Id
     @GeneratedValue(generator = "use-existing-or-generate")
     @GenericGenerator(name = "use-existing-or-generate", type = UseExistingOrGenerateId.class)
