@@ -267,4 +267,11 @@ public class SignalementService {
 
 		return crudSignalementMapper.toResponseDTO(updatedSignalement);
 	}
+
+    public MvtPrixSignalement addMvtPrix(Double montant) {
+		MvtPrixSignalement mvtPrix = new MvtPrixSignalement();
+		mvtPrix.setDateCreation(LocalDateTime.now().toLocalDate());
+		mvtPrix.setMontant(montant);
+		return mvtPrixSignalementRepository.save(mvtPrix);
+	}
 }
