@@ -6,6 +6,11 @@
       <h2>🚧 Gestion des Signalements</h2>
       <p class="subtitle">Consulter et gérer les travaux signalés</p>
     </div>
+    <div class="header-right" *ngIf="isManager">
+      <button class="btn btn-primary" (click)="openPrixModal()">
+        💰 Définir le prix m² forfaitaire
+      </button>
+    </div>
   </div>
 
   <!-- Messages -->
@@ -73,7 +78,7 @@
       >
         <option value="">Tous les statuts</option>
         <option value="NOUVEAU">NOUVEAU</option>
-        <option value="EN COURS">EN COURS</option>
+        <option value="EN_COURS">EN_COURS</option>
         <option value="TERMINE">TERMINE</option>
       </select>
     </div>
@@ -213,6 +218,57 @@
         <div class="modal-actions">
           <button class="btn btn-secondary" (click)="closeDetailsModal()">
             Fermer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de configuration du prix m2 forfaitaire global -->
+  <div class="modal-overlay" *ngIf="showPrixModal" (click)="closePrixModal()">
+    <div class="modal-content modal-prix" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>💰 Définir le prix m² forfaitaire</h3>
+        <button class="modal-close" (click)="closePrixModal()">✖</button>
+      </div>
+      <div class="modal-body">
+        <div class="info-box">
+          <p class="info-text">
+            🏗️ Définissez le <strong>prix forfaitaire par mètre carré</strong> qui servira de référence
+            pour le calcul des budgets des travaux routiers.
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label for="prixM2">Prix forfaitaire par m² (MGA) <span class="required">*</span></label>
+          <input 
+            type="number" 
+            id="prixM2"
+            class="form-control" 
+            [(ngModel)]="prixM2ForfaitaireGlobal"
+            min="0"
+            step="1000"
+            placeholder="Ex: 25000"
+          />
+          <small class="hint">Montant en Ariary par mètre carré</small>
+        </div>
+
+        <div class="preview-box" *ngIf="prixM2ForfaitaireGlobal > 0">
+          <div class="preview-label">💰 Prix défini</div>
+          <div class="preview-value">
+            {{ formatPrixGlobal(prixM2ForfaitaireGlobal) }}
+          </div>
+          <small class="preview-detail">
+            Ce tarif sera utilisé comme référence pour les calculs budgétaires
+          </small>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-secondary" (click)="closePrixModal()">
+            Annuler
+          </button>
+          <button class="btn btn-primary" (click)="savePrixM2()">
+            💾 Enregistrer
           </button>
         </div>
       </div>

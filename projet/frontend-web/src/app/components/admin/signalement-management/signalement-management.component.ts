@@ -2,6 +2,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { SignalementService } from '../../../services/signalement.service';
+import { AuthService } from '../../../services/auth.service';
 import { Signalement, StatutAvancement } from '../../../models/signalement.model';
 
 @Component({
@@ -29,11 +30,18 @@ export class SignalementManagementComponent implements OnInit, OnDestroy {
   
   // Modals
   showDetailsModal = false;
+  showPrixModal = false;
   
   // Signalement sélectionné
   selectedSignalement: Signalement | null = null;
   selectedPhotoNames: string[] = [];
   imageBaseUrl = '/api/images/';
+  
+  // Prix forfaitaire global
+  prixM2ForfaitaireGlobal: number = 0;
+  
+  // Permissions
+  isManager = false;
   
   // État
   loading = false;
@@ -42,9 +50,13 @@ export class SignalementManagementComponent implements OnInit, OnDestroy {
   
   private subscriptions = new Subscription();
 
-  constructor(private signalementService: SignalementService) {}
+  constructor(
+    private signalementService: SignalementService,
+    private authService: AuthService
+  ) {}
 
   ngOnInit(): void {
+    this.isManager = this.authService.isManager();
     this.loadData();
   }
 
@@ -168,6 +180,36 @@ export class SignalementManagementComponent implements OnInit, OnDestroy {
 
   getDefaultPhoto(): string {
     return 'assets/img/login.png';
+  }
+
+  // Gestion du prix m2 forfaitaire global
+  openPrixModal(): void {
+    this.showPrixModal = true;
+  }
+
+  closePrixModal(): void {
+    this.showPrixModal = false;
+  }
+
+  savePrixM2(): void {
+    // Validation
+    if (this.prixM2ForfaitaireGlobal < 0) {
+      this.showError('Le prix doit être positif');
+      return;
+    }
+
+    if (this.prixM2ForfaitaireGlobal === 0) {
+      this.showError('Veuillez entrer un prix valide');
+      return;
+    }
+
+    // Sauvegarde statique du prix global (pas d'appel API pour l'instant)
+    this.showSuccess(`Prix m² forfaitaire global défini : ${this.formatPrixGlobal(this.prixM2ForfaitaireGlobal)}`);
+    this.closePrixModal();
+  }
+
+  formatPrixGlobal(prix: number): string {
+    return new Intl.NumberFormat('fr-FR').format(prix) + ' MGA/m²';
   }
 
   private showSuccess(message: string): void {

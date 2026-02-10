@@ -49,6 +49,7 @@ export interface Signalement {
   email_utilisateur_createur?: string;
   photos?: string[]; // URLs des photos - par défaut login.png
   avancements?: AvancementResponseDTO[]; // Liste des avancements pour calcul du statut à une date donnée
+  prixM2Forfaitaire?: number; // Prix forfaitaire par m² (MGA)
 }
 
 export interface StatistiquesRecap {
