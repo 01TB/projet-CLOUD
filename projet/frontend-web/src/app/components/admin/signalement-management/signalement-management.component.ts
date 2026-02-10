@@ -32,6 +32,8 @@ export class SignalementManagementComponent implements OnInit, OnDestroy {
   
   // Signalement sélectionné
   selectedSignalement: Signalement | null = null;
+  selectedPhotoNames: string[] = [];
+  imageBaseUrl = '/api/images/';
   
   // État
   loading = false;
@@ -105,11 +107,28 @@ export class SignalementManagementComponent implements OnInit, OnDestroy {
     this.selectedSignalement = signalement;
     this.showDetailsModal = true;
     this.clearMessages();
+    // Charger les photos du signalement
+    this.loadPhotos(signalement.id);
+  }
+
+  private loadPhotos(id: number): void {
+    const photoSub = this.signalementService.getSignalementPhotos(id).subscribe({
+      next: (photoNames) => {
+        this.selectedPhotoNames = photoNames;
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement des photos:', error);
+        this.selectedPhotoNames = [];
+      }
+    });
+
+    this.subscriptions.add(photoSub);
   }
 
   closeDetailsModal(): void {
     this.showDetailsModal = false;
     this.selectedSignalement = null;
+    this.selectedPhotoNames = [];
   }
 
   // Utilitaires

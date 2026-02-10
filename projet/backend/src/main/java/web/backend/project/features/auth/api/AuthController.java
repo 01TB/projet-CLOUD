@@ -20,7 +20,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public String login(@RequestBody LoginCredentialsDto credentials) {
-        // System.out.println("Login attempt for email: " + credentials.email());
+        System.out.println("Login attempt for email: " + credentials.email());
         return authService.login(credentials.email(), credentials.password());
     }
 

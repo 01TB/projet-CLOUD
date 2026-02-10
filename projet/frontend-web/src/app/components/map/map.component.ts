@@ -124,7 +124,8 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Calculer pourcentage moyen d'avancement en normalisant chaque statut
     const totalPct = this.filteredSignalements.reduce((acc, s) => {
-      const val = s.statut_actuel?.valeur ?? 0;
+      // Utiliser le statut affiché (calculé selon la date du filtre) au lieu du statut actuel
+      const val = this.getStatutAffiche(s)?.valeur ?? 0;
       const pct = maxStatVal > 0 ? (val / maxStatVal) * 100 : 0;
       return acc + pct;
     }, 0);
@@ -167,9 +168,10 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
     this.clearMarkers();
 
     this.filteredSignalements.forEach(signalement => {
+      const statutAffiche = this.getStatutAffiche(signalement);
       const marker = L.marker(
         [signalement.localisation.lat, signalement.localisation.lng],
-        { icon: this.getStatusIcon(signalement.statut_actuel.valeur) }
+        { icon: this.getStatusIcon(statutAffiche.valeur) }
       ).addTo(this.map);
 
       const popupContent = this.createPopupContent(signalement);
@@ -213,13 +215,14 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private createPopupContent(signalement: Signalement): string {
     const formatNumber = (num: number) => num.toLocaleString('fr-FR');
-    const statusBadgeClass = this.getStatusBadgeClass(signalement.statut_actuel.valeur);
+    const statutAffiche = this.getStatutAffiche(signalement);
+    const statusBadgeClass = this.getStatusBadgeClass(statutAffiche.valeur);
 
     return `
       <div class="signalement-popup">
         <div class="popup-header">
           <span class="popup-badge ${statusBadgeClass}">
-            ${signalement.statut_actuel.nom}
+            ${statutAffiche.nom}
           </span>
           <span class="popup-id">#${signalement.id}</span>
         </div>
@@ -331,7 +334,6 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
       // Appeler l'API pour mettre à jour le signalement
       this.signalementService.updateSignalement(this.selectedSignalement.id, dataToSend).subscribe({
         next: (updatedSignalement) => {
-          console.log('Signalement mis à jour avec succès:', updatedSignalement);
           
           // Afficher un message de confirmation
           if (this.editForm.idNouveauStatut && this.editForm.idNouveauStatut !== this.selectedSignalement?.statut_actuel.id) {
@@ -412,6 +414,15 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
         );
       }
     });
+  }
+
+  /**
+   * Retourne le statut à afficher pour un signalement
+   * Utilise statut_affiche si disponible (calculé par le filtre de date)
+   * Sinon utilise statut_actuel
+   */
+  getStatutAffiche(signalement: Signalement): StatutAvancement {
+    return signalement.statut_affiche || signalement.statut_actuel;
   }
 
   ngOnDestroy(): void {

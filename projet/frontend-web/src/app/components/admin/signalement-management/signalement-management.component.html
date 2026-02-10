@@ -122,10 +122,17 @@
             <button 
               class="action-btn btn-view" 
               (click)="openDetailsModal(signalement)"
-              title="Voir détails"
+              title="Voir détails rapide"
             >
               👁️
             </button>
+            <a 
+              [routerLink]="['/signalement', signalement.id]"
+              class="action-btn btn-detail"
+              title="Page de détail complète"
+            >
+              📄
+            </a>
           </td>
         </tr>
         <tr *ngIf="filteredSignalements.length === 0">
@@ -140,89 +147,65 @@
 
   <!-- Modal de détails -->
   <div class="modal-overlay" *ngIf="showDetailsModal" (click)="closeDetailsModal()">
-    <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+    <div class="modal-content modal-compact" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h3>👁️ Détails du signalement #{{ selectedSignalement?.id }}</h3>
-        <button class="modal-close" (click)="closeDetailsModal()">✖</button>
+        <h3>👁️ Signalement #{{ selectedSignalement?.id }}</h3>
+        <div class="modal-header-actions">
+          <a 
+            [routerLink]="['/signalement', selectedSignalement?.id]"
+            class="btn btn-link"
+            (click)="closeDetailsModal()"
+          >
+            📄 Voir détails complets
+          </a>
+          <button class="modal-close" (click)="closeDetailsModal()">✖</button>
+        </div>
       </div>
       <div class="modal-body" *ngIf="selectedSignalement">
-        <!-- Section Photos -->
-        <div class="details-section">
-          <h4>📷 Photos</h4>
-          <div class="photos-grid">
-            <div class="photo-item">
-              <img [src]="getDefaultPhoto()" alt="Photo du signalement" class="signalement-photo">
+        <div class="modal-grid">
+          <!-- Colonne gauche: Photos -->
+          <div class="modal-column">
+            <h4>📷 Photos ({{ selectedPhotoNames.length }})</h4>
+            <div class="photos-compact" *ngIf="selectedPhotoNames.length > 0">
+              <div class="photo-mini" *ngFor="let photoName of selectedPhotoNames">
+                <img [src]="imageBaseUrl + photoName" [alt]="photoName" class="photo-thumbnail">
+              </div>
+            </div>
+            <div class="no-photos-message" *ngIf="selectedPhotoNames.length === 0">
+              <p>📷 Aucune photo disponible</p>
             </div>
           </div>
-        </div>
 
-        <!-- Section Informations générales -->
-        <div class="details-section">
-          <h4>📋 Informations générales</h4>
-          <div class="details-grid">
-            <div class="detail-item">
-              <span class="detail-label">ID :</span>
-              <span class="detail-value">#{{ selectedSignalement.id }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Date de création :</span>
-              <span class="detail-value">{{ formatDate(selectedSignalement.date_creation) }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Entreprise :</span>
-              <span class="detail-value">
-                <span class="entreprise-icon">🏢</span>
-                {{ selectedSignalement.entreprise?.nom || 'Non assigné' }}
-              </span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Statut :</span>
-              <span class="detail-value">
+          <!-- Colonne droite: Informations -->
+          <div class="modal-column">
+            <h4>📋 Informations</h4>
+            <div class="info-compact">
+              <div class="info-line">
+                <span class="info-label">Date:</span>
+                <span class="info-value">{{ formatDate(selectedSignalement.date_creation) }}</span>
+              </div>
+              <div class="info-line">
+                <span class="info-label">Statut:</span>
                 <span class="badge" [ngClass]="getStatutBadgeClass(selectedSignalement.statut_actuel.nom)">
                   {{ getStatutIcon(selectedSignalement.statut_actuel.nom) }} {{ selectedSignalement.statut_actuel.nom }}
                 </span>
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Section Dimensions et Budget -->
-        <div class="details-section">
-          <h4>💰 Dimensions et Budget</h4>
-          <div class="details-grid">
-            <div class="detail-item">
-              <span class="detail-label">Surface :</span>
-              <span class="detail-value">{{ formatSurface(selectedSignalement.surface) }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Budget :</span>
-              <span class="detail-value budget-value">{{ formatBudget(selectedSignalement.budget) }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Section Localisation -->
-        <div class="details-section">
-          <h4>📍 Localisation</h4>
-          <div class="details-grid">
-            <div class="detail-item">
-              <span class="detail-label">Latitude :</span>
-              <span class="detail-value">{{ selectedSignalement.localisation.lat }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Longitude :</span>
-              <span class="detail-value">{{ selectedSignalement.localisation.lng }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Section Créateur -->
-        <div class="details-section">
-          <h4>👤 Créateur</h4>
-          <div class="details-grid">
-            <div class="detail-item">
-              <span class="detail-label">ID Utilisateur :</span>
-              <span class="detail-value">#{{ selectedSignalement.id_utilisateur_createur }}</span>
+              </div>
+              <div class="info-line">
+                <span class="info-label">Entreprise:</span>
+                <span class="info-value">🏭 {{ selectedSignalement.entreprise?.nom || 'Non assigné' }}</span>
+              </div>
+              <div class="info-line">
+                <span class="info-label">Surface:</span>
+                <span class="info-value">{{ formatSurface(selectedSignalement.surface) }}</span>
+              </div>
+              <div class="info-line">
+                <span class="info-label">Budget:</span>
+                <span class="info-value budget">{{ formatBudget(selectedSignalement.budget) }}</span>
+              </div>
+              <div class="info-line">
+                <span class="info-label">Position:</span>
+                <span class="info-value">{{ selectedSignalement.localisation.lat.toFixed(4) }}, {{ selectedSignalement.localisation.lng.toFixed(4) }}</span>
+              </div>
             </div>
           </div>
         </div>

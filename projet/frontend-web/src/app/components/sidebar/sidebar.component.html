@@ -39,26 +39,16 @@
 
   <!-- Filtre par date -->
   <div class="filter-section">
-    <h4>Période</h4>
-    <div class="date-range">
-      <div class="form-group">
-        <label>Date début</label>
-        <input 
-          type="date" 
-          class="form-control" 
-          [(ngModel)]="filters.dateDebut"
-          (change)="onFilterChange()"
-        />
-      </div>
-      <div class="form-group">
-        <label>Date fin</label>
-        <input 
-          type="date" 
-          class="form-control" 
-          [(ngModel)]="filters.dateFin"
-          (change)="onFilterChange()"
-        />
-      </div>
+    <h4>📅 Date de référence</h4>
+    <div class="form-group">
+      <label>Date</label>
+      <input 
+        type="date" 
+        class="form-control" 
+        [(ngModel)]="filters.date"
+        (change)="onFilterChange()"
+      />
+      <small class="help-text">Le <strong style="color: red;">statut des signalements</strong> sera calculé en fonction des avancements à cette date</small>
     </div>
   </div>
 

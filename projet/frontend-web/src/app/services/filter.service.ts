@@ -6,8 +6,7 @@ import { Signalement } from '../models/signalement.model';
 export interface SignalementFilters {
   statuts: number[];
   entreprises: number[];
-  dateDebut: string;
-  dateFin: string;
+  date: string; // Date unique pour filtrer les signalements par leur statut à cette date
   surfaceMin: number | null;
   surfaceMax: number | null;
   budgetMin: number | null;
@@ -21,8 +20,7 @@ export class FilterService {
   private filtersSubject = new BehaviorSubject<SignalementFilters>({
     statuts: [],
     entreprises: [],
-    dateDebut: '',
-    dateFin: '',
+    date: new Date().toISOString().split('T')[0], // Date d'aujourd'hui par défaut
     surfaceMin: null,
     surfaceMax: null,
     budgetMin: null,
@@ -32,28 +30,47 @@ export class FilterService {
   public filters$ = this.filtersSubject.asObservable();
 
   updateFilters(filters: SignalementFilters): void {
+    // console.log('UpdateFilters appelé avec:', filters);
+    // console.log('Statuts reçus:', filters.statuts, 'Type:', typeof filters.statuts, 'Length:', filters.statuts.length);
     this.filtersSubject.next(filters);
   }
 
   applyFilters(signalements: Signalement[], filters: SignalementFilters): Signalement[] {
-    return signalements.filter(signalement => {
-      // Filtre par statut
-      if (filters.statuts.length > 0 && !filters.statuts.includes(signalement.statut_actuel.id)) {
+    // D'abord, mettre à jour le statut_affiche de TOUS les signalements selon la date
+    signalements.forEach(signalement => {
+      signalement.statut_affiche = this.getStatutAtDate(signalement, filters.date);
+    });
+    
+    const filtered = signalements.filter(signalement => {
+      // Utiliser le statut déjà calculé
+      const statutALaDate = signalement.statut_affiche!;
+      
+      // Filtre par date : ne garder que les signalements créés avant ou à la date sélectionnée
+      const dateCreation = new Date(signalement.date_creation).getTime();
+      const dateFiltre = new Date(filters.date + 'T23:59:59').getTime();
+      if (dateCreation > dateFiltre) {
+        // Le signalement n'existe pas encore à cette date
         return false;
       }
+      
+      // console.log(`\n--- Traitement Signalement #${signalement.id} ---`);
+      // console.log('Statut à la date:', statutALaDate);
+      // console.log('filters.statuts.length:', filters.statuts.length);
+      
+      // Filtre par statut (basé sur le statut à la date sélectionnée)
+      // S'assurer que les IDs sont comparés en tant que nombres
+      if (filters.statuts.length > 0) {
+        const statutIdNumber = Number(statutALaDate.id);
+        const included = filters.statuts.includes(statutIdNumber);
+        // console.log('Filtre statut actif - ID:', statutIdNumber, 'dans', filters.statuts, '→', included);
+        if (!included) {
+          // console.log('❌ FILTRÉ : statut non inclus');
+          return false;
+        }
+      } 
 
       // Filtre par entreprise
       if (filters.entreprises.length > 0 && !filters.entreprises.includes(signalement.entreprise.id)) {
-        return false;
-      }
-
-      // Filtre par date début
-      if (filters.dateDebut && signalement.date_creation < filters.dateDebut) {
-        return false;
-      }
-
-      // Filtre par date fin
-      if (filters.dateFin && signalement.date_creation > filters.dateFin) {
         return false;
       }
 
@@ -79,5 +96,47 @@ export class FilterService {
 
       return true;
     });
+    
+    return filtered;
+  }
+
+  /**
+   * Récupère le statut d'un signalement à une date donnée
+   * en prenant le dernier avancement avant ou égal à cette date
+   */
+  private getStatutAtDate(signalement: Signalement, dateStr: string): any {
+    if (!signalement.avancements || signalement.avancements.length === 0) {
+      // Si pas d'avancements, retourner le statut actuel
+      return signalement.statut_actuel;
+    }
+
+    // Convertir la date de filtre en timestamp pour comparaison
+    const dateFiltre = new Date(dateStr + 'T23:59:59').getTime();
+
+    // Trouver le dernier avancement avant ou égal à la date sélectionnée
+    // Les avancements sont triés par date décroissante depuis le backend
+    let dernierAvancement = null;
+    for (const avancement of signalement.avancements) {
+      const dateAvancement = new Date(avancement.dateModification).getTime();
+      if (dateAvancement <= dateFiltre) {
+        dernierAvancement = avancement;
+        break;
+      }
+    }
+
+    // Si aucun avancement trouvé avant cette date, utiliser le statut par défaut
+    if (!dernierAvancement) {
+      return {
+        id: 1,
+        nom: 'Nouveau',
+        valeur: 1
+      };
+    }
+    
+    return {
+      id: dernierAvancement.idStatutAvancement,
+      nom: dernierAvancement.nomStatutAvancement,
+      valeur: dernierAvancement.valeurStatutAvancement
+    };
   }
 }
