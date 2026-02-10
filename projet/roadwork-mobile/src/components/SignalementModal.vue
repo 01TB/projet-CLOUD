@@ -58,45 +58,7 @@
             <ion-note slot="error" v-if="surfaceError">{{ surfaceError }}</ion-note>
           </ion-item>
 
-          <!-- Budget -->
-            <ion-label position="floating">Budget estimé (Ar) *</ion-label>
-          <ion-item>
-            <ion-input
-              v-model="form.budget"
-              type="number"
-              placeholder="Budget estimé en Ariary (ex: 2500000)"
-              min="1000"
-              step="1000"
-              required
-              @input="validateBudget"
-            ></ion-input>
-            <ion-note slot="error" v-if="budgetError">{{ budgetError }}</ion-note>
-          </ion-item>
-
-          <!-- ID Entreprise -->
-          <ion-label position="floating">Entreprise</ion-label>
-          <ion-item>
-            <ion-select 
-              v-model="form.id_entreprise" 
-              placeholder="Choisir une entreprise si applicable"
-              interface="alert"
-              :cancelable="false"
-            >
-              <ion-select-option 
-                v-for="entreprise in entreprises" 
-                :key="entreprise.id" 
-                :value="entreprise.id"
-              >
-                {{ entreprise.nom }}
-              </ion-select-option>
-            </ion-select>
-            <!-- Debug info -->
-            <small style="color: #666; font-size: 10px;">
-              DEBUG: {{ entreprises.length }} entreprises disponibles
-            </small>
-          </ion-item>
-
-          <!-- Photos -->
+          <!-- Adresse -->
           <ion-label position="floating">Photos</ion-label>
           <ion-item>
             <div class="photo-section">
@@ -201,14 +163,12 @@ import {
   IonModal, IonHeader, IonToolbar, IonTitle, IonContent,
   IonButton, IonInput, IonItem, IonLabel, IonList,
   IonIcon, IonText, IonSpinner, IonTextarea, IonChip,
-  IonFooter, IonListHeader, toastController, IonButtons, IonBackButton, IonNote,
-  IonSelect, IonSelectOption
+  IonFooter, IonListHeader, toastController, IonButtons, IonBackButton, IonNote
 } from '@ionic/vue';
 import { pin, camera, image, close } from 'ionicons/icons';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useSignalementsStore } from '@/store/modules/signalements';
-import { useEntreprisesStore } from '@/store/modules/entreprises';
 
 const props = defineProps({
   isOpen: {
@@ -228,15 +188,11 @@ let miniMap = null;
 let miniMarker = null;
 
 const signalementsStore = useSignalementsStore();
-const entreprisesStore = useEntreprisesStore();
 
 const form = ref({
   description: '',
   surface: '',
-  budget: '',
   adresse: '',
-  id_entreprise: '',
-  // photos: [] // Temporairement désactivé
   photos: []
 });
 
@@ -255,11 +211,6 @@ const validationErrors = computed(() => {
     errors.push('La surface doit être supérieure à 0');
   }
   
-  const budget = parseFloat(form.value.budget);
-  if (!form.value.budget || budget < 1000) {
-    errors.push('Le budget minimum est de 1000 Ar');
-  }
-  
   return errors;
 });
 
@@ -269,7 +220,6 @@ const formValid = computed(() => {
 
 // Validation refs
 const surfaceError = ref('');
-const budgetError = ref('');
 
 // Validation functions
 const validateSurface = () => {
@@ -281,18 +231,6 @@ const validateSurface = () => {
   surfaceError.value = '';
   return true;
 };
-
-const validateBudget = () => {
-  const budget = parseFloat(form.value.budget);
-  if (!form.value.budget || budget < 1000) {
-    budgetError.value = 'Le budget minimum est de 1000 Ar';
-    return false;
-  }
-  budgetError.value = '';
-  return true;
-};
-
-const entreprises = computed(() => entreprisesStore.entreprises || []);
 
 // Initialiser la mini carte
 const initMiniMap = () => {
@@ -363,9 +301,8 @@ const initMiniMap = () => {
 const handleSubmit = async () => {
   // Valider explicitement tous les champs
   const isSurfaceValid = validateSurface();
-  const isBudgetValid = validateBudget();
   
-  if (!formValid.value || !isSurfaceValid || !isBudgetValid) {
+  if (!formValid.value || !isSurfaceValid) {
     return;
   }
 
@@ -376,9 +313,7 @@ const handleSubmit = async () => {
     const signalementData = {
       description: form.value.description.trim(),
       surface: parseFloat(form.value.surface),
-      budget: parseFloat(form.value.budget),
       adresse: form.value.adresse.trim() || undefined,
-      id_entreprise: form.value.id_entreprise ? String(form.value.id_entreprise) : null,
       localisation: {
         type: 'Point',
         coordinates: [props.coordinates.lng, props.coordinates.lat]
@@ -386,8 +321,6 @@ const handleSubmit = async () => {
     };
 
     console.log('📝 Données du signalement:', signalementData);
-    console.log('🏢 ID Entreprise brut:', form.value.id_entreprise);
-    console.log('🏢 ID Entreprise parsé:', parseInt(form.value.id_entreprise));
     console.log('📸 Photos à ajouter:', form.value.photos.length);
     console.log('📸 Données photos:', form.value.photos.map(p => ({
       hasData: !!p.data,
@@ -449,16 +382,12 @@ const handleSubmit = async () => {
     form.value = {
       description: '',
       surface: '',
-      budget: '',
       adresse: '',
-      id_entreprise: '',
-      // photos: [] // Temporairement désactivé
       photos: []
     };
     
     // Reset validation errors
     surfaceError.value = '';
-    budgetError.value = '';
     error.value = '';
     
   } catch (err) {
@@ -473,23 +402,8 @@ const onDismiss = () => {
   emit('dismiss');
 };
 
-// Charger les entreprises
-const loadEntreprises = async () => {
-  try {
-    console.log('🏢 Modal - Chargement des entreprises...');
-    await entreprisesStore.fetchEntreprises();
-    console.log('🏢 Modal - Entreprises chargées:', entreprisesStore.entreprises.length);
-    console.log('🏢 Modal - Liste entreprises:', entreprisesStore.entreprises);
-  } catch (error) {
-    console.error('🏢 Modal - Error loading entreprises:', error);
-  }
-};
-
 // Lifecycle hooks - must be registered before any async operations
 onMounted(() => {
-  // Charger les entreprises
-  loadEntreprises();
-  
   // Initialiser la mini carte si le modal est déjà ouvert
   if (props.isOpen) {
     setTimeout(() => {
@@ -570,9 +484,9 @@ const takePhoto = async () => {
 
 const processPhoto = async (file) => {
   try {
-    // Vérifier la taille du fichier (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      showToast('L\'image est trop grande (max 5MB)', 'warning');
+    // Vérifier la taille du fichier (max 3MB pour mobile)
+    if (file.size > 3 * 1024 * 1024) {
+      showToast('L\'image est trop grande (max 3MB)', 'warning');
       return;
     }
     
@@ -582,38 +496,54 @@ const processPhoto = async (file) => {
     const ctx = canvas.getContext('2d');
     
     img.onload = () => {
-      // Dimensions maximales
-      const maxWidth = 800;
-      const maxHeight = 600;
-      
-      let width = img.width;
-      let height = img.height;
+      // Dimensions optimisées pour mobile
+      const maxSize = 800;
+      let { width, height } = img;
       
       // Redimensionner si nécessaire
-      if (width > maxWidth || height > maxHeight) {
-        const ratio = Math.min(maxWidth / width, maxHeight / height);
-        width *= ratio;
-        height *= ratio;
+      if (width > maxSize || height > maxSize) {
+        if (width > height) {
+          height = (height / width) * maxSize;
+          width = maxSize;
+        } else {
+          width = (width / height) * maxSize;
+          height = maxSize;
+        }
       }
+      
+      // Arrondir les dimensions pour optimiser
+      width = Math.round(width);
+      height = Math.round(height);
       
       canvas.width = width;
       canvas.height = height;
       
-      // Dessiner l'image redimensionnée
+      // Dessiner l'image redimensionnée avec optimisation
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'medium';
       ctx.drawImage(img, 0, 0, width, height);
       
-      // Convertir en base64 avec compression
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+      // Convertir en base64 avec compression optimisée pour mobile
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+      
+      // Libérer la mémoire
+      URL.revokeObjectURL(img.src);
       
       // Ajouter la photo au formulaire
       form.value.photos.push({
         data: dataUrl,
         name: file.name,
         size: file.size,
-        type: file.type
+        type: file.type,
+        compressedSize: Math.round(dataUrl.length * 0.75) // Taille approximative
       });
       
-      showToast('Photo ajoutée avec succès', 'success');
+      showToast('Photo optimisée ajoutée', 'success');
+    };
+    
+    img.onerror = () => {
+      showToast('Erreur lors du chargement de l\'image', 'danger');
+      URL.revokeObjectURL(img.src);
     };
     
     img.src = URL.createObjectURL(file);
@@ -650,10 +580,6 @@ watch(() => props.coordinates, (newCoords) => {
 // Watchers pour la validation en temps réel
 watch(() => form.value.surface, () => {
   validateSurface();
-});
-
-watch(() => form.value.budget, () => {
-  validateBudget();
 });
 </script>
 
@@ -745,28 +671,28 @@ ion-list {
 */
 
 ion-item {
-  --background: rgba(255, 255, 255, 0.9);
+  --background: rgba(45, 55, 72, 0.8);
   --border-radius: 12px;
   margin-bottom: 0.75rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   transition: all 0.2s ease;
   min-height: 50px;
 }
 
 ion-item:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   transform: translateY(-1px);
 }
 
 ion-label {
-  --color: #2d3748 !important;
+  --color: #f7fafc !important;
   font-weight: 600;
   font-size: 0.85rem;
 }
 
 ion-input, ion-textarea {
-  --color: #2d3748 !important;
-  --placeholder-color: #718096;
+  --color: #f7fafc !important;
+  --placeholder-color: #a0aec0;
   font-size: 0.85rem;
 }
 
@@ -782,7 +708,7 @@ ion-textarea {
 
 .location-chip ion-label {
   font-size: 0.75rem;
-  color: #2d3748 !important;
+  color: #f7fafc !important;
 }
 
 /* Button improvements */
@@ -810,8 +736,8 @@ ion-content {
 /* Footer improvements */
 ion-footer {
   padding: 0.75rem 1rem;
-  background: rgba(255, 255, 255, 0.98);
-  border-top: 1px solid #e2e8f0;
+  background: rgba(30, 41, 59, 0.98);
+  border-top: 1px solid rgba(74, 85, 104, 0.8);
 }
 
 ion-footer ion-toolbar {
@@ -822,30 +748,30 @@ ion-footer ion-toolbar {
 }
 
 ion-toolbar {
-  --background: rgba(255, 255, 255, 0.98);
-  --color: #2d3748;
+  --background: rgba(30, 41, 59, 0.98);
+  --color: #f7fafc;
 }
 
 ion-title {
   font-size: 1.1rem;
-  color: #2d3748;
+  color: #f7fafc;
   font-weight: 600;
 }
 
 /* Header improvements */
 ion-header {
-  --background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
-  --color: white;
+  --background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+  --color: #f7fafc;
 }
 
 ion-toolbar {
   --background: transparent;
-  --color: white;
+  --color: #f7fafc;
 }
 
 /* Back button */
 ion-back-button {
-  --color: white;
+  --color: #f7fafc;
   --background: transparent;
 }
 
@@ -870,7 +796,7 @@ ion-textarea {
 /* Error text */
 ion-note {
   font-size: 0.8rem;
-  color: #e53e3e;
+  color: #a0aec0;
   margin: 0.25rem 0;
 }
 

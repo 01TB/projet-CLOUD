@@ -22,22 +22,17 @@
           
           <ion-item button @click="navigateTo('/map')" class="menu-item">
             <ion-icon :icon="map" slot="start" class="menu-icon"></ion-icon>
-            <ion-note slot="end" color="medium">Carte</ion-note>
+            <ion-label slot="end" color="medium">Carte</ion-label>
           </ion-item>
           
           <ion-item button @click="navigateTo('/signalements')" class="menu-item">
             <ion-icon :icon="list" slot="start" class="menu-icon"></ion-icon>
-            <ion-note slot="end" color="medium">Signalements</ion-note>
+            <ion-label slot="end" color="medium">Signalements</ion-label>
           </ion-item>
           
           <ion-item button @click="navigateTo('/stats')" class="menu-item">
             <ion-icon :icon="barChart" slot="start" class="menu-icon"></ion-icon>
-            <ion-note slot="end" color="medium">Statistiques</ion-note>
-          </ion-item>
-          
-          <ion-item button @click="navigateTo('/profile')" class="menu-item" v-if="isAuthenticated">
-            <ion-icon :icon="person" slot="start" class="menu-icon"></ion-icon>
-            <ion-note slot="end" color="medium">Mon compte</ion-note>
+            <ion-label slot="end" color="medium">Statistiques</ion-label>
           </ion-item>
         </ion-list>
         
@@ -47,22 +42,41 @@
         <!-- Section authentification -->
         <ion-list class="auth-section">
           <ion-list-header>
-            <ion-label class="section-title">Compte</ion-label>
+            <ion-label class="section-title">Utilisateur</ion-label>
           </ion-list-header>
           
           <ion-item button @click="navigateTo('/login')" class="menu-item auth-item" v-if="!isAuthenticated">
             <ion-icon :icon="logIn" slot="start" class="menu-icon auth-icon"></ion-icon>
-            <ion-chip slot="end" color="primary" outline>Se connecter</ion-chip>
+            <ion-chip slot="start" color="primary" outline>Se connecter</ion-chip>
           </ion-item>
           
           <ion-item button @click="navigateTo('/register')" class="menu-item auth-item" v-if="!isAuthenticated">
             <ion-icon :icon="personAdd" slot="start" class="menu-icon auth-icon"></ion-icon>
-            <ion-chip slot="end" color="success" outline>S'inscrire</ion-chip>
+            <ion-chip slot="start" color="success" outline>S'inscrire</ion-chip>
+          </ion-item>
+
+          
+          <ion-item button @click="navigateTo('/profile')" class="menu-item" v-if="isAuthenticated">
+            <ion-icon :icon="person" slot="start" class="menu-icon"></ion-icon>
+            <ion-label slot="end" color="medium">Mon compte</ion-label>
+          </ion-item>
+          
+          <ion-item button @click="openNotifications" class="menu-item" v-if="isAuthenticated">
+            <ion-icon :icon="notificationsOutline" slot="start" class="menu-icon"></ion-icon>
+            <ion-label slot="end" color="medium">Mes notifications</ion-label>
+            <ion-badge 
+              v-if="unreadCount > 0" 
+              color="danger" 
+              slot="end"
+              :key="`badge-${unreadCount}-${Date.now()}`"
+            >
+              {{ unreadCount > 99 ? '99+' : unreadCount }}
+            </ion-badge>
           </ion-item>
           
           <ion-item button @click="logout" class="menu-item logout-item" v-if="isAuthenticated">
             <ion-icon :icon="logOut" slot="start" class="menu-icon logout-icon"></ion-icon>
-            <ion-note slot="end" color="danger">Quitter</ion-note>
+            <ion-label slot="end" color="danger">Quitter</ion-label>
           </ion-item>
         </ion-list>
         
@@ -87,23 +101,42 @@
     </ion-menu>
 
     <ion-router-outlet id="main-content"></ion-router-outlet>
+    
+    <!-- Notifications Modal -->
+    <NotificationsModal 
+      :is-open="notificationsOpen" 
+      :key="notifications.length"
+      @dismiss="closeNotifications" 
+    />
   </ion-app>
 </template>
 
 <script setup>
 import { IonApp, IonMenu, IonHeader, IonToolbar, IonTitle, IonContent, 
          IonList, IonItem, IonIcon, IonLabel, IonNote, IonChip, IonAvatar,
-         IonListHeader, IonRouterOutlet } from '@ionic/vue';
-import { map, list, barChart, person, logIn, logOut, personAdd } from 'ionicons/icons';
+         IonListHeader, IonRouterOutlet, IonBadge } from '@ionic/vue';
+import { map, list, barChart, person, logIn, logOut, personAdd, notificationsOutline } from 'ionicons/icons';
 import { useRouter } from 'vue-router';
-import { computed } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { useAuthStore } from '@/store/modules/auth';
+import NotificationsModal from '@/components/NotificationsModal.vue';
+import { useNotifications } from '@/composables/useNotifications';
 
 const router = useRouter();
 const authStore = useAuthStore();
 
+// Notifications
+const notificationsOpen = ref(false);
+const { 
+  notifications, 
+  isLoading, 
+  unreadCount, 
+  requestPermission 
+} = useNotifications();
+
 const isAuthenticated = computed(() => authStore.isAuthenticated);
 
+// Navigation functions
 const navigateTo = async (path) => {
   console.log('Navigating to:', path);
   await router.push(path);
@@ -126,6 +159,21 @@ const logout = async () => {
   }
 };
 
+// Notifications functions
+const openNotifications = () => {
+  notificationsOpen.value = true;
+  
+  // Fermer le menu après ouverture des notifications
+  const menu = document.querySelector('ion-menu');
+  if (menu) {
+    menu.close();
+  }
+};
+
+const closeNotifications = () => {
+  notificationsOpen.value = false;
+};
+
 const getRoleLabel = (role) => {
   const roles = {
     1: 'Manager',
@@ -135,8 +183,16 @@ const getRoleLabel = (role) => {
   return roles[role] || 'Utilisateur';
 };
 
-// Vérifier l'authentification au démarrage
-authStore.checkAuth();
+// Initialisation
+onMounted(async () => {
+  // Vérifier l'authentification au démarrage
+  authStore.checkAuth();
+  
+  // Demander la permission de notifications si l'utilisateur est connecté
+  if (authStore.isAuthenticated) {
+    await requestPermission();
+  }
+});
 </script>
 
 <style>
@@ -227,10 +283,10 @@ ion-content {
 }
 
 .menu-item:hover {
-  --background: rgba(255, 255, 255, 1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transform: translateY(-1px);
-  border-color: rgba(49, 130, 206, 0.3);
+  --background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transform: none;
+  border-color: rgba(226, 232, 240, 0.8);
 }
 
 .menu-item:active {
@@ -255,15 +311,22 @@ ion-content {
   font-weight: 400;
 }
 
-/* Auth items */
-.auth-item {
-  --background: linear-gradient(135deg, rgba(49, 130, 206, 0.05) 0%, rgba(49, 130, 206, 0.02) 100%);
-  border-color: rgba(49, 130, 206, 0.2);
+.menu-item ion-badge[color="danger"] {
+  background: #ef4444;
+  color: white;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  min-width: 20px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
 }
 
-.auth-item:hover {
-  --background: linear-gradient(135deg, rgba(49, 130, 206, 0.1) 0%, rgba(49, 130, 206, 0.05) 100%);
-  border-color: rgba(49, 130, 206, 0.4);
+/* Auth items */
+.auth-item {
+  --background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(226, 232, 240, 0.8);
 }
 
 .auth-icon {
@@ -271,13 +334,8 @@ ion-content {
 }
 
 .logout-item {
-  --background: linear-gradient(135deg, rgba(229, 62, 62, 0.05) 0%, rgba(229, 62, 62, 0.02) 100%);
-  border-color: rgba(229, 62, 62, 0.2);
-}
-
-.logout-item:hover {
-  --background: linear-gradient(135deg, rgba(229, 62, 62, 0.1) 0%, rgba(229, 62, 62, 0.05) 100%);
-  border-color: rgba(229, 62, 62, 0.4);
+  --background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(226, 232, 240, 0.8);
 }
 
 .logout-icon {
@@ -296,6 +354,42 @@ ion-content {
   background: transparent;
   padding: 0;
   margin: 1rem 0;
+}
+
+/* Notification item styles */
+.notification-item {
+  --background: rgba(255, 255, 255, 0.9);
+  --border-radius: 12px;
+  margin: 0.5rem 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s ease;
+  min-height: 56px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  position: relative;
+}
+
+.notification-item:hover {
+  --background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transform: none;
+  border-color: rgba(226, 232, 240, 0.8);
+}
+
+.notification-item ion-label {
+  color: #2d3748 !important;
+  font-weight: 500;
+}
+
+.notification-item ion-badge {
+  background: #ef4444;
+  color: white;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  min-width: 20px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
 }
 
 /* Menu footer */
@@ -533,6 +627,129 @@ ion-list-header ion-label {
   .menu-footer {
     border-top-color: rgba(74, 85, 104, 0.8);
   }
+}
+
+/* Unified header styling - matching side-bar */
+ion-header {
+  --background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
+  --color: white;
+  --border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+ion-header ion-toolbar {
+  --background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
+  --color: white;
+}
+
+ion-header ion-title {
+  --color: white !important;
+  font-weight: 600;
+}
+
+ion-header ion-button {
+  --color: white;
+}
+
+ion-header ion-icon {
+  color: white;
+}
+
+/* Map page specific header */
+ion-page ion-header {
+  --background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
+  --color: white;
+}
+
+ion-page ion-header ion-toolbar {
+  --background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
+  --color: white;
+}
+
+/* List page specific header */
+ion-list-header {
+  --background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
+  --color: white !important;
+  font-weight: 600;
+}
+
+/* Filter modal header */
+ion-modal ion-header {
+  --background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
+  --color: white;
+  --border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+ion-modal ion-toolbar {
+  --background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
+  --color: white;
+}
+
+ion-modal ion-title {
+  --color: white !important;
+  font-weight: 600;
+}
+
+/* Filter content background */
+ion-modal ion-content {
+  --background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+}
+
+ion-modal ion-list {
+  background: transparent;
+}
+
+ion-modal ion-item {
+  --background: rgba(255, 255, 255, 0.9);
+  --color: #2d3748;
+  --border-color: rgba(226, 232, 240, 0.8);
+  --border-radius: 12px;
+  margin-bottom: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+ion-modal ion-item:hover {
+  --background: rgba(255, 255, 255, 1);
+  --border-color: rgba(49, 130, 206, 0.3);
+}
+
+ion-modal ion-label {
+  --color: #2d3748 !important;
+  font-weight: 500;
+}
+
+ion-modal ion-checkbox {
+  --background: rgba(255, 255, 255, 0.8);
+  --border-color: rgba(226, 232, 240, 0.8);
+  --checkmark-color: #3182ce;
+}
+
+ion-modal ion-checkbox:checked {
+  --background: rgba(49, 130, 206, 0.8);
+  --border-color: #3182ce;
+}
+
+ion-modal ion-badge {
+  --background: #3182ce;
+  --color: white;
+}
+
+ion-modal ion-spinner {
+  --color: #3182ce;
+}
+
+ion-modal ion-note {
+  --color: #718096 !important;
+}
+
+ion-modal ion-chip {
+  --background: rgba(49, 130, 206, 0.1);
+  --color: #3182ce;
+  --border-color: rgba(49, 130, 206, 0.3);
+}
+
+ion-modal ion-footer {
+  --background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+  --border-top: 1px solid rgba(226, 232, 240, 0.8);
 }
 
 /* Animation improvements */

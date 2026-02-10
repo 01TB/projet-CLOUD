@@ -50,11 +50,23 @@
           <ion-card-content>
             <p class="description">{{ signalement.description }}</p>
             
-            <ion-list v-if="signalement.surface">
-              <ion-item>
+            <ion-list>
+              <ion-item v-if="signalement.surface">
                 <ion-icon :icon="resize" slot="start"></ion-icon>
                 <ion-label>Surface affectée</ion-label>
                 <ion-note slot="end">{{ signalement.surface }} m²</ion-note>
+              </ion-item>
+              
+              <ion-item v-if="signalement.budget">
+                <ion-icon :icon="cash" slot="start"></ion-icon>
+                <ion-label>Budget</ion-label>
+                <ion-note slot="end">{{ formatBudget(signalement.budget) }}</ion-note>
+              </ion-item>
+              
+              <ion-item v-if="signalement.id_entreprise || signalement.nom_entreprise || signalement.entreprise">
+                <ion-icon :icon="business" slot="start"></ion-icon>
+                <ion-label>Entreprise responsable</ion-label>
+                <ion-note slot="end">{{ getEntrepriseInfo(signalement) }}</ion-note>
               </ion-item>
             </ion-list>
           </ion-card-content>
@@ -82,11 +94,16 @@
         </ion-card>
 
         <!-- Photos -->
-        <ion-card v-if="signalement.photos && signalement.photos.length > 0">
+        <ion-card v-if="signalement.photos && Array.isArray(signalement.photos) && signalement.photos.length > 0">
           <ion-card-header>
-            <ion-card-title>Photos</ion-card-title>
+            <ion-card-title>Photos ({{ signalement.photos.length }})</ion-card-title>
           </ion-card-header>
           <ion-card-content>
+            <!-- Debug info -->
+            <div v-if="signalement.photos" style="margin-bottom: 1rem; font-size: 0.8rem; color: #666;">
+              Debug: {{ signalement.photos.length }} photos trouvées
+            </div>
+            
             <Swiper 
               :modules="[Pagination]"
               :pagination="{ clickable: true }"
@@ -94,9 +111,27 @@
               class="signalement-swiper"
             >
               <SwiperSlide v-for="(photo, index) in signalement.photos" :key="index">
-                <img :src="photo.data" :alt="`Photo ${index + 1}`" class="signalement-image" />
+                <div class="photo-container">
+                  <img 
+                    :src="getPhotoSrc(photo)" 
+                    :alt="`Photo ${index + 1}`" 
+                    class="signalement-image" 
+                    @error="handleImageError"
+                    @load="handleImageLoad"
+                  />
+                  <div v-if="!getPhotoSrc(photo)" class="photo-error">
+                    Format de photo invalide
+                  </div>
+                </div>
               </SwiperSlide>
             </Swiper>
+          </ion-card-content>
+        </ion-card>
+        
+        <!-- Fallback si photos existent mais ne s'affichent pas -->
+        <ion-card v-else-if="signalement.photos && signalement.photos.length === 0">
+          <ion-card-content>
+            <p style="text-align: center; color: #666;">Aucune photo disponible</p>
           </ion-card-content>
         </ion-card>
 
@@ -161,7 +196,7 @@ import { Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/pagination';
 import {
-  create, alertCircle, map, shareSocial, resize
+  create, alertCircle, map, shareSocial, resize, cash, business
 } from 'ionicons/icons';
 import { useAuthStore } from '@/store/modules/auth';
 import { useSignalementsStore } from '@/store/modules/signalements';
@@ -236,6 +271,32 @@ const formatDate = (dateString) => {
   });
 };
 
+const formatBudget = (budget) => {
+  if (!budget || budget === 0) return 'Non assigné';
+  return new Intl.NumberFormat('fr-MG', {
+    style: 'currency',
+    currency: 'MGA',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(budget);
+};
+
+const getEntrepriseInfo = (signalement) => {
+  if (!signalement.id_entreprise) {
+    return 'Non assigné';
+  }
+  
+  if (signalement.nom_entreprise) {
+    return signalement.nom_entreprise;
+  }
+  
+  if (signalement.entreprise) {
+    return signalement.entreprise;
+  }
+  
+  return `Entreprise #${signalement.id_entreprise}`;
+};
+
 const editSignalement = () => {
   router.push(`/signalement/${signalement.value.id}/edit`);
 };
@@ -265,12 +326,95 @@ const shareSignalement = async () => {
   }
 };
 
+const handleImageError = (event) => {
+  console.error('Erreur de chargement de l\'image:', event);
+  const img = event.target;
+  img.style.display = 'none';
+  
+  // Afficher un message d'erreur
+  const errorDiv = document.createElement('div');
+  errorDiv.className = 'photo-error';
+  errorDiv.textContent = 'Impossible de charger cette photo';
+  errorDiv.style.cssText = 'text-align: center; padding: 20px; color: #ef4444; background: #fef2f2; border-radius: 8px;';
+  img.parentNode.appendChild(errorDiv);
+};
+
+const handleImageLoad = (event) => {
+  console.log('Image chargée avec succès:', event.target.src);
+};
+
+const getPhotoSrc = (photo) => {
+  // Si photo est null ou undefined
+  if (!photo) return null;
+  
+  // Si photo est une chaîne de caractères
+  if (typeof photo === 'string') {
+    // Si c'est déjà une URL data ou une URL complète
+    if (photo.startsWith('data:') || photo.startsWith('http')) {
+      return photo;
+    }
+    // Sinon, c'est probablement une URL relative
+    return photo;
+  }
+  
+  // Si photo est un objet avec propriété data
+  if (typeof photo === 'object' && photo.data) {
+    return photo.data;
+  }
+  
+  // Si photo est un objet avec propriété photo (format utilisé dans Map/List)
+  if (typeof photo === 'object' && photo.photo) {
+    return photo.photo;
+  }
+  
+  // Si photo est un objet avec propriété url
+  if (typeof photo === 'object' && photo.url) {
+    return photo.url;
+  }
+  
+  // Si photo est un objet avec propriété src
+  if (typeof photo === 'object' && photo.src) {
+    return photo.src;
+  }
+  
+  // Format non reconnu
+  console.warn('Format de photo non reconnu:', photo);
+  return null;
+};
+
 const loadSignalement = async () => {
   try {
     loading.value = true;
     const id = route.params.id;
     await signalementsStore.fetchSignalementById(id);
     signalement.value = signalementsStore.currentSignalement;
+    
+    // Debug spécifique pour les photos
+    console.log('📸 DEBUG - Signalement chargé:', signalement.value);
+    console.log('📸 DEBUG - Photos brutes:', signalement.value?.photos);
+    console.log('📸 DEBUG - Type de photos:', typeof signalement.value?.photos);
+    console.log('📸 DEBUG - Longueur photos:', signalement.value?.photos?.length);
+    
+    if (signalement.value?.photos && signalement.value.photos.length > 0) {
+      console.log('📸 DEBUG - Analyse des photos:');
+      signalement.value.photos.forEach((photo, index) => {
+        const photoSrc = getPhotoSrc(photo);
+        console.log(`📸 Photo ${index}:`, {
+          type: typeof photo,
+          hasData: !!photo.data,
+          hasPhoto: !!photo.photo,
+          dataLength: photo.data?.length || 0,
+          photoLength: photo.photo?.length || 0,
+          isString: typeof photo === 'string',
+          startsWithData: typeof photo === 'string' && photo.startsWith('data:'),
+          keys: Object.keys(photo),
+          photoSrc: photoSrc,
+          photoSrcType: typeof photoSrc,
+          photoSrcLength: photoSrc?.length || 0,
+          photoSrcStartsWithData: typeof photoSrc === 'string' && photoSrc.startsWith('data:')
+        });
+      });
+    }
     
     // Initialiser la carte si nécessaire
     if (signalement.value?.localisation) {
@@ -296,6 +440,42 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* Dark background for signalement detail */
+ion-content {
+  --background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+}
+
+/* Dark theme for cards */
+ion-card {
+  --background: rgba(45, 55, 72, 0.8);
+  --color: #f7fafc;
+  --border-color: rgba(74, 85, 104, 0.6);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  margin-bottom: 1rem;
+}
+
+ion-card:hover {
+  --background: rgba(45, 55, 72, 1);
+  --border-color: rgba(74, 85, 104, 0.8);
+}
+
+ion-card-header {
+  --background: rgba(30, 41, 59, 0.8);
+  --color: #f7fafc;
+  --border-color: rgba(74, 85, 104, 0.6);
+}
+
+ion-card-title {
+  --color: #f7fafc !important;
+  font-weight: 600;
+}
+
+ion-card-content {
+  --color: #f7fafc;
+}
+
+/* Dark theme for loading and empty states */
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -303,6 +483,10 @@ onMounted(() => {
   justify-content: center;
   padding: 3rem;
   text-align: center;
+}
+
+.loading-container p {
+  color: #cbd5e0 !important;
 }
 
 .empty-state {
@@ -315,20 +499,21 @@ onMounted(() => {
 }
 
 .empty-state ion-icon {
-  color: var(--ion-color-medium);
+  color: #a0aec0;
   margin-bottom: 1rem;
 }
 
 .empty-state h3 {
   margin: 0.5rem 0;
-  color: var(--ion-color-medium);
+  color: #cbd5e0 !important;
 }
 
 .empty-state p {
-  color: var(--ion-color-medium);
+  color: #a0aec0;
   margin-bottom: 1rem;
 }
 
+/* Dark theme for status header */
 .status-header {
   display: flex;
   justify-content: space-between;
@@ -341,24 +526,186 @@ onMounted(() => {
 }
 
 .date {
-  color: var(--ion-color-medium);
+  color: #a0aec0;
   font-size: 0.9rem;
 }
 
+/* Dark theme for labels and text */
+ion-label {
+  --color: #f7fafc !important;
+  font-weight: 500;
+}
+
+ion-label h2 {
+  color: #f7fafc !important;
+  font-weight: 600;
+}
+
+ion-label h3 {
+  color: #f7fafc !important;
+  font-weight: 500;
+}
+
+ion-label p {
+  color: #cbd5e0 !important;
+}
+
+/* Dark theme for buttons */
+ion-button {
+  --color: #f7fafc;
+}
+
+ion-button[color="primary"] {
+  --background: rgba(49, 130, 206, 0.8);
+  --color: #f7fafc;
+}
+
+ion-button[color="secondary"] {
+  --background: rgba(72, 187, 120, 0.8);
+  --color: #f7fafc;
+}
+
+ion-button[color="danger"] {
+  --background: rgba(229, 62, 62, 0.8);
+  --color: #f7fafc;
+}
+
+/* Dark theme for badges */
+ion-badge {
+  --background: #3182ce;
+  --color: white;
+}
+
+/* Dark theme for items */
+ion-item {
+  --background: rgba(45, 55, 72, 0.8);
+  --color: #f7fafc;
+  --border-color: rgba(74, 85, 104, 0.6);
+  --border-radius: 12px;
+  margin-bottom: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+ion-item:hover {
+  --background: rgba(45, 55, 72, 1);
+  --border-color: rgba(74, 85, 104, 0.8);
+}
+
+/* Dark theme for textareas and inputs */
+ion-textarea {
+  --color: #f7fafc !important;
+  --placeholder-color: #a0aec0;
+  --background: rgba(30, 41, 59, 0.6);
+  --border-color: rgba(74, 85, 104, 0.8);
+}
+
+ion-textarea:focus {
+  --background: rgba(30, 41, 59, 0.8);
+  --border-color: #3182ce;
+}
+
+ion-input {
+  --color: #f7fafc !important;
+  --placeholder-color: #a0aec0;
+  --background: rgba(30, 41, 59, 0.6);
+  --border-color: rgba(74, 85, 104, 0.8);
+}
+
+ion-input:focus {
+  --background: rgba(30, 41, 59, 0.8);
+  --border-color: #3182ce;
+}
+
+/* Dark theme for chips */
+ion-chip {
+  --background: rgba(49, 130, 206, 0.2);
+  --color: #3182ce;
+  --border-color: rgba(49, 130, 206, 0.4);
+}
+
+/* Dark theme for progress bars */
+ion-progress-bar {
+  --background: rgba(74, 85, 104, 0.6);
+}
+
+ion-progress-bar::part(progress) {
+  background: #3182ce;
+}
+
+/* Dark theme for select */
+ion-select {
+  --color: #f7fafc !important;
+  --placeholder-color: #a0aec0;
+  --background: rgba(30, 41, 59, 0.6);
+  --border-color: rgba(74, 85, 104, 0.8);
+}
+
+ion-select:focus {
+  --background: rgba(30, 41, 59, 0.8);
+  --border-color: #3182ce;
+}
+
+/* Dark theme for radio buttons */
+ion-radio {
+  --color: #f7fafc;
+}
+
+ion-radio::part(container) {
+  --background: rgba(45, 55, 72, 0.6);
+  --border-color: rgba(74, 85, 104, 0.8);
+}
+
+ion-radio::part(mark) {
+  --background: #3182ce;
+}
+
+/* Dark theme for range sliders */
+ion-range {
+  --background: rgba(74, 85, 104, 0.6);
+}
+
+ion-range::part(knob) {
+  --background: #3182ce;
+}
+
+ion-range::part(bar) {
+  background: rgba(49, 130, 206, 0.6);
+}
+
+/* Dark theme for toggle */
+ion-toggle {
+  --background: rgba(74, 85, 104, 0.6);
+}
+
+ion-toggle::part(track) {
+  background: rgba(49, 130, 206, 0.6);
+}
+
+ion-toggle::part(handle) {
+  --background: #3182ce;
+}
+
+/* Dark theme for spinner */
+ion-spinner {
+  color: #3182ce;
+}
+
+/* Additional dark theme styles */
 .description {
   line-height: 1.5;
   margin-bottom: 1rem;
+  color: #cbd5e0 !important;
 }
 
 .map-container {
   height: 200px;
-  background: var(--ion-color-light);
+  background: rgba(30, 41, 59, 0.6);
   border-radius: 8px;
   margin-bottom: 1rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--ion-color-medium);
+  color: #a0aec0;
 }
 
 .map-button {
@@ -381,23 +728,23 @@ onMounted(() => {
 }
 
 .status-new {
-  background: var(--ion-color-danger);
+  background: #ef4444;
 }
 
 .status-progress {
-  background: var(--ion-color-warning);
+  background: #f59e0b;
 }
 
 .status-validation {
-  background: var(--ion-color-tertiary);
+  background: #06b6d4;
 }
 
 .status-completed {
-  background: var(--ion-color-success);
+  background: #10b981;
 }
 
 .status-default {
-  background: var(--ion-color-medium);
+  background: #6b7280;
 }
 
 ion-card {
@@ -425,19 +772,44 @@ ion-card-title {
   align-items: center;
 }
 
+.photo-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
 .signalement-image {
   max-width: 100%;
   max-height: 280px;
   object-fit: contain;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.photo-error {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  padding: 20px;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
 }
 
 .signalement-swiper .swiper-pagination-bullet {
-  background: var(--ion-color-primary);
+  background: #3182ce;
 }
 
 .signalement-swiper .swiper-pagination-bullet-active {
-  background: var(--ion-color-primary);
+  background: #3182ce;
 }
+
 </style>

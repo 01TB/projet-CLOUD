@@ -2,65 +2,30 @@ import api from './api';
 
 class EntrepriseService {
   
-  // Récupérer toutes les entreprises (utilisera les données locales pour éviter les erreurs CORS)
+  // Récupérer toutes les entreprises depuis Firebase API
   async getAllEntreprises() {
     try {
-      // Pour l'instant, retourner des données locales pour éviter les erreurs CORS
-      // L'endpoint /entreprises n'existe probablement pas sur l'API
-      return {
-        success: true,
-        data: [
-          {
-            id: 1,
-            nom: "Entreprise Routière Madagascar",
-            description: "Spécialisée dans les travaux routiers",
-            telephone: "+261340000001",
-            email: "contact@erm.mg",
-            date_creation: "2026-01-15T10:30:00.000Z",
-            date_modification: "2026-01-15T10:30:00.000Z"
-          },
-          {
-            id: 2,
-            nom: "BTP Construction",
-            description: "Construction et travaux publics",
-            telephone: "+261340000002",
-            email: "info@btp.mg",
-            date_creation: "2026-01-16T14:20:00.000Z",
-            date_modification: "2026-01-16T14:20:00.000Z"
-          },
-          {
-            id: 3,
-            nom: "Infrastructure SARL",
-            description: "Développement d'infrastructures",
-            telephone: "+261340000003",
-            email: "contact@infra.mg",
-            date_creation: "2026-01-17T09:15:00.000Z",
-            date_modification: "2026-01-17T09:15:00.000Z"
-          }
-        ]
-      };
+      const response = await api.get('/getEntreprises');
       
-      // Si l'endpoint existe plus tard, décommentez ce code :
-      // const response = await api.get('/entreprises');
-      // return response.data;
+      if (response.data.success) {
+        console.log('✅ Entreprises récupérées:', response.data.data);
+        return response.data;
+      } else {
+        throw new Error(response.data.error?.message || 'Erreur lors de la récupération des entreprises');
+      }
     } catch (error) {
-      console.error('Error fetching entreprises:', error);
-      // En cas d'erreur, retourner les données locales
-      return {
-        success: true,
-        data: [
-          {
-            id: 1,
-            nom: "Entreprise Routière Madagascar",
-            description: "Spécialisée dans les travaux routiers"
-          },
-          {
-            id: 2,
-            nom: "BTP Construction",
-            description: "Construction et travaux publics"
-          }
-        ]
-      };
+      console.error('❌ Erreur getAllEntreprises:', error);
+      
+      // Gérer les erreurs spécifiques
+      if (error.response?.status === 500) {
+        throw new Error('Erreur interne du serveur');
+      } else if (error.response?.status === 404) {
+        throw new Error('Endpoint getEntreprises non trouvé');
+      } else if (error.code === 'ECONNABORTED') {
+        throw new Error('Timeout - le serveur ne répond pas');
+      } else {
+        throw new Error('Erreur réseau ou serveur');
+      }
     }
   }
 
@@ -68,45 +33,89 @@ class EntrepriseService {
   async getEntrepriseById(id) {
     try {
       const allEntreprises = await this.getAllEntreprises();
-      const entreprise = allEntreprises.data.find(e => e.id === parseInt(id));
+      const entreprise = allEntreprises.data.find(e => e.id === id || e.id === parseInt(id));
       return {
         success: true,
         data: entreprise || null
       };
     } catch (error) {
-      console.error('Error fetching entreprise by id:', error);
+      console.error('❌ Erreur getEntrepriseById:', error);
       throw error;
     }
   }
 
-  // Les autres méthodes peuvent être implémentées plus tard si nécessaire
+  // Créer une nouvelle entreprise
   async createEntreprise(entrepriseData) {
-    console.log('createEntreprise called but not implemented:', entrepriseData);
-    return { success: false, error: 'Non implémenté' };
-  }
-
-  async updateEntreprise(id, entrepriseData) {
-    console.log('updateEntreprise called but not implemented:', id, entrepriseData);
-    return { success: false, error: 'Non implémenté' };
-  }
-
-  async deleteEntreprise(id) {
-    console.log('deleteEntreprise called but not implemented:', id);
-    return { success: false, error: 'Non implémenté' };
-  }
-
-  async getEntreprisesPaginated(page = 1, limit = 20, filters = {}) {
-    const allEntreprises = await this.getAllEntreprises();
-    return {
-      success: true,
-      data: allEntreprises.data,
-      pagination: {
-        page,
-        limit,
-        total: allEntreprises.data.length,
-        totalPages: 1
+    try {
+      const response = await api.post('/createEntreprise', entrepriseData);
+      
+      if (response.data.success) {
+        console.log('✅ Entreprise créée:', response.data.data);
+        return response.data;
+      } else {
+        throw new Error(response.data.error?.message || 'Erreur lors de la création de l\'entreprise');
       }
-    };
+    } catch (error) {
+      console.error('❌ Erreur createEntreprise:', error);
+      throw error;
+    }
+  }
+
+  // Mettre à jour une entreprise
+  async updateEntreprise(id, entrepriseData) {
+    try {
+      const response = await api.put(`/updateEntreprise/${id}`, entrepriseData);
+      
+      if (response.data.success) {
+        console.log('✅ Entreprise mise à jour:', response.data.data);
+        return response.data;
+      } else {
+        throw new Error(response.data.error?.message || 'Erreur lors de la mise à jour de l\'entreprise');
+      }
+    } catch (error) {
+      console.error('❌ Erreur updateEntreprise:', error);
+      throw error;
+    }
+  }
+
+  // Supprimer une entreprise
+  async deleteEntreprise(id) {
+    try {
+      const response = await api.delete(`/deleteEntreprise/${id}`);
+      
+      if (response.data.success) {
+        console.log('✅ Entreprise supprimée:', response.data);
+        return response.data;
+      } else {
+        throw new Error(response.data.error?.message || 'Erreur lors de la suppression de l\'entreprise');
+      }
+    } catch (error) {
+      console.error('❌ Erreur deleteEntreprise:', error);
+      throw error;
+    }
+  }
+
+  // Récupérer les entreprises avec pagination
+  async getEntreprisesPaginated(page = 1, limit = 20, filters = {}) {
+    try {
+      const response = await api.get('/getEntreprises', {
+        params: {
+          page,
+          limit,
+          ...filters
+        }
+      });
+      
+      if (response.data.success) {
+        console.log('✅ Entreprises paginées récupérées:', response.data);
+        return response.data;
+      } else {
+        throw new Error(response.data.error?.message || 'Erreur lors de la récupération des entreprises paginées');
+      }
+    } catch (error) {
+      console.error('❌ Erreur getEntreprisesPaginated:', error);
+      throw error;
+    }
   }
 }
 

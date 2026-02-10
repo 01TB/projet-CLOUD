@@ -62,6 +62,12 @@ router.beforeEach(async (to, from, next) => {
   // Initialiser l'authentification depuis localStorage avant toute vérification
   authStore.initializeAuth();
   
+  // Désactiver le mode visiteur lorsqu'on accède à la page de login
+  if (to.path === '/login' && authStore.isVisitor) {
+    authStore.disableVisitorMode();
+    console.log('👤 Mode visiteur désactivé (accès à login)');
+  }
+  
   // Vérifier l'authentification si nécessaire
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next('/login');

@@ -61,8 +61,8 @@
                 <h3>{{ signalement.description }}</h3>
                 <p><strong>Surface:</strong> {{ signalement.surface ? signalement.surface + ' m²' : 'Non spécifiée' }}</p>
                 <p><strong>Budget:</strong> {{ formatBudget(signalement.budget) }}</p>
-                <p><strong>Adresse:</strong> {{ signalement.adresse || 'Non spécifiée' }}</p>
                 <p><strong>Entreprise responsable:</strong> {{ getEntrepriseInfo(signalement) }}</p>
+                <p><strong>Adresse:</strong> {{ signalement.adresse || 'Non spécifiée' }}</p>
                 <p><strong>Date:</strong> {{ formatDate(signalement.date_creation) }}</p>
                 
                 <!-- Photos -->
@@ -83,17 +83,6 @@
                       +{{ signalement.photos.length - 3 }}
                     </div>
                   </div>
-                </div>
-                
-                <!-- Debug info -->
-                <div style="font-size: 10px; color: #666; margin-top: 8px;">
-                  <small>DEBUG: Photos={{ signalement.photos?.length || 0 }}, 
-                    HasData={{ !!signalement.photos?.[0]?.photo }},
-                    DataLength={{ signalement.photos?.[0]?.photo?.length || 0 }}</small>
-                  <br/>
-                  <small>Photo0Keys={{ Object.keys(signalement.photos?.[0] || {}).join(',') }}</small>
-                  <br/>
-                  <small>Photo0Type={{ typeof signalement.photos?.[0] }}</small>
                 </div>
                 
                 <!-- Actions CRUD pour utilisateur connecté -->
@@ -171,27 +160,22 @@
       </ion-fab>
 
       <!-- Statistiques simplifiées (temporairement sans slides) -->
-      <div v-if="showStats" class="stats-container">
-        <div class="stats-grid">
-          <div class="stat-card">
-            <ion-icon :icon="alertCircle" size="large"></ion-icon>
-            <h3>{{ stats.total_signalements || 0 }}</h3>
-            <p>Signalements</p>
-          </div>
+      <div v-show="showStats" class="stats-container">
+        <div class="stats-container">
           <div class="stat-card">
             <ion-icon :icon="square" size="large"></ion-icon>
-            <h3>{{ stats.total_surface || 0 }} m²</h3>
-            <p>Surface totale</p>
-          </div>
-          <div class="stat-card">
-            <ion-icon :icon="cash" size="large"></ion-icon>
-            <h3>{{ formatBudget(stats.total_budget) }}</h3>
-            <p>Budget total</p>
+            <h3>{{ signalements.length }}</h3>
+            <p>Total signalements</p>
           </div>
           <div class="stat-card">
             <ion-icon :icon="trendingUp" size="large"></ion-icon>
-            <h3>{{ stats.avancement_moyen || 0 }}%</h3>
-            <p>Avancement moyen</p>
+            <h3>{{ getStatsByStatus('En cours') }}</h3>
+            <p>En cours</p>
+          </div>
+          <div class="stat-card">
+            <ion-icon :icon="checkmarkCircle" size="large"></ion-icon>
+            <h3>{{ getStatsByStatus('Terminé') }}</h3>
+            <p>Terminés</p>
           </div>
         </div>
       </div>
@@ -214,7 +198,19 @@
             <ion-list-header>
               <ion-label>Statut</ion-label>
             </ion-list-header>
-            <ion-item v-for="statut in statuts" :key="statut.id">
+            
+            <!-- Loading state -->
+            <ion-item v-show="!statusesLoaded">
+              <ion-spinner slot="start"></ion-spinner>
+              <ion-label>Chargement des statuts...</ion-label>
+            </ion-item>
+            
+            <!-- Status checkboxes -->
+            <ion-item 
+              v-for="statut in statuts" 
+              :key="statut.id"
+              v-show="statusesLoaded"
+            >
               <ion-checkbox
                 slot="start"
                 :checked="filters.statuts.includes(statut.nom)"
@@ -264,36 +260,58 @@ import {
   IonButton, IonIcon, IonButtons, IonMenuButton, IonFab,
   IonFabButton, IonModal, IonList,
   IonListHeader, IonItem, IonCheckbox, IonLabel, IonBadge,
-  alertController 
+  IonSpinner, alertController 
 } from '@ionic/vue';
 import {
   refresh, locate, filter, add, alertCircle,
-  square, cash, trendingUp, create, trash, chatbubble, eye, person
+  square, trendingUp, create, trash, chatbubble, eye, person, checkmarkCircle
 } from 'ionicons/icons';
 import { LMap, LTileLayer, LMarker, LIcon, LPopup } from '@vue-leaflet/vue-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Geolocation } from '@capacitor/geolocation';
 import { useAuthStore } from '@/store/modules/auth';
 import { useSignalementsStore } from '@/store/modules/signalements';
-import { useEntreprisesStore } from '@/store/modules/entreprises';
-import { useAuthCheck } from '@/composables/useAuthCheck';
 import SignalementModal from '@/components/SignalementModal.vue';
 import L from 'leaflet';
 
-// Configuration Leaflet avec URLs CDN
+// Configuration optimisée pour mobile
+const createOptimizedTileLayer = () => {
+  return L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    minZoom: 3,
+    maxNativeZoom: 19,
+    keepBuffer: 2,
+    updateWhenIdle: true,
+    updateWhenZooming: false,
+    updateInterval: 200,
+    tileSize: 256,
+    zoomOffset: 0,
+    zoomReverse: false,
+    detectRetina: true,
+    crossOrigin: true,
+    reuseTiles: true,
+    bounds: null,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  });
+};
+
+// Configuration Leaflet avec URLs CDN optimisés
 delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+
+L.Icon.mergeOptions({
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+  shadowAnchor: [2, -2]
 });
 
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
 const signalementsStore = useSignalementsStore();
-const entreprisesStore = useEntreprisesStore();
-const { checkAuthAndRedirect } = useAuthCheck();
 
 // Références
 const map = ref(null);
@@ -309,7 +327,7 @@ const selectedCoordinates = ref({ lat: -18.8792, lng: 47.5079 });
 
 // Filtres
 const filters = ref({
-  statuts: ['Nouveau', 'En attente', 'En cours', 'En validation', 'Validé', 'Terminé'], // Inclure tous les statuts possibles
+  statuts: [], // Sera initialisé avec les statuts du backend
   mesSignalements: false
 });
 
@@ -319,6 +337,17 @@ const isUser = computed(() => authStore.isUser);
 const hasGeolocation = computed(() => !!userLocation.value);
 const statuts = computed(() => signalementsStore.statuts || []);
 const stats = computed(() => signalementsStore.stats || {});
+const signalements = computed(() => signalementsStore.signalements || []);
+const statusesLoaded = computed(() => statuts.value.length > 0);
+
+// Watcher pour initialiser les filtres quand les statuts sont chargés
+watch(statuts, (newStatuts) => {
+  if (newStatuts.length > 0) {
+    // Toujours réinitialiser les filtres avec les statuts du backend
+    // pour s'assurer qu'ils sont à jour
+    filters.value.statuts = newStatuts.map(s => s.nom);
+  }
+}, { immediate: true });
 
 const authStatus = computed(() => {
   return authStore.isLoggedIn && authStore.token;
@@ -333,7 +362,7 @@ const userLocationIcon = computed(() => {
   });
 });
 
-// Options pour les tiles de la carte
+// Options pour les tiles de la carte optimisées pour mobile
 const tileOptions = {
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   maxZoom: 19,
@@ -341,15 +370,17 @@ const tileOptions = {
   noWrap: false,
   tileSize: 256,
   zoomOffset: 0,
-  keepBuffer: 4,
-  updateWhenIdle: false,
+  keepBuffer: 2,
+  updateWhenIdle: true,
   updateWhenZooming: false,
-  preferCanvas: true
+  updateInterval: 200,
+  preferCanvas: true,
+  reuseTiles: true,
+  crossOrigin: true
 };
 
 const filteredSignalements = computed(() => {
   const allSignalements = signalementsStore.signalements || [];
-  console.log('📊 Signalements bruts:', allSignalements.length);
   
   let filtered = allSignalements.filter(sig => {
     // Vérifier si le statut est dans les filtres
@@ -361,13 +392,6 @@ const filteredSignalements = computed(() => {
                      (sig.id_utilisateur_createur === authStore.user?.id);
     
     return statusMatch && userMatch;
-  });
-  
-  console.log('📊 Signalements filtrés:', filtered.length);
-  
-  // Log détaillé des coordonnées pour chaque signalement filtré
-  filtered.forEach(sig => {
-    console.log(`🔍 Signalement ${sig.id} - Statut: ${getCurrentStatus(sig)} - Coordonnées:`, sig.localisation?.coordinates);
   });
   
   return filtered;
@@ -384,34 +408,29 @@ const validMarkers = computed(() => {
     return latLng !== null;
   });
   
-  console.log('📍 Marqueurs valides:', markers.length);
-  
-  // Log tous les statuts trouvés pour débogage
-  const allStatuses = [...new Set(filteredSignalements.value.map(sig => getCurrentStatus(sig)))];
-  console.log('🏷️ Tous les statuts trouvés:', allStatuses);
-  console.log('🔍 Filtres actuels:', filters.value.statuts);
-  
-  // Log détaillé des photos pour chaque signalement
-  markers.forEach(signalement => {
-    console.log(`📸 Signalement ${signalement.id}:`, {
-      hasPhotos: !!signalement.photos,
-      photosLength: signalement.photos?.length || 0,
-      photos: signalement.photos?.map(p => ({
-        id: p.id,
-        hasData: !!p.data,
-        dataLength: p.data?.length || 0,
-        dataPreview: p.data?.substring(0, 50) + '...' || 'NO_DATA'
-      })),
-      entreprise: signalement.id_entreprise,
-      entrepriseType: typeof signalement.id_entreprise,
-      fullSignalement: signalement
-    });
-  });
-  
   return markers;
 });
+  
+  
+// Gestion de la mémoire pour les marqueurs
+const cleanupMarkers = () => {
+  // Nettoyer les marqueurs quand ils ne sont plus visibles
+  if (validMarkers.value.length > 100) {
+    // Garder seulement les 50 marqueurs les plus récents
+    const markersToKeep = validMarkers.value.slice(-50);
+    validMarkers.value = markersToKeep;
+  }
+};
 
-// Méthodes
+// Nettoyage complet des marqueurs
+const clearAllMarkers = () => {
+  validMarkers.value.forEach(marker => {
+    if (marker.leafletObject) {
+      map.value?.leafletObject?.removeLayer(marker.leafletObject);
+    }
+  });
+  validMarkers.value = [];
+};
 const onMapReady = async () => {
   // Vérifier l'authentification avant de charger les données
   // await authStore.checkAuth();
@@ -420,27 +439,26 @@ const onMapReady = async () => {
 };
 
 const onMapClick = async (event) => {
+  console.log('🗺️ Map clicked!', event);
+  console.log('🗺️ Click coordinates:', event.latlng);
+  console.log('🗺️ Auth status:', authStatus.value);
+  
   // Vérifier si l'utilisateur est connecté (simple vérification de token)
-  if (!authStore.isAuthenticated || !authStore.token) {
+  if (!authStatus.value) {
+    console.log('🗺️ User not authenticated, showing login prompt');
     const alert = await alertController.create({
       header: 'Connexion requise',
-      message: 'Vous devez être connecté pour créer un signalement',
+      message: 'Veuillez vous connecter pour créer un signalement',
       buttons: ['OK']
     });
+    
     await alert.present();
     return;
   }
-
-  // Debug logs
-  console.log('=== AUTH DEBUG ===');
-  console.log('authStore.isAuthenticated:', authStore.isAuthenticated);
-  console.log('authStore.token:', authStore.token);
-  console.log('authStore.user:', authStore.user);
-  console.log('authStatus.value:', authStatus.value);
-  console.log('==================');
   
   // Obtenir les coordonnées du clic
   const { lat, lng } = event.latlng;
+  console.log('🗺️ Coordinates extracted:', { lat, lng });
   
   // Confirmer la création d'un signalement à cet endroit
   const alert = await alertController.create({
@@ -452,14 +470,19 @@ const onMapClick = async (event) => {
     buttons: [
       {
         text: 'Annuler',
-        role: 'cancel'
+        role: 'cancel',
+        handler: () => {
+          console.log('🗺️ User cancelled signalement creation');
+        }
       },
       {
         text: 'Créer',
         handler: () => {
+          console.log('🗺️ User confirmed signalement creation');
           // Ouvrir le modal avec les coordonnées
           selectedCoordinates.value = { lat, lng };
           signalementModalOpen.value = true;
+          console.log('🗺️ Modal opened with coordinates:', selectedCoordinates.value);
         }
       }
     ]
@@ -475,30 +498,13 @@ const onSignalementCreated = () => {
 
 const loadInitialData = async () => {
   try {
-    console.log('🔄 Chargement des données initiales...');
     await signalementsStore.fetchSignalements();
     // fetchStats n'existe plus dans le store, les stats sont déjà dans le state
     await signalementsStore.fetchStatuts();
-    await entreprisesStore.fetchEntreprises(); // Charger les entreprises dynamiquement
-    console.log('✅ Statuts loaded:', signalementsStore.statuts);
-    console.log('📊 Signalements chargés:', signalementsStore.signalements.length);
-    console.log('🏢 Entreprises chargées:', entreprisesStore.entreprises.length);
-    
-    // Log détaillé des entreprises chargées
-    console.log('🏢 Liste des entreprises disponibles:');
-    entreprisesStore.entreprises.forEach((entreprise, index) => {
-      console.log(`  ${index + 1}. ID: ${entreprise.id}, Nom: "${entreprise.nom}"`);
-    });
   } catch (error) {
-    console.error('❌ Erreur chargement données:', error);
-    
     // En cas d'erreur 500, afficher un message plus informatif
     if (error.response && error.response.status === 500) {
-      console.warn('🚨 ERREUR SERVEUR 500 SUR LA MAP - Les données existantes sont conservées');
-      console.warn('📊 Signalements actuellement visibles:', signalementsStore.signalements.length);
       // Ne pas afficher d'erreur critique à l'utilisateur
-    } else {
-      console.error('🔴 Erreur critique lors du chargement des données');
     }
   }
 };
@@ -520,7 +526,7 @@ const getCurrentLocation = async () => {
       map.value.leafletObject.setView(userLocation.value, 15);
     }
   } catch (error) {
-    console.warn('Erreur géolocalisation:', error.message);
+    // Erreur de géolocalisation silencieuse
   }
 };
 
@@ -543,16 +549,12 @@ const zoomUpdated = (newZoom) => {
 const getLatLng = (signalement) => {
   // Vérification de sécurité pour éviter les erreurs quand signalement est undefined
   if (!signalement || !signalement.id) {
-    console.warn('❌ getLatLng appelé avec signalement invalide:', signalement);
     return null;
   }
   
-  console.log(`🔍 Vérification coordonnées pour signalement ${signalement.id}:`, {
-    localisation: signalement.localisation,
-    coordinates: signalement.localisation?.coordinates,
-    isArray: Array.isArray(signalement.localisation?.coordinates),
-    length: signalement.localisation?.coordinates?.length
-  });
+  if (!signalement.localisation?.coordinates || !Array.isArray(signalement.localisation?.coordinates)) {
+    return null;
+  }
   
   if (signalement.localisation && 
       signalement.localisation.coordinates && 
@@ -566,10 +568,8 @@ const getLatLng = (signalement) => {
       signalement.localisation.coordinates[1], // latitude
       signalement.localisation.coordinates[0]  // longitude
     ];
-    console.log(`✅ Marqueur pour ${signalement.id}:`, latLng, signalement.localisation.coordinates);
     return latLng;
   }
-  console.warn(`❌ Coordonnées invalides pour signalement ${signalement.id}:`, signalement.localisation);
   // Retourner null si les coordonnées sont invalides pour ne pas afficher le marqueur
   return null;
 };
@@ -577,20 +577,43 @@ const getLatLng = (signalement) => {
 const getMarkerIcon = (signalement) => {
   // Vérification de sécurité
   if (!signalement || !signalement.id) {
-    console.warn('❌ getMarkerIcon appelé avec signalement invalide:', signalement);
     return 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png';
   }
   
   const status = getCurrentStatus(signalement);
-  const colors = {
-    'Nouveau': 'violet',
-    'En attente': 'red',
-    'En cours': 'orange', 
-    'En validation': 'yellow',
-    'Validé': 'lightgreen',
-    'Terminé': 'green'
-  };
-  const color = colors[status] || 'red';
+  
+  // Récupérer la couleur depuis le backend si disponible, sinon utiliser des couleurs par défaut
+  const statutBackend = statuts.value.find(s => s.nom === status);
+  let color = 'red'; // Couleur par défaut
+  
+  if (statutBackend && statutBackend.couleur) {
+    // Utiliser la couleur du backend (adapter si nécessaire)
+    const backendColor = statutBackend.couleur.toLowerCase();
+    // Mapper les couleurs du backend vers les couleurs disponibles dans Leaflet
+    const colorMapping = {
+      'rouge': 'red',
+      'vert': 'green',
+      'bleu': 'blue',
+      'jaune': 'yellow',
+      'orange': 'orange',
+      'violet': 'violet',
+      'lightgreen': 'lightgreen',
+      'darkgreen': 'darkgreen',
+      'gray': 'grey'
+    };
+    color = colorMapping[backendColor] || backendColor;
+  } else {
+    // Couleurs par défaut si pas de correspondance dans le backend
+    const defaultColors = {
+      'Nouveau': 'violet',
+      'En attente': 'red',
+      'En cours': 'orange', 
+      'En validation': 'yellow',
+      'Validé': 'lightgreen',
+      'Terminé': 'green'
+    };
+    color = defaultColors[status] || 'red';
+  }
   
   // URL valide pour les icônes Leaflet
   return `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`;
@@ -603,29 +626,31 @@ const getCurrentStatus = (signalement) => {
   return 'En attente';
 };
 
-const formatBudget = (budget) => {
-  if (!budget) return '0 Ar';
-  return new Intl.NumberFormat('fr-MG', {
-    style: 'currency',
-    currency: 'MGA',
-    minimumFractionDigits: 0
-  }).format(budget);
-};
-
 const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString('fr-MG');
 };
 
+const formatBudget = (budget) => {
+  if (!budget || budget === 0) return 'Non assigné';
+  return new Intl.NumberFormat('fr-MG', {
+    style: 'currency',
+    currency: 'MGA',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(budget);
+};
+
 const getEntrepriseInfo = (signalement) => {
   if (!signalement.id_entreprise) {
-    return 'Non spécifiée';
+    return 'Non assigné';
   }
   
-  // Chercher l'entreprise dans le store (le getter gère la conversion string/number)
-  const entreprise = entreprisesStore.getEntrepriseById(signalement.id_entreprise);
+  if (signalement.nom_entreprise) {
+    return signalement.nom_entreprise;
+  }
   
-  if (entreprise) {
-    return entreprise.nom;
+  if (signalement.entreprise) {
+    return signalement.entreprise;
   }
   
   return `Entreprise #${signalement.id_entreprise}`;
@@ -655,17 +680,14 @@ const canEditSignalement = (signalement) => {
 
 const editSignalement = (signalement) => {
   // TODO: Implémenter l'édition de signalement
-  console.log('Edit signalement:', signalement);
 };
 
 const confirmDeleteSignalement = (signalement) => {
   // TODO: Implémenter la suppression de signalement
-  console.log('Delete signalement:', signalement);
 };
 
 const addProgress = (signalement) => {
   // TODO: Implémenter l'ajout de progression
-  console.log('Add progress to signalement:', signalement);
 };
 
 const toggleFilter = () => {
@@ -673,6 +695,9 @@ const toggleFilter = () => {
 };
 
 const toggleStatutFilter = (statut) => {
+  // Permettre la modification des filtres de statut même si "Mes signalements uniquement" est actif
+  // car nous voulons que tous les filtres soient toujours cochés
+  
   const index = filters.value.statuts.indexOf(statut);
   if (index > -1) {
     filters.value.statuts.splice(index, 1);
@@ -687,9 +712,15 @@ const getStatutCount = (statutName) => {
   ).length;
 };
 
+const getStatsByStatus = (statutName) => {
+  return (signalementsStore.signalements || []).filter(sig => 
+    getCurrentStatus(sig) === statutName
+  ).length;
+};
+
 const resetFilters = () => {
   filters.value = {
-    statuts: ['En attente', 'En cours', 'En validation', 'Validé', 'Terminé'],
+    statuts: statuts.value.map(s => s.nom), // Utiliser les statuts du backend
     mesSignalements: false
   };
 };
@@ -700,7 +731,6 @@ const refreshData = async () => {
 
 // Gestion des erreurs de tiles
 const onTileError = (error) => {
-  console.warn('Tile loading error:', error);
   // Les tiles qui échouent utiliseront automatiquement l'errorTileUrl (image vide)
 };
 
@@ -719,7 +749,12 @@ const toggleMySignalements = async () => {
     await alert.present();
     return;
   }
+  
+  // Inverser l'état du filtre
   filters.value.mesSignalements = !filters.value.mesSignalements;
+  
+  // Garder tous les statuts cochés par défaut (ne pas vider les filtres de statut)
+  // Les filtres de statut restent toujours cochés
 };
 
 const handleMesSignalementsChange = async () => {
@@ -734,7 +769,12 @@ const handleMesSignalementsChange = async () => {
     filters.value.mesSignalements = false;
     return;
   }
+  
+  // Inverser l'état du filtre
   filters.value.mesSignalements = !filters.value.mesSignalements;
+  
+  // Garder tous les statuts cochés par défaut (ne pas vider les filtres de statut)
+  // Les filtres de statut restent toujours cochés
 };
 
 const viewPhoto = async (photo) => {
@@ -746,21 +786,16 @@ const viewPhoto = async (photo) => {
     });
     await alert.present();
   } catch (error) {
-    console.error('Erreur affichage photo:', error);
+    // Erreur affichage photo silencieuse
   }
 };
 
 // Fonction pour gérer le focus sur un signalement
 const handleSignalementFocus = () => {
-  console.log('🔍 Query parameters reçus:', route.query);
   if (route.query.focus && route.query.lat && route.query.lng) {
-    console.log('🎯 Focus sur signalement:', route.query.focus);
-    console.log('📍 Coordonnées reçues:', { lat: route.query.lat, lng: route.query.lng });
-    
+    // Focus sur le signalement spécifique
     const targetLat = parseFloat(route.query.lat);
     const targetLng = parseFloat(route.query.lng);
-    
-    console.log('📍 Coordonnées parsées:', { lat: targetLat, lng: targetLng });
     
     // Centrer la carte sur les coordonnées spécifiées
     center.value = [targetLat, targetLng];
@@ -768,27 +803,19 @@ const handleSignalementFocus = () => {
     // Zoomer pour bien voir le marqueur
     zoom.value = 16;
     
-    console.log('🗺️ Carte centrée sur:', center.value, 'zoom:', zoom.value);
-    
     // Attendre que les données soient chargées puis mettre en évidence le marqueur
     setTimeout(() => {
       const targetSignalement = signalementsStore.signalements.find(sig => sig.id === route.query.focus);
       if (targetSignalement) {
-        console.log('✅ Signalement trouvé pour focus:', targetSignalement);
         // Ouvrir le popup du marqueur si possible
         // TODO: Implémenter l'ouverture automatique du popup
-      } else {
-        console.warn('❌ Signalement non trouvé:', route.query.focus);
       }
     }, 2000);
-  } else {
-    console.log('ℹ️ Pas de query parameters pour focus');
   }
 };
 
 // Watcher pour les query parameters
 watch(() => route.query, () => {
-  console.log('🔄 Route query changé:', route.query);
   handleSignalementFocus();
 }, { immediate: true });
 
@@ -799,6 +826,11 @@ onMounted(async () => {
   
   onUnmounted(() => {
     clearInterval(interval);
+    // Nettoyer les marqueurs et la carte
+    clearAllMarkers();
+    if (map.value?.leafletObject) {
+      map.value.leafletObject.remove();
+    }
   });
   
   // Initialiser l'authentification depuis localStorage
@@ -807,8 +839,14 @@ onMounted(async () => {
   // Vérifier l'authentification au montage
   await authStore.checkAuth();
   
+  // Charger les statuts du backend
+  await signalementsStore.fetchStatuts();
+  
   // Gérer les query parameters pour focus sur un signalement
   handleSignalementFocus();
+  
+  // Optimiser la mémoire périodiquement
+  setInterval(cleanupMarkers, 30000); // Nettoyer toutes les 30 secondes
 });
 
 </script>
@@ -820,6 +858,22 @@ onMounted(async () => {
   position: absolute;
   top: 0;
   left: 0;
+  z-index: 1;
+}
+
+/* Ensure map container receives clicks */
+.map-container .leaflet-container {
+  z-index: 1;
+  pointer-events: auto;
+}
+
+/* Fix for Ionic content overlay */
+ion-content {
+  --background: transparent;
+}
+
+ion-content::part(scroll) {
+  z-index: 0;
 }
 
 /* Statistics improvements */
@@ -1154,5 +1208,24 @@ ion-spinner {
 /* Focus states */
 ion-button:focus {
   --box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.2);
+}
+
+/* Filter disabled states */
+.filter-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.text-disabled {
+  color: #a0aec0 !important;
+}
+
+.filter-disabled ion-checkbox {
+  --checkbox-background-disabled: #e2e8f0;
+  --checkbox-background-checked-disabled: #cbd5e0;
+}
+
+.filter-disabled ion-badge {
+  opacity: 0.6;
 }
 </style>
