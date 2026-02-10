@@ -1,15 +1,17 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { getMessaging, getToken, onMessage } from 'firebase/messaging'
 import { initializeApp } from 'firebase/app'
+import { useAuthStore } from '@/store/modules/auth'
+import { notificationService } from '@/services/notifications'
 
 // Configuration Firebase (REMPLACER AVEC VOS VRAIES CLÉS)
 const firebaseConfig = {
-  apiKey: "VOTRE_API_KEY_ICI", // À remplacer
-  authDomain: "projet-cloud-e2146.firebaseapp.com",
-  projectId: "projet-cloud-e2146",
-  storageBucket: "projet-cloud-e2146.appspot.com",
-  messagingSenderId: "103456789012", // Vérifier dans Firebase Console
-  appId: "VOTRE_APP_ID_ICI" // À remplacer
+  apiKey: "AIzaSyDhLRO2eNXgH2_qHnZeIZYmRjIJvwr38RU", // remplacé
+  authDomain: "projet-cloud-e2146.firebaseapp.com", // remplacé
+  projectId: "projet-cloud-e2146", // remplacé
+  storageBucket: "projet-cloud-e2146.firebasestorage.app", // remplacé
+  messagingSenderId: "536116876117", // Vérifier dans Firebase Console (remplacé)
+  appId: "1:536116876117:web:6be40fecc75a39650e95dc" // remplacé
 }
 
 // Initialiser Firebase
@@ -21,6 +23,36 @@ export function useNotifications() {
   const notificationPermission = ref('default')
   const notifications = ref([])
   const isLoading = ref(false)
+  const authStore = useAuthStore()
+
+  // Sauvegarder le token FCM dans le backend
+  const saveTokenToBackend = async (token) => {
+    try {
+      // Vérifier si l'utilisateur est connecté
+      if (!authStore.user || !authStore.user.id) {
+        console.warn('❌ Aucun utilisateur connecté pour sauvegarder le token FCM')
+        return false
+      }
+
+      // Vérifier la connectivité avec le backend
+      const isConnected = await notificationService.checkBackendConnectivity()
+      if (!isConnected) {
+        console.warn('⚠️ Backend non accessible - token sauvegardé uniquement en local')
+        return false
+      }
+
+      // Envoyer le token au backend
+      const response = await notificationService.saveFcmToken(token, authStore.user.id)
+      console.log('✅ Token FCM sauvegardé dans le backend:', response)
+      return true
+    } catch (error) {
+      console.error('❌ Erreur sauvegarde token FCM dans le backend:', error.message)
+      
+      // Ne pas bloquer l'expérience utilisateur si le backend ne répond pas
+      // Le token reste sauvegardé en local
+      return false
+    }
+  }
 
   // Demander la permission et obtenir le token
   const requestPermission = async () => {
@@ -35,7 +67,7 @@ export function useNotifications() {
         
         // Obtenir le token FCM
         const token = await getToken(messaging, {
-          vapidKey: 'VOTRE_VAPID_KEY_ICI' // À remplacer avec votre vraie clé VAPID
+          vapidKey: 'BJKuYKYqZr4v8azAGVTKeFiFR8DHlbsKE2spbhC4GEWIt50xqeSBSX' // remplacé
         })
         
         if (token) {
@@ -45,8 +77,8 @@ export function useNotifications() {
           // Sauvegarder le token dans localStorage
           localStorage.setItem('fcmToken', token)
           
-          // TODO: Envoyer le token au backend pour sauvegarde
-          // await saveTokenToBackend(token)
+          // Envoyer le token au backend pour sauvegarde
+          await saveTokenToBackend(token)
         }
       } else if (result.state === 'prompt') {
         // Demander la permission
@@ -58,7 +90,7 @@ export function useNotifications() {
           
           // Obtenir le token FCM
           const token = await getToken(messaging, {
-            vapidKey: 'VOTRE_VAPID_KEY_ICI' // À remplacer avec votre vraie clé VAPID
+            vapidKey: 'BJKuYKYqZr4v8azAGVTKeFiFR8DHlbsKE2spbhC4GEWIt50xqeSBSX' // À remplacer avec votre vraie clé VAPID
           })
           
           if (token) {
@@ -68,8 +100,8 @@ export function useNotifications() {
             // Sauvegarder le token dans localStorage
             localStorage.setItem('fcmToken', token)
             
-            // TODO: Envoyer le token au backend pour sauvegarde
-            // await saveTokenToBackend(token)
+            // Envoyer le token au backend pour sauvegarde
+            await saveTokenToBackend(token)
           }
         } else {
           console.warn('❌ Permission notification refusée')
