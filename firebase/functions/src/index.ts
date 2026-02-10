@@ -10,6 +10,9 @@ admin.initializeApp();
 // Authentification
 export { register, login, logout, me, update } from "./auth";
 
+// Token FCM
+export { updateFcmToken, deleteFcmToken } from "./utilisateurs/updateFcmToken";
+
 // Trigger: Synchronisation utilisateur → Firebase Auth
 export { syncUserToAuth } from "./auth/syncUserToAuth";
 

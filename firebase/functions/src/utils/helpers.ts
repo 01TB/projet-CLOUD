@@ -35,7 +35,7 @@ export async function isManager(uid: string): Promise<boolean> {
     const userData = userDoc.data();
     const roleDoc = await db.collection("roles").doc(userData?.id_role).get();
 
-    return roleDoc.exists && roleDoc.data()?.nom === "Administrateur";
+    return roleDoc.exists && roleDoc.data()?.nom === "MANAGER";
   } catch (error) {
     return false;
   }
