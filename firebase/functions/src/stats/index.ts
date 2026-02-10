@@ -34,7 +34,7 @@ export const getStats = functions.https.onRequest(async (req, res) => {
       const data = doc.data();
       totalSignalements++;
       totalSurface += data.surface || 0;
-      totalBudget += data.budget || 0;
+      totalBudget += data?.budget || 0;
     });
 
     // Récupérer tous les avancements pour calculer l'avancement moyen
@@ -45,10 +45,21 @@ export const getStats = functions.https.onRequest(async (req, res) => {
 
     for (const avDoc of avancementsSnapshot.docs) {
       const avData = avDoc.data();
+
+      // Vérifier que les IDs existent et sont valides
+      if (!avData.id_statut_avancement || !avData.id_signalement) {
+        continue;
+      }
+
       const statutDoc = await db
         .collection("statuts_avancement")
-        .doc(avData.id_statut_avancement)
+        .doc(String(avData.id_statut_avancement))
         .get();
+
+      if (!statutDoc.exists) {
+        continue;
+      }
+
       const valeur = statutDoc.data()?.valeur || 0;
 
       // Garder seulement le dernier avancement (le plus élevé) par signalement
