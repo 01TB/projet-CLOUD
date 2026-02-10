@@ -147,23 +147,27 @@ export class SignalementService {
 
   /**
    * Parse une chaîne WKT (Well-Known Text) en objet Localisation
-   * Exemple: "POINT(47.5236 -18.8792)" => { lng: 47.5236, lat: -18.8792 }
+   * Exemple: "POINT (47.5236 -18.8792)" ou "POINT(47.5236 -18.8792)" => { lng: 47.5236, lat: -18.8792 }
    */
   private parseWktToLocation(wkt: string): Localisation {
     try {
-      // Extrait les coordonnées du format POINT(lng lat)
-      const match = wkt.match(/POINT\(([+-]?\d+\.?\d*)\s+([+-]?\d+\.?\d*)\)/);
+      // Extrait les coordonnées du format POINT(lng lat) ou POINT (lng lat)
+      // \s* permet un espace optionnel après POINT
+      const match = wkt.match(/POINT\s*\(([+-]?\d+\.?\d*)\s+([+-]?\d+\.?\d*)\)/);
       if (match) {
-        return {
-          lng: parseFloat(match[1]),
-          lat: parseFloat(match[2])
-        };
+        const lng = parseFloat(match[1]);
+        const lat = parseFloat(match[2]);
+        console.log(`WKT parsé: "${wkt}" => lng: ${lng}, lat: ${lat}`);
+        return { lng, lat };
+      } else {
+        console.warn(`Échec du parsing WKT: "${wkt}" - utilisation de la position par défaut`);
       }
     } catch (error) {
-      console.error('Erreur lors du parsing WKT:', error);
+      console.error('Erreur lors du parsing WKT:', wkt, error);
     }
     
     // Valeur par défaut (centre d'Antananarivo)
+    console.warn('Utilisation de la position par défaut pour:', wkt);
     return { lng: 47.5236, lat: -18.8792 };
   }
 

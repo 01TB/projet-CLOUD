@@ -144,7 +144,6 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
     this.map = L.map('map', {
       center: this.antananarivoCenter,
       zoom: this.defaultZoom,
-      minZoom: 10,
       maxZoom: 18
     });
 
@@ -201,7 +200,20 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
       2: 'green',    // Terminé
     };
     
-    const color = iconMap[statusValue] || 'blue';
+    const color = iconMap[statusValue];
+    
+    // Si la couleur n'existe pas dans le mapping, utiliser red par défaut et logger
+    if (!color) {
+      console.warn(`Statut inconnu détecté: ${statusValue}, utilisation du marqueur rouge par défaut`);
+      return L.icon({
+        iconUrl: `assets/markers/marker-red.png`,
+        shadowUrl: 'assets/markers/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      });
+    }
     
     return L.icon({
       iconUrl: `assets/markers/marker-${color}.png`,

@@ -30,14 +30,14 @@ INSERT INTO utilisateurs (email, password, synchro, id_role) VALUES
 
 -- 6. Insertion d'un Utilisateur bloqué
 INSERT INTO utilisateurs_bloques (date_blocage, synchro, id_utilisateur) VALUES 
-('2023-10-25 14:00:00', false, 5);
+('2026-10-25 14:00:00', false, 5);
 
 -- 7. Insertion des Signalements
 -- Note: Localisation utilise la syntaxe PostGIS (Longitude, Latitude). 
 -- date_creation est un VARCHAR dans votre schéma.
 INSERT INTO signalements (date_creation, surface, budget, localisation, synchro, id_utilisateur_createur, id_entreprise) VALUES 
 (
-    '2023-11-01 09:30:00', 
+    '2026-11-01 09:30:00', 
     45.5, 
     15000, 
     ST_GeographyFromText('POINT(47.50 18.90)'), -- Exemple coords Madagascar (Antananarivo approx)
@@ -46,7 +46,7 @@ INSERT INTO signalements (date_creation, surface, budget, localisation, synchro,
     1  -- BTP Rénovation
 ),
 (
-    '2023-11-02 10:15:00', 
+    '2026-11-02 10:15:00', 
     120.0, 
     50000, 
     ST_GeographyFromText('POINT(49.29 -12.28)'), -- Exemple coords (Diego Suarez approx)
@@ -55,7 +55,7 @@ INSERT INTO signalements (date_creation, surface, budget, localisation, synchro,
     2  -- Eco-Construction
 ),
 (
-    '2023-11-03 16:00:00', 
+    '2026-11-03 16:00:00', 
     15.0, 
     2000, 
     ST_GeographyFromText('POINT(47.52 18.92)'), 

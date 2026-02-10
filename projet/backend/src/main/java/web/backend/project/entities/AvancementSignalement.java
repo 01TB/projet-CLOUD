@@ -10,6 +10,7 @@ import web.backend.project.entities.dto.AvancementSignalementDTO;
 @Table(name = "avancements_signalement")
 public class AvancementSignalement implements SyncableEntity<AvancementSignalementDTO> {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Integer id;
 
