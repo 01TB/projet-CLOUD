@@ -1,11 +1,13 @@
 // src/app/components/map/map.component.ts
 import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import * as L from 'leaflet';
 import { SignalementService } from '../../services/signalement.service';
 import { SyncService } from '../../services/sync.service';
 import { AuthService } from '../../services/auth.service';
 import { FilterService } from '../../services/filter.service';
-import { Signalement, StatistiquesRecap, StatutAvancement } from '../../models/signalement.model';
+import { Signalement, StatistiquesRecap, StatutAvancement, Entreprise } from '../../models/signalement.model';
+import { environment } from '../../../environments/environment';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -25,6 +27,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
   filteredSignalements: Signalement[] = [];
   statistiques: StatistiquesRecap | null = null;
   statuts: StatutAvancement[] = [];
+  entreprises: Entreprise[] = [];
   selectedSignalement: Signalement | null = null;
   showStatusModal = false;
   newStatusId: number | null = null;
@@ -34,6 +37,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
   showRecapModal = false;
 
   constructor(
+    private http: HttpClient,
     private signalementService: SignalementService,
     private syncService: SyncService,
     private authService: AuthService,
@@ -59,6 +63,12 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
       { id: 2, nom: 'EN_COURS', valeur: 1 },
       { id: 3, nom: 'TERMINE', valeur: 2 }
     ];
+
+    // Charger les entreprises
+    this.http.get<Entreprise[]>(`${environment.apiUrl}/entreprises`).subscribe({
+      next: entreprises => this.entreprises = entreprises,
+      error: err => console.error('Erreur récupération entreprises', err)
+    });
 
     // Valeurs par défaut pour le récap
     this.statistiques = {
@@ -334,10 +344,6 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
       // Validation basique
       if (!this.editForm.surface || this.editForm.surface <= 0) {
         alert('La surface doit être supérieure à 0');
-        return;
-      }
-      if (!this.editForm.budget || this.editForm.budget <= 0) {
-        alert('Le budget doit être supérieur à 0');
         return;
       }
 

@@ -81,8 +81,11 @@
         </div>
 
         <div class="form-row">
-          <label>Budget (MGA) <span class="required">*</span></label>
-          <input type="number" [(ngModel)]="editForm.budget" min="0" step="1000" class="form-input">
+          <label>Entreprise</label>
+          <select [(ngModel)]="editForm.idEntreprise" class="form-select">
+            <option [ngValue]="null">-- Non assigné --</option>
+            <option *ngFor="let entreprise of entreprises" [ngValue]="entreprise.id">{{ entreprise.nom }}</option>
+          </select>
         </div>
 
         <div class="form-row">
