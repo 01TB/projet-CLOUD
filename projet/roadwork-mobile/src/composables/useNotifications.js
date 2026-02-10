@@ -9,7 +9,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyDhLRO2eNXgH2_qHnZeIZYmRjIJvwr38RU", // remplacé
   authDomain: "projet-cloud-e2146.firebaseapp.com", // remplacé
   projectId: "projet-cloud-e2146", // remplacé
-  storageBucket: "projet-cloud-e2146.firebasestorage.app", // remplacé
+  storageBucket: "projet-cloud-e2146.appspot.com", // remplacé
   messagingSenderId: "536116876117", // Vérifier dans Firebase Console (remplacé)
   appId: "1:536116876117:web:6be40fecc75a39650e95dc" // remplacé
 }
@@ -28,9 +28,9 @@ export function useNotifications() {
   // Sauvegarder le token FCM dans le backend
   const saveTokenToBackend = async (token) => {
     try {
-      // Vérifier si l'utilisateur est connecté
-      if (!authStore.user || !authStore.user.id) {
-        console.warn('❌ Aucun utilisateur connecté pour sauvegarder le token FCM')
+      // Vérifier si l'utilisateur est connecté et a un token
+      if (!authStore.token) {
+        console.warn('❌ Aucun token d\'authentification disponible pour sauvegarder le token FCM')
         return false
       }
 
@@ -41,8 +41,8 @@ export function useNotifications() {
         return false
       }
 
-      // Envoyer le token au backend
-      const response = await notificationService.saveFcmToken(token, authStore.user.id)
+      // Envoyer le token au backend avec authentification Bearer
+      const response = await notificationService.saveFcmToken(token, authStore.token)
       console.log('✅ Token FCM sauvegardé dans le backend:', response)
       return true
     } catch (error) {

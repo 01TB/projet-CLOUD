@@ -4,14 +4,13 @@ importScripts('https://www.gstatic.com/firebasejs/9.6.1/firebase-messaging-compa
 
 // Configuration Firebase (REMPLACER AVEC VOS VRAIES CLÉS)
 const firebaseConfig = {
-  apiKey: "VOTRE_API_KEY_ICI", // À remplacer
-  authDomain: "projet-cloud-e2146.firebaseapp.com",
-  projectId: "projet-cloud-e2146",
-  storageBucket: "projet-cloud-e2146.appspot.com",
-  messagingSenderId: "103456789012", // Vérifier dans Firebase Console
-  appId: "VOTRE_APP_ID_ICI" // À remplacer
-};
-
+  apiKey: "AIzaSyDhLRO2eNXgH2_qHnZeIZYmRjIJvwr38RU", // remplacé
+  authDomain: "projet-cloud-e2146.firebaseapp.com", // remplacé
+  projectId: "projet-cloud-e2146", // remplacé
+  storageBucket: "projet-cloud-e2146.appspot.com", // remplacé
+  messagingSenderId: "536116876117", // Vérifier dans Firebase Console (remplacé)
+  appId: "1:536116876117:web:6be40fecc75a39650e95dc" // remplacé
+}
 // Initialiser Firebase
 firebase.initializeApp(firebaseConfig);
 
