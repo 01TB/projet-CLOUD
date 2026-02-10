@@ -12,6 +12,7 @@ import { MapComponent } from './components/map/map.component';
 import { LoginComponent } from './components/auth/login/login.component';
 import { SidebarComponent } from './components/sidebar/sidebar.component';
 import { UserManagementComponent } from './components/admin/user-management/user-management.component';
+import { UserDetailsComponent } from './components/admin/user-details/user-details.component';
 import { SignalementManagementComponent } from './components/admin/signalement-management/signalement-management.component';
 import { SignalementDetailComponent } from './components/signalement-detail/signalement-detail.component';
 import { SignalementTableComponent } from './components/signalement-table/signalement-table.component';
@@ -34,6 +35,7 @@ import { JwtInterceptor } from './interceptors/jwt.interceptor';
     LoginComponent,
     SidebarComponent,
     UserManagementComponent,
+    UserDetailsComponent,
     SignalementManagementComponent,
     SignalementDetailComponent,
     SignalementTableComponent

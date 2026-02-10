@@ -119,6 +119,7 @@ export class SignalementService {
       statut_actuel: statutActuel,
       statut_affiche: statutActuel, // Initialiser avec le statut actuel, sera mis à jour par le filtre de date
       id_utilisateur_createur: dto.idUtilisateurCreateur,
+      email_utilisateur_createur: dto.emailUtilisateurCreateur,
       avancements: dto.avancements // Conserver la liste des avancements pour filtrage par date
     };
   }

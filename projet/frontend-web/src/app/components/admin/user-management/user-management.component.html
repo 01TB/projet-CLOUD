@@ -145,6 +145,13 @@
           </td>
           <td class="actions-cell">
             <button 
+              class="action-btn btn-view" 
+              (click)="viewUserDetails(user.id)"
+              title="Voir les détails"
+            >
+              👁️
+            </button>
+            <button 
               class="action-btn btn-edit" 
               (click)="openEditModal(user)"
               title="Modifier le rôle"

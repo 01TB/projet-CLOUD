@@ -5,6 +5,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { MapComponent } from './components/map/map.component';
 import { LoginComponent } from './components/auth/login/login.component';
 import { UserManagementComponent } from './components/admin/user-management/user-management.component';
+import { UserDetailsComponent } from './components/admin/user-details/user-details.component';
 import { SignalementManagementComponent } from './components/admin/signalement-management/signalement-management.component';
 import { SignalementDetailComponent } from './components/signalement-detail/signalement-detail.component';
 import { SignalementTableComponent } from './components/signalement-table/signalement-table.component';
@@ -21,6 +22,11 @@ const routes: Routes = [
   { 
     path: 'admin/users', 
     component: UserManagementComponent,
+    canActivate: [AuthGuard]
+  },
+  { 
+    path: 'admin/users/:id', 
+    component: UserDetailsComponent,
     canActivate: [AuthGuard]
   },
   { 

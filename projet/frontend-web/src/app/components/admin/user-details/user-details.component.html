@@ -1,0 +1,199 @@
+<!-- src/app/components/admin/user-details/user-details.component.html -->
+<div class="user-details-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <button class="btn-back" (click)="goBack()">← Retour</button>
+      <h2>👤 Détails Utilisateur</h2>
+    </div>
+    <button 
+      class="btn"
+      *ngIf="user && user.role.nom !== 'Manager'"
+      [class.btn-block]="!user.est_bloque"
+      [class.btn-unblock]="user.est_bloque"
+      (click)="openBlockModal()"
+    >
+      {{ user.est_bloque ? '🔓 Débloquer' : '🔒 Bloquer' }}
+    </button>
+  </div>
+
+  <!-- Messages -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    ✓ {{ successMessage }}
+  </div>
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    ✗ {{ errorMessage }}
+  </div>
+
+  <!-- Loader principal -->
+  <div class="loader" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Chargement de l'utilisateur...</p>
+  </div>
+
+  <!-- Contenu principal -->
+  <div class="content" *ngIf="!loading && user">
+    
+    <!-- Card informations utilisateur -->
+    <div class="user-card">
+      <div class="user-card-header">
+        <div class="user-avatar">
+          <span class="avatar-icon">👤</span>
+        </div>
+        <div class="user-info">
+          <h3>{{ user.email }}</h3>
+          <span class="badge" [ngClass]="getRoleBadgeClass(user.role.nom)">
+            {{ user.role.nom }}
+          </span>
+        </div>
+      </div>
+      
+      <div class="user-card-body">
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">🆔 ID</span>
+            <span class="info-value">#{{ user.id }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">📧 Email</span>
+            <span class="info-value">{{ user.email }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">👔 Rôle</span>
+            <span class="info-value">{{ user.role.nom }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">📅 Date de création</span>
+            <span class="info-value">{{ formatDate(user.date_creation) }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">📊 Statut</span>
+            <span class="info-value" [class.status-active]="!user.est_bloque" [class.status-blocked]="user.est_bloque">
+              {{ user.est_bloque ? '🚫 Bloqué' : '✓ Actif' }}
+            </span>
+          </div>
+          <div class="info-item" *ngIf="user.est_bloque && user.date_blocage">
+            <span class="info-label">🔒 Date de blocage</span>
+            <span class="info-value">{{ user.date_blocage }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section signalements -->
+    <div class="signalements-section">
+      <div class="section-header">
+        <h3>📋 Signalements créés par cet utilisateur</h3>
+      </div>
+
+      <!-- Statistiques des signalements -->
+      <div class="signalement-stats">
+        <div class="mini-stat">
+          <span class="mini-stat-value">{{ stats.total }}</span>
+          <span class="mini-stat-label">Total</span>
+        </div>
+        <div class="mini-stat stat-nouveau">
+          <span class="mini-stat-value">{{ stats.nouveau }}</span>
+          <span class="mini-stat-label">Nouveau</span>
+        </div>
+        <div class="mini-stat stat-encours">
+          <span class="mini-stat-value">{{ stats.enCours }}</span>
+          <span class="mini-stat-label">En cours</span>
+        </div>
+        <div class="mini-stat stat-termine">
+          <span class="mini-stat-value">{{ stats.termine }}</span>
+          <span class="mini-stat-label">Terminé</span>
+        </div>
+      </div>
+
+      <!-- Loader signalements -->
+      <div class="loader-small" *ngIf="loadingSignalements">
+        <div class="spinner-small"></div>
+        <span>Chargement des signalements...</span>
+      </div>
+
+      <!-- Table des signalements -->
+      <div class="table-container" *ngIf="!loadingSignalements">
+        <table class="signalements-table" *ngIf="signalements.length > 0">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Date création</th>
+              <th>Surface</th>
+              <th>Budget</th>
+              <th>Entreprise</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let sig of signalements">
+              <td class="id-cell">#{{ sig.id }}</td>
+              <td>{{ formatDate(sig.date_creation) }}</td>
+              <td>{{ formatSurface(sig.surface) }}</td>
+              <td class="budget-cell">{{ formatBudget(sig.budget) }}</td>
+              <td>{{ sig.entreprise?.nom || 'Non assigné' }}</td>
+              <td>
+                <span class="badge" [ngClass]="getStatutBadgeClass(sig.statut_actuel.nom)">
+                  {{ getStatutIcon(sig.statut_actuel.nom) }} {{ sig.statut_actuel.nom }}
+                </span>
+              </td>
+              <td class="actions-cell">
+                <button 
+                  class="btn btn-view" 
+                  (click)="viewSignalement(sig.id)"
+                  title="Voir les détails"
+                >
+                  👁️ Voir
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- État vide -->
+        <div class="empty-state" *ngIf="signalements.length === 0">
+          <div class="empty-icon">📭</div>
+          <p>Cet utilisateur n'a créé aucun signalement</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de blocage/déblocage -->
+  <div class="modal-overlay" *ngIf="showBlockModal" (click)="closeBlockModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ user?.est_bloque ? '🔓 Débloquer' : '🔒 Bloquer' }} l'utilisateur</h3>
+        <button class="modal-close" (click)="closeBlockModal()">✖</button>
+      </div>
+      <div class="modal-body" *ngIf="user">
+        <div class="confirmation-message">
+          <p *ngIf="!user.est_bloque">
+            Êtes-vous sûr de vouloir <strong>bloquer</strong> l'utilisateur <strong>{{ user.email }}</strong> ?
+          </p>
+          <p *ngIf="user.est_bloque">
+            Êtes-vous sûr de vouloir <strong>débloquer</strong> l'utilisateur <strong>{{ user.email }}</strong> ?
+          </p>
+          <div class="warning-box" *ngIf="!user.est_bloque">
+            ⚠️ Cet utilisateur ne pourra plus se connecter à l'application.
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-secondary" (click)="closeBlockModal()">
+            Annuler
+          </button>
+          <button 
+            class="btn" 
+            [class.btn-danger]="!user.est_bloque"
+            [class.btn-success]="user.est_bloque"
+            (click)="toggleBlockUser()"
+          >
+            {{ user.est_bloque ? 'Débloquer' : 'Bloquer' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

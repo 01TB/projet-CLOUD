@@ -46,8 +46,10 @@ export interface Signalement {
   statut_actuel: StatutAvancement;
   statut_affiche?: StatutAvancement; // Statut calculé à la date du filtre pour l'affichage
   id_utilisateur_createur: number;
+  email_utilisateur_createur?: string;
   photos?: string[]; // URLs des photos - par défaut login.png
   avancements?: AvancementResponseDTO[]; // Liste des avancements pour calcul du statut à une date donnée
+  prixM2Forfaitaire?: number; // Prix forfaitaire par m² (MGA)
 }
 
 export interface StatistiquesRecap {
