@@ -114,5 +114,24 @@ service cloud.firestore {
       
       allow delete: if isManager();
     }
+    
+    // Collection UTILISATEURS_FCM_TOKENS
+    // Collection dédiée pour les tokens FCM (séparée de la synchronisation PostgreSQL)
+    match /utilisateurs_fcm_tokens/{tokenId} {
+      // Lecture/Écriture : Uniquement via Cloud Functions
+      // Cette collection est gérée exclusivement par les Firebase Functions
+      // pour des raisons de sécurité et d'isolation de la synchronisation
+      allow read, write: if false;
+    }
+    
+    // Collection NOTIFICATIONS (historique des notifications envoyées)
+    match /notifications/{notificationId} {
+      // Lecture : Utilisateur peut voir ses propres notifications ou Manager peut tout voir
+      allow read: if request.auth != null && 
+                    (resource.data.firebase_auth_uid == request.auth.uid || isManager());
+      
+      // Écriture : Uniquement via Cloud Functions
+      allow write: if false;
+    }
   }
 }

@@ -4,15 +4,21 @@ export const db = admin.firestore();
 export const auth = admin.auth();
 export const apiKEY = "AIzaSyDhLRO2eNXgH2_qHnZeIZYmRjIJvwr38RU";
 
-// Obtenir les paramètres (doc id = 1)
+// Obtenir les paramètres (dernier document de la collection)
 export async function getParameters(): Promise<{
   duree_session: number;
   nb_tentatives_connexion: number;
 } | null> {
   try {
-    const doc = await db.collection("parametres").doc("1").get();
-    if (!doc.exists) return null;
-    const data = doc.data();
+    const snapshot = await db
+      .collection("parametres")
+      .orderBy("id", "desc")
+      .limit(1)
+      .get();
+
+    if (snapshot.empty) return null;
+
+    const data = snapshot.docs[0].data();
     return {
       duree_session:
         typeof data?.duree_session === "number" ? data.duree_session : 3600,
@@ -35,7 +41,7 @@ export async function isManager(uid: string): Promise<boolean> {
     const userData = userDoc.data();
     const roleDoc = await db.collection("roles").doc(userData?.id_role).get();
 
-    return roleDoc.exists && roleDoc.data()?.nom === "MANAGER";
+    return roleDoc.exists && roleDoc.data()?.nom === "Administrateur";
   } catch (error) {
     return false;
   }

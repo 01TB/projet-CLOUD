@@ -208,27 +208,25 @@ export const createSignalement = functions.https.onRequest(async (req, res) => {
     const {
       description,
       surface,
-      budget,
       adresse,
       localisation,
-      id_entreprise,
     } = req.body;
 
     // Validation
-    if (!surface || !budget || !localisation) {
+    if (!surface || !localisation) {
       const response = errorResponse(
         "VALIDATION_ERROR",
-        "Surface, budget et localisation requis",
+        "Surface et localisation requis",
         400,
       );
       res.status(response.status).json(response.body);
       return;
     }
 
-    if (surface <= 0 || budget <= 0) {
+    if (surface <= 0) {
       const response = errorResponse(
         "VALIDATION_ERROR",
-        "Surface et budget doivent être supérieurs à 0",
+        "Surface doit être supérieur à 0",
         400,
       );
       res.status(response.status).json(response.body);
@@ -236,16 +234,16 @@ export const createSignalement = functions.https.onRequest(async (req, res) => {
     }
 
     // Récupérer une entreprise par défaut si non fournie
-    let entrepriseId = id_entreprise;
-    if (!entrepriseId) {
-      const entreprisesSnapshot = await db
-        .collection("entreprises")
-        .limit(1)
-        .get();
-      if (!entreprisesSnapshot.empty) {
-        entrepriseId = entreprisesSnapshot.docs[0].data()?.id;
-      }
-    }
+    // let entrepriseId = id_entreprise;
+    // if (!entrepriseId) {
+    //   const entreprisesSnapshot = await db
+    //     .collection("entreprises")
+    //     .limit(1)
+    //     .get();
+    //   if (!entreprisesSnapshot.empty) {
+    //     entrepriseId = entreprisesSnapshot.docs[0].data()?.id;
+    //   }
+    // }
 
     const userInfo = await getUserInfo(decodedToken.uid);
 
@@ -287,7 +285,7 @@ export const createSignalement = functions.https.onRequest(async (req, res) => {
       id: signalementNumericId,
       description: description || "",
       surface,
-      budget,
+      budget: null,
       adresse: adresse || "",
       localisation: new admin.firestore.GeoPoint(
         localisation.coordinates[1], // latitude
@@ -296,7 +294,7 @@ export const createSignalement = functions.https.onRequest(async (req, res) => {
       date_creation: formattedDate,
       date_modification: formattedDate,
       id_utilisateur_createur: userId,
-      id_entreprise: Number(entrepriseId),
+      id_entreprise: null,
       synchro: false,
     };
 
@@ -330,7 +328,6 @@ export const createSignalement = functions.https.onRequest(async (req, res) => {
           id: signalementNumericId,
           description: signalementData.description,
           surface: signalementData.surface,
-          budget: signalementData.budget,
           adresse: signalementData.adresse,
           localisation: {
             type: "Point",
@@ -338,7 +335,6 @@ export const createSignalement = functions.https.onRequest(async (req, res) => {
           },
           date_creation: signalementData.date_creation,
           id_utilisateur_createur: signalementData.id_utilisateur_createur,
-          id_entreprise: signalementData.id_entreprise,
           avancement_signalements: {
             id: signalementNumericId,
             id_statut_avancement: avancementData.id_statut_avancement,

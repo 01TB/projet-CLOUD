@@ -653,13 +653,11 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
 {
   "description": "Nid de poule important sur la route",
   "surface": 150.5,
-  "budget": 5000000,
   "adresse": "Route Ambohijatovo, Antananarivo",
   "localisation": {
     "type": "Point",
     "coordinates": [47.5079, -18.8792]
-  },
-  "id_entreprise": "1"
+  }
 }
 ```
 
@@ -681,7 +679,6 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
     "id": "signalement123",
     "description": "Nid de poule important sur la route",
     "surface": 150.5,
-    "budget": 5000000,
     "adresse": "Route Ambohijatovo, Antananarivo",
     "localisation": {
       "type": "Point",
@@ -689,7 +686,6 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
     },
     "date_creation": "2026-01-27T10:30:00.000Z",
     "id_utilisateur_createur": "1",
-    "id_entreprise": "1"
     "avancement_signalements": {
         "id": "ORG39tzZZB1ZgwIn2IFS",
         "id_statut_avancement": 1,
