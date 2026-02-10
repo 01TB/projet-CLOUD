@@ -12,7 +12,7 @@ import java.time.LocalDate;
 @Entity
 @Table(name = "mvt_prix_signalements")
 public class MvtPrixSignalement {
-
+    @SuppressWarnings("deprecation")
     @Id
     @GeneratedValue(generator = "use-existing-or-generate")
     @GenericGenerator(name = "use-existing-or-generate", type = UseExistingOrGenerateId.class)

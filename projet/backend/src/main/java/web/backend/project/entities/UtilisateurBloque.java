@@ -10,6 +10,7 @@ import java.util.Objects;
 @Entity
 @Table(name = "utilisateurs_bloques")
 public class UtilisateurBloque implements SyncableEntity<UtilisateurBloqueDTO> {
+    @SuppressWarnings("deprecation")
     @Id
     @GeneratedValue(generator = "use-existing-or-generate")
     @GenericGenerator(name = "use-existing-or-generate", type = UseExistingOrGenerateId.class)

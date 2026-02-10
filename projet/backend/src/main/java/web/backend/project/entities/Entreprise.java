@@ -16,6 +16,7 @@ import web.backend.project.entities.dto.EntrepriseDTO;
         @UniqueConstraint(columnNames = { "nom" })
 })
 public class Entreprise implements SyncableEntity<EntrepriseDTO> {
+    @SuppressWarnings("deprecation")
     @Id
     @GeneratedValue(generator = "use-existing-or-generate")
     @GenericGenerator(name = "use-existing-or-generate", type = UseExistingOrGenerateId.class)
