@@ -203,9 +203,19 @@ export class SignalementManagementComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Sauvegarde statique du prix global (pas d'appel API pour l'instant)
-    this.showSuccess(`Prix m² forfaitaire global défini : ${this.formatPrixGlobal(this.prixM2ForfaitaireGlobal)}`);
-    this.closePrixModal();
+    // Appel API pour sauvegarder le prix forfaitaire
+    const prixSub = this.signalementService.addMvtPrix(this.prixM2ForfaitaireGlobal).subscribe({
+      next: () => {
+        this.showSuccess(`Prix m² forfaitaire global défini : ${this.formatPrixGlobal(this.prixM2ForfaitaireGlobal)}`);
+        this.closePrixModal();
+      },
+      error: (error) => {
+        console.error('Erreur lors de la sauvegarde du prix:', error);
+        this.showError('Erreur lors de la sauvegarde du prix forfaitaire');
+      }
+    });
+
+    this.subscriptions.add(prixSub);
   }
 
   formatPrixGlobal(prix: number): string {

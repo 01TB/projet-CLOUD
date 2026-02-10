@@ -53,6 +53,10 @@
             <span class="value budget">{{ formatBudget(signalement.budget) }}</span>
           </div>
           <div class="info-row">
+            <span class="label">Niveaux:</span>
+            <span class="value">{{ signalement.niveaux ?? 'Non défini' }}</span>
+          </div>
+          <div class="info-row">
             <span class="label">Entreprise:</span>
             <span class="value">{{ signalement.entreprise?.nom || 'Non assigné' }}</span>
           </div>
@@ -79,6 +83,12 @@
         <div class="form-row">
           <label>Budget (MGA) <span class="required">*</span></label>
           <input type="number" [(ngModel)]="editForm.budget" min="0" step="1000" class="form-input">
+        </div>
+
+        <div class="form-row">
+          <label>Niveaux (1-5)</label>
+          <input type="number" [(ngModel)]="editForm.niveaux" min="1" max="5" step="1" class="form-input">
+          <small class="hint">Niveau de dégradation de la route</small>
         </div>
 
         <div class="form-row">

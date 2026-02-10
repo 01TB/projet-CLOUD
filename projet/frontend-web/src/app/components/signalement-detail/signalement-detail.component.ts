@@ -132,6 +132,7 @@ export class SignalementDetailComponent implements OnInit, OnDestroy {
       dateCreation: this.signalement.date_creation,
       surface: this.signalement.surface,
       budget: this.signalement.budget,
+      niveaux: this.signalement.niveaux,
       localisation: this.signalementService.locationToWkt(this.signalement.localisation),
       idUtilisateurCreateur: this.signalement.id_utilisateur_createur,
       idEntreprise: this.signalement.entreprise.id,

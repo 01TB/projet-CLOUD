@@ -143,6 +143,21 @@
           </div>
 
           <div class="form-group">
+            <label for="editNiveaux">Niveaux (1-5):</label>
+            <input 
+              type="number" 
+              id="editNiveaux" 
+              class="form-input" 
+              [(ngModel)]="editForm.niveaux"
+              [ngModelOptions]="{standalone: true}"
+              min="1"
+              max="5"
+              step="1"
+            />
+            <small class="form-hint">🚧 Niveau de dégradation de la route</small>
+          </div>
+
+          <div class="form-group">
             <label for="editEntreprise">Entreprise:</label>
             <input 
               type="text" 

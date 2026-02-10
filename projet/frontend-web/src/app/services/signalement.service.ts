@@ -100,6 +100,14 @@ export class SignalementService {
   }
 
   /**
+   * Ajoute un mouvement de prix forfaitaire m²
+   * POST /api/signalements/prix
+   */
+  addMvtPrix(montant: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/prix`, montant);
+  }
+
+  /**
    * Convertit un SignalementResponseDTO en Signalement
    */
   private convertDtoToSignalement(dto: SignalementResponseDTO): Signalement {
@@ -111,6 +119,7 @@ export class SignalementService {
       date_creation: dto.dateCreation,
       surface: dto.surface,
       budget: dto.budget,
+      niveaux: dto.niveaux ?? undefined,
       localisation: this.parseWktToLocation(dto.localisation),
       entreprise: {
         id: dto.idEntreprise || 0,

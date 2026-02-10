@@ -41,6 +41,7 @@ export interface Signalement {
   date_creation: string;
   surface: number; // en m²
   budget: number; // en MGA
+  niveaux?: number; // Niveau de dégradation (1-5)
   localisation: Localisation;
   entreprise: Entreprise;
   statut_actuel: StatutAvancement;
@@ -65,6 +66,7 @@ export interface SignalementResponseDTO {
   dateCreation: string;
   surface: number;
   budget: number;
+  niveaux: number | null; // Niveau de dégradation
   localisation: string; // Format WKT (ex: "POINT(47.5236 -18.8792)")
   synchro: boolean;
   idUtilisateurCreateur: number;

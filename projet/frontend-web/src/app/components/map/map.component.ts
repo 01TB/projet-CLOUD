@@ -255,6 +255,11 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
             <span class="info-value">${formatNumber(signalement.budget)} MGA</span>
           </div>
           <div class="popup-info">
+            <span class="info-icon">🔢</span>
+            <span class="info-label">Niveaux:</span>
+            <span class="info-value">${signalement.niveaux ?? 'Non défini'}</span>
+          </div>
+          <div class="popup-info">
             <span class="info-icon">🏢</span>
             <span class="info-label">Entreprise:</span>
             <span class="info-value">${signalement.entreprise.nom}</span>
@@ -288,6 +293,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
         dateCreation: signalement.date_creation,
         surface: signalement.surface,
         budget: signalement.budget,
+        niveaux: signalement.niveaux,
         localisation: this.signalementService.locationToWkt(signalement.localisation),
         idUtilisateurCreateur: signalement.id_utilisateur_createur,
         idEntreprise: signalement.entreprise.id,
