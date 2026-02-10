@@ -374,9 +374,168 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
 
 ---
 
+## � Gestion du Token FCM
+
+### 6. PUT /updateFcmToken
+
+**Description** : Enregistrer ou mettre à jour le token FCM (Firebase Cloud Messaging) de l'utilisateur connecté pour recevoir des notifications push.
+
+**URL complète** : `https://us-central1-projet-cloud-e2146.cloudfunctions.net/updateFcmToken`
+
+**Méthode HTTP** : `PUT`
+
+**Headers** :
+
+```json
+{
+  "Content-Type": "application/json",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Corps de la requête** :
+
+```json
+{
+  "fcm_token": "fXh4kD3R7bQ:APA91bH8j9K..."
+}
+```
+
+**Champs** :
+
+- `fcm_token` (string, requis) : Token FCM généré par Firebase SDK côté client
+
+**Réponse succès (200)** :
+
+```json
+{
+  "success": true,
+  "message": "Token FCM enregistré avec succès",
+  "data": {
+    "id": 123,
+    "fcm_token_registered": true
+  }
+}
+```
+
+**Réponses erreur** :
+
+```json
+// 401 - Token manquant
+{
+  "success": false,
+  "error": {
+    "code": "AUTH_REQUIRED",
+    "message": "Token requis"
+  }
+}
+
+// 401 - Token invalide
+{
+  "success": false,
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "Token invalide"
+  }
+}
+
+// 400 - Token FCM manquant
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Le token FCM est requis"
+  }
+}
+
+// 404 - Utilisateur non trouvé
+{
+  "success": false,
+  "error": {
+    "code": "USER_NOT_FOUND",
+    "message": "Utilisateur non trouvé"
+  }
+}
+```
+
+**Notes importantes** :
+
+- 📱 Le token FCM est généré côté client (mobile ou web)
+- 🔄 Met à jour automatiquement le champ `fcm_token` dans le document utilisateur
+- 📅 Ajoute/met à jour le champ `fcm_token_updated_at` avec un timestamp
+- ✅ Nécessaire pour recevoir les notifications push sur nouveaux avancements
+- 🔔 Le trigger `notifyUserOnAvancement` utilise ce token pour envoyer les notifications
+
+---
+
+### 7. DELETE /deleteFcmToken
+
+**Description** : Supprimer le token FCM de l'utilisateur connecté (lors de la déconnexion ou désactivation des notifications).
+
+**URL complète** : `https://us-central1-projet-cloud-e2146.cloudfunctions.net/deleteFcmToken`
+
+**Méthode HTTP** : `DELETE`
+
+**Headers** :
+
+```json
+{
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Réponse succès (200)** :
+
+```json
+{
+  "success": true,
+  "message": "Token FCM supprimé avec succès"
+}
+```
+
+**Réponses erreur** :
+
+```json
+// 401 - Token manquant
+{
+  "success": false,
+  "error": {
+    "code": "AUTH_REQUIRED",
+    "message": "Token requis"
+  }
+}
+
+// 401 - Token invalide
+{
+  "success": false,
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "Token invalide"
+  }
+}
+
+// 404 - Utilisateur non trouvé
+{
+  "success": false,
+  "error": {
+    "code": "USER_NOT_FOUND",
+    "message": "Utilisateur non trouvé"
+  }
+}
+```
+
+**Notes importantes** :
+
+- 🚪 À appeler lors de la déconnexion de l'utilisateur
+- 🔕 Empêche l'envoi de notifications après déconnexion
+- 🗑️ Supprime complètement le champ `fcm_token` du document utilisateur
+- ⚠️ L'utilisateur ne recevra plus de notifications push jusqu'à réenregistrement
+
+---
+
 ## 📍 Signalements
 
-### 6. GET /getSignalements
+### 8. GET /getSignalements
 
 **Description** : Récupérer la liste des signalements avec pagination et filtres (accessible à tous, même sans authentification).
 
@@ -471,7 +630,7 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
 
 ---
 
-### 7. POST /createSignalement
+### 9. POST /createSignalement
 
 **Description** : Créer un nouveau signalement (authentification requise, utilisateur non bloqué).
 
@@ -582,7 +741,7 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
 
 ---
 
-### 8. GET /getSignalement/:id
+### 10. GET /getSignalement/:id
 
 **Description** : Récupérer les détails d'un signalement spécifique (accessible à tous).
 
@@ -666,7 +825,7 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
 
 ---
 
-### 9. PUT /updateSignalement/:id
+### 11. PUT /updateSignalement/:id
 
 **Description** : Mettre à jour un signalement (uniquement Manager).
 
@@ -749,7 +908,7 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
 
 ---
 
-### 10. DELETE /deleteSignalement/:id
+### 12. DELETE /deleteSignalement/:id
 
 **Description** : Supprimer un signalement (uniquement Manager).
 
@@ -813,7 +972,7 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
 
 ## � Photos de signalements
 
-### 11. POST /addSignalementPhoto
+### 13. POST /addSignalementPhoto
 
 **Description** : Ajouter une photo (encodée en base64) à un signalement existant.
 
@@ -952,7 +1111,7 @@ curl -X POST https://us-central1-projet-cloud-e2146.cloudfunctions.net/addSignal
 
 ## �📊 Statuts d'avancement
 
-### 12. GET /getStatuts
+### 14. GET /getStatuts
 
 **Description** : Récupérer la liste de tous les statuts d'avancement possibles (accessible à tous).
 
@@ -1012,7 +1171,7 @@ curl -X POST https://us-central1-projet-cloud-e2146.cloudfunctions.net/addSignal
 
 ## 🏢 Entreprises
 
-### 13. GET /getEntreprises
+### 15. GET /getEntreprises
 
 **Description** : Récupérer la liste de toutes les entreprises enregistrées dans le système (accessible à tous).
 
@@ -1057,7 +1216,7 @@ curl -X POST https://us-central1-projet-cloud-e2146.cloudfunctions.net/addSignal
 
 ## 📈 Statistiques
 
-### 14. GET /getStats
+### 16. GET /getStats
 
 **Description** : Récupérer les statistiques globales du système (accessible à tous).
 
@@ -1118,7 +1277,7 @@ curl -X POST https://us-central1-projet-cloud-e2146.cloudfunctions.net/addSignal
 
 ## � Synchronisation
 
-### 15. POST /syncToBackend
+### 17. POST /syncToBackend
 
 **Description** : Synchroniser les données Firestore vers le backend Spring Boot. Récupère toutes les données non synchronisées (synchro = false), les envoie au backend, puis met à jour synchro = true.
 
@@ -1446,8 +1605,14 @@ curl -X POST https://us-central1-projet-cloud-e2146.cloudfunctions.net/syncToBac
 
 ---
 
-**Date de dernière mise à jour** : 7 février 2026  
-**Version API** : 1.1.0  
+**Date de dernière mise à jour** : 10 février 2026  
+**Version API** : 1.2.0  
+**Changelog v1.2.0** :
+
+- 📱 Nouveaux endpoints pour gestion du token FCM
+- 🔔 Support des notifications push via Firebase Cloud Messaging
+- ✨ Endpoints `updateFcmToken` et `deleteFcmToken`
+
 **Changelog v1.1.0** :
 
 - ✨ Durée de session configurable via `parametres.duree_session`
