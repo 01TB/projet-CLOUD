@@ -1,10 +1,12 @@
 // src/app/components/signalement-detail/signalement-detail.component.ts
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { SignalementService } from '../../services/signalement.service';
 import { AuthService } from '../../services/auth.service';
-import { Signalement, StatutAvancement } from '../../models/signalement.model';
+import { Signalement, StatutAvancement, Entreprise } from '../../models/signalement.model';
+import { environment } from '../../../environments/environment';
 import photoData from '../../../assets/img/login_image_data.json';
 
 @Component({
@@ -19,6 +21,7 @@ export class SignalementDetailComponent implements OnInit, OnDestroy {
   isEditMode = false;
   editForm: any = null;
   statuts: StatutAvancement[] = [];
+  entreprises: Entreprise[] = [];
   canEdit = false;
   photoNames: string[] = [];
   imageBaseUrl = '/api/images/';
@@ -28,6 +31,7 @@ export class SignalementDetailComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
+    private http: HttpClient,
     private signalementService: SignalementService,
     private authService: AuthService
   ) {}
@@ -41,6 +45,9 @@ export class SignalementDetailComponent implements OnInit, OnDestroy {
       { id: 2, nom: 'EN_COURS', valeur: 1 },
       { id: 3, nom: 'TERMINE', valeur: 2 }
     ];
+
+    // Charger les entreprises
+    this.loadEntreprises();
     
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
@@ -48,6 +55,13 @@ export class SignalementDetailComponent implements OnInit, OnDestroy {
     } else {
       this.errorMessage = 'ID du signalement manquant';
     }
+  }
+
+  private loadEntreprises(): void {
+    this.http.get<Entreprise[]>(`${environment.apiUrl}/entreprises`).subscribe({
+      next: entreprises => this.entreprises = entreprises,
+      error: err => console.error('Erreur récupération entreprises', err)
+    });
   }
 
   private loadSignalement(id: number): void {
@@ -155,10 +169,6 @@ export class SignalementDetailComponent implements OnInit, OnDestroy {
     // Validation
     if (!this.editForm.surface || this.editForm.surface <= 0) {
       alert('La surface doit être supérieure à 0');
-      return;
-    }
-    if (!this.editForm.budget || this.editForm.budget <= 0) {
-      alert('Le budget doit être supérieur à 0');
       return;
     }
 

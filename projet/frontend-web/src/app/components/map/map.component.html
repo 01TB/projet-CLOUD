@@ -130,16 +130,18 @@
           </div>
 
           <div class="form-group">
-            <label for="editBudget">Budget (MGA):</label>
-            <input 
-              type="number" 
-              id="editBudget" 
-              class="form-input" 
-              [(ngModel)]="editForm.budget"
+            <label for="editEntreprise">Entreprise:</label>
+            <select 
+              id="editEntreprise" 
+              class="form-select" 
+              [(ngModel)]="editForm.idEntreprise"
               [ngModelOptions]="{standalone: true}"
-              min="0"
-              required
-            />
+            >
+              <option [ngValue]="null">-- Non assigné --</option>
+              <option *ngFor="let entreprise of entreprises" [ngValue]="entreprise.id">
+                {{ entreprise.nom }}
+              </option>
+            </select>
           </div>
 
           <div class="form-group">
@@ -155,17 +157,6 @@
               step="1"
             />
             <small class="form-hint">🚧 Niveau de dégradation de la route</small>
-          </div>
-
-          <div class="form-group">
-            <label for="editEntreprise">Entreprise:</label>
-            <input 
-              type="text" 
-              id="editEntreprise" 
-              class="form-input" 
-              [value]="selectedSignalement.entreprise.nom"
-              disabled
-            />
           </div>
 
           <div class="form-group">
