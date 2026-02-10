@@ -1,0 +1,14 @@
+# INSTRUCTIONS:
+## lancement du projet:
+	- aller dans /projet
+	- docker compose up --build
+
+## ports:
+backend: localhost:8080
+front web: localhost:80
+
+
+## base de données:
+	docker exec -it postgres-signalisation psql -U signalisation_admin -d signalisation_prod
+
+
