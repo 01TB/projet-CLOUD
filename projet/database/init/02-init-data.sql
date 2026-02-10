@@ -12,8 +12,8 @@ INSERT INTO entreprises (nom, synchro) VALUES
 -- 3. Insertion des Statuts d''avancement
 INSERT INTO statuts_avancement (nom, valeur, synchro) VALUES 
 ('NOUVEAU', 0, false),
-('EN_COURS', 50, false),
-('TERMINE', 100, false);
+('EN_COURS', 1, false),
+('TERMINE', 2, false);
 
 -- 4. Insertion des Paramètres globaux
 INSERT INTO parametres (nb_tentatives_connexion, duree_session, synchro) VALUES 
@@ -40,7 +40,7 @@ INSERT INTO signalements (date_creation, surface, budget, localisation, synchro,
     '2026-11-01 09:30:00', 
     45.5, 
     15000, 
-    ST_GeographyFromText('POINT(47.50 18.90)'), -- Exemple coords Madagascar (Antananarivo approx)
+    ST_GeographyFromText('POINT(47.5236 -18.8792)'), -- Exemple coords Madagascar (Antananarivo approx)
     false, 
     2, -- Jean Dupont
     1  -- BTP Rénovation
@@ -49,7 +49,7 @@ INSERT INTO signalements (date_creation, surface, budget, localisation, synchro,
     '2026-11-02 10:15:00', 
     120.0, 
     50000, 
-    ST_GeographyFromText('POINT(49.29 -12.28)'), -- Exemple coords (Diego Suarez approx)
+    ST_GeographyFromText('POINT(47.5290 -18.8924)'), -- Exemple coords (Diego Suarez approx)
     false, 
     3, -- Marie Curie
     2  -- Eco-Construction
@@ -58,7 +58,7 @@ INSERT INTO signalements (date_creation, surface, budget, localisation, synchro,
     '2026-11-03 16:00:00', 
     15.0, 
     2000, 
-    ST_GeographyFromText('POINT(47.52 18.92)'), 
+    ST_GeographyFromText('POINT(47.5250 -18.8875)'), 
     false, 
     2, -- Jean Dupont
     3  -- Travaux Express
