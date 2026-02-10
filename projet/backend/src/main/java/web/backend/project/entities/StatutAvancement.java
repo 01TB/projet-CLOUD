@@ -1,6 +1,7 @@
 package web.backend.project.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.GenericGenerator;
 import web.backend.project.entities.dto.StatutAvancementDTO;
 
 import java.time.LocalDateTime;
@@ -13,6 +14,8 @@ import java.util.Objects;
 })
 public class StatutAvancement implements SyncableEntity<StatutAvancementDTO> {
     @Id
+    @GeneratedValue(generator = "use-existing-or-generate")
+    @GenericGenerator(name = "use-existing-or-generate", type = UseExistingOrGenerateId.class)
     @Column(name = "id")
     private Integer id;
 

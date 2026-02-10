@@ -1,6 +1,7 @@
 package web.backend.project.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.GenericGenerator;
 import web.backend.project.entities.dto.UtilisateurBloqueDTO;
 
 import java.time.LocalDateTime;
@@ -10,6 +11,8 @@ import java.util.Objects;
 @Table(name = "utilisateurs_bloques")
 public class UtilisateurBloque implements SyncableEntity<UtilisateurBloqueDTO> {
     @Id
+    @GeneratedValue(generator = "use-existing-or-generate")
+    @GenericGenerator(name = "use-existing-or-generate", type = UseExistingOrGenerateId.class)
     @Column(name = "id")
     private Integer id;
 

@@ -4,9 +4,11 @@ import java.util.Objects;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import org.hibernate.annotations.GenericGenerator;
 import web.backend.project.entities.dto.RoleDTO;
 
 @Entity
@@ -15,6 +17,8 @@ import web.backend.project.entities.dto.RoleDTO;
 })
 public class Role implements SyncableEntity<RoleDTO> {
     @Id
+    @GeneratedValue(generator = "use-existing-or-generate")
+    @GenericGenerator(name = "use-existing-or-generate", type = UseExistingOrGenerateId.class)
     @Column(name = "id")
     private Integer id;
 

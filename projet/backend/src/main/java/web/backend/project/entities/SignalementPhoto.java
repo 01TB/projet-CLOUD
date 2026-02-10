@@ -4,12 +4,15 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.GenericGenerator;
 import web.backend.project.entities.dto.SignalementPhotoDTO;
 
 @Entity
 @Table(name = "signalements_photos")
 public class SignalementPhoto implements SyncableEntity<SignalementPhotoDTO> {
     @Id
+    @GeneratedValue(generator = "use-existing-or-generate")
+    @GenericGenerator(name = "use-existing-or-generate", type = UseExistingOrGenerateId.class)
     @Column(name = "id")
     private Integer id;
 

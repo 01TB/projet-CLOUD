@@ -4,13 +4,15 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.GenericGenerator;
 import web.backend.project.entities.dto.AvancementSignalementDTO;
 
 @Entity
 @Table(name = "avancements_signalement")
 public class AvancementSignalement implements SyncableEntity<AvancementSignalementDTO> {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(generator = "use-existing-or-generate")
+    @GenericGenerator(name = "use-existing-or-generate", type = UseExistingOrGenerateId.class)
     @Column(name = "id")
     private Integer id;
 
