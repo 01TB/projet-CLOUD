@@ -33,7 +33,7 @@ export class SyncService {
   /**
    * Synchronisation bidirectionnelle (par défaut tous les types d'entités)
    */
-  synchronizeBidirectional(entities?: string, forceSync: boolean = false): Observable<SyncResponse> {
+  synchronizeBidirectional(entities?: string[], forceSync: boolean = false): Observable<SyncResponse> {
     const params = new HttpParams()
       .set('forceSync', false)
       .set('entities', '');
@@ -44,7 +44,7 @@ export class SyncService {
   /**
    * Synchronisation push (envoyer vers Firebase)
    */
-  push(entities?: string, forceSync: boolean = false): Observable<SyncResponse> {
+  push(entities?: string[], forceSync: boolean = false): Observable<SyncResponse> {
     const params = new HttpParams()
       .set('forceSync', false)
       .set('entities', '');
@@ -55,7 +55,7 @@ export class SyncService {
   /**
    * Synchronisation pull (récupérer depuis Firebase)
    */
-  pull(entities?: string): Observable<SyncResponse> {
+  pull(entities?: string[]): Observable<SyncResponse> {
     const params = entities?.length 
       ? new HttpParams().set('entities', '')
       : new HttpParams();
