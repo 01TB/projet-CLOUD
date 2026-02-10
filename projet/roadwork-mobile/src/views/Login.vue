@@ -193,6 +193,11 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* Dark background for login page */
+ion-content {
+  --background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+}
+
 .login-container {
   max-width: 400px;
   margin: 0 auto;
@@ -206,107 +211,123 @@ onUnmounted(() => {
 
 .logo-section h2 {
   margin: 1.5rem 0 0.5rem;
-  color: #1a202c;
+  color: #f7fafc !important;
   font-weight: 700;
   font-size: 1.8rem;
   letter-spacing: -0.5px;
 }
 
 .logo-section p {
-  color: #4a5568;
+  color: #cbd5e0 !important;
   margin: 0;
   font-size: 1rem;
   line-height: 1.5;
   font-weight: 400;
 }
 
-/* Improved form styling */
+/* Dark theme for form styling */
 ion-list {
   background: transparent;
   padding: 0;
 }
 
 ion-item {
-  --background: rgba(255, 255, 255, 0.9);
+  --background: rgba(45, 55, 72, 0.8);
   --border-radius: 12px;
   margin-bottom: 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   transition: all 0.2s ease;
 }
 
 ion-item:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(240, 240, 240, 0.4);
   transform: translateY(-1px);
 }
 
 ion-label {
-  --color: #2d3748 !important;
+  --color: #f7fafc !important;
   font-weight: 600;
-  color: #2d3748;
+  font-size: 0.9rem;
 }
 
 ion-input {
-  --color: #1a202c !important;
-  --placeholder-color: #718096 !important;
-  --placeholder-opacity: 0.7;
-  color: #1a202c;
+  --color: #f7fafc !important;
+  --placeholder-color: #a0aec0;
+  --background: rgba(30, 41, 59, 0.6);
+  --border-color: rgba(74, 85, 104, 0.8);
 }
 
-/* Button improvements */
-ion-button[type="submit"] {
-  --background: #3182ce;
-  --background-hover: #2c5282;
-  --background-activated: #2c5282;
-  --border-radius: 12px;
-  height: 48px;
+ion-input:focus {
+  --background: rgba(30, 41, 59, 0.8);
+  --border-color: #3182ce;
+}
+
+ion-button {
+  --color: #f7fafc;
   font-weight: 600;
-  letter-spacing: 0.5px;
-  margin-top: 1.5rem;
-  box-shadow: 0 4px 12px rgba(49, 130, 206, 0.3);
-  transition: all 0.2s ease;
-  --color: white !important;
-  color: white;
+  margin-top: 1rem;
 }
 
-ion-button[type="submit"]:hover {
-  box-shadow: 0 6px 16px rgba(49, 130, 206, 0.4);
-  transform: translateY(-1px);
+ion-button[color="primary"] {
+  --background: rgba(49, 130, 206, 0.8);
+  --color: #f7fafc;
 }
 
-ion-button[fill="clear"] {
+ion-button[color="primary"]:hover {
+  --background: rgba(49, 130, 206, 1);
+}
+
+ion-button[color="secondary"] {
+  --background: rgba(72, 187, 120, 0.8);
+  --color: #f7fafc;
+}
+
+ion-button[color="secondary"]:hover {
+  --background: rgba(72, 187, 120, 1);
+}
+
+/* Dark theme for error messages */
+ion-text[color="danger"] {
+  --color: #ef4444 !important;
+  font-weight: 500;
+}
+
+/* Dark theme for links */
+ion-text[color="primary"] {
   --color: #3182ce !important;
   font-weight: 500;
-  margin-top: 1rem;
+}
+
+ion-text[color="primary"]:hover {
+  --color: #2c5282 !important;
+}
+
+/* Dark theme for loading spinner */
+ion-spinner {
   color: #3182ce;
 }
 
-ion-button[fill="outline"] {
-  --border-color: #e2e8f0;
-  --border-width: 2px;
-  --border-radius: 12px;
-  height: 48px;
-  font-weight: 500;
-  --color: #4a5568 !important;
-  color: #4a5568;
-  margin-top: 1rem;
-  transition: all 0.2s ease;
+/* Dark theme for icons */
+ion-icon[color="primary"] {
+  color: #3182ce !important;
 }
 
-ion-button[fill="outline"]:hover {
-  --border-color: #3182ce;
-  --color: #3182ce;
-  background: rgba(49, 130, 206, 0.05);
+/* Dark theme for guest section */
+.guest-section {
+  text-align: center;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(74, 85, 104, 0.6);
+  margin-top: 2rem;
 }
 
-/* Error and status improvements */
-ion-text[color="danger"] {
-  --color: #e53e3e;
+.guest-section ion-text[color="medium"] {
+  --color: #a0aec0 !important;
   font-weight: 500;
   display: block;
-  padding: 0.5rem 0;
-  text-align: center;
+  margin-bottom: 1rem;
 }
 
+/* Dark theme for offline mode */
 .offline-mode {
   display: flex;
   align-items: center;
@@ -321,57 +342,38 @@ ion-text[color="danger"] {
   font-weight: 500;
 }
 
-.guest-section {
-  text-align: center;
-  padding-top: 2rem;
-  border-top: 1px solid #e2e8f0;
-  margin-top: 2rem;
-}
-
-.guest-section ion-text[color="medium"] {
-  --color: #718096;
-  font-weight: 500;
-  display: block;
-  margin-bottom: 1rem;
-}
-
-/* Content background */
-ion-content {
-  --background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
-}
-
 /* Responsive improvements */
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   .login-container {
-    padding: 2rem 1rem;
+    max-width: 350px;
+    padding-top: 2rem;
   }
   
   .logo-section h2 {
-    font-size: 1.6rem;
-  }
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .logo-section h2 {
-    color: hsl(204, 77%, 28%);
+    font-size: 1.5rem;
   }
   
   .logo-section p {
-    color: hsl(204, 77%, 28%);
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-container {
+    max-width: 300px;
+    padding-top: 1.5rem;
+  }
+  
+  .logo-section h2 {
+    font-size: 1.3rem;
+  }
+  
+  .logo-section p {
+    font-size: 0.85rem;
   }
   
   ion-item {
-    --background: rgba(45, 55, 72, 0.9);
-  }
-  
-  ion-label {
-    --color: #f7fafc;
-  }
-  
-  ion-input {
-    --color: #f7fafc;
-    --placeholder-color: #cbd5e0;
+    margin-bottom: 0.75rem;
   }
 }
 </style>

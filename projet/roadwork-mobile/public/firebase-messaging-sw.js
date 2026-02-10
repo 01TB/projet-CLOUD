@@ -17,12 +17,11 @@ firebase.initializeApp(firebaseConfig);
 // Initialiser Firebase Cloud Messaging
 const messaging = firebase.messaging();
 
-// Gérer les notifications en arrière-plan
+// Gérer les messages en arrière-plan
 messaging.onBackgroundMessage((payload) => {
   console.log('📨 Notification reçue en arrière-plan:', payload);
-
-  // Créer une notification système
-  const notificationTitle = payload.notification?.title || 'Nouvelle notification';
+  
+  const notificationTitle = payload.notification?.title || 'Nouvelle notification RoadWork';
   const notificationOptions = {
     body: payload.notification?.body || 'Vous avez une nouvelle notification',
     icon: payload.notification?.icon || '/icons/icon-192x192.png',
@@ -34,6 +33,7 @@ messaging.onBackgroundMessage((payload) => {
   };
 
   // Afficher la notification
+  console.log('🔔 Affichage notification système:', notificationTitle, notificationOptions);
   return self.registration.showNotification(notificationTitle, notificationOptions);
 });
 

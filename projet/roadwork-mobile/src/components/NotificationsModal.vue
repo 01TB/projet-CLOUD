@@ -39,10 +39,27 @@
       <div v-else-if="notifications.length === 0" class="notifications-empty">
         <ion-icon :icon="notificationsOffOutline" class="notifications-empty-icon" />
         <p class="notifications-empty-text">Aucune notification</p>
+        
+        <!-- Bouton pour activer les notifications -->
+        <div v-if="notificationPermission !== 'granted'" class="permission-prompt">
+          <ion-button 
+            @click="requestPermission" 
+            :disabled="isLoading"
+            fill="outline" 
+            color="primary"
+            class="permission-button"
+          >
+            <ion-icon :icon="notificationsOutline" slot="start" />
+            {{ isLoading ? 'Demande en cours...' : 'Activer les notifications' }}
+          </ion-button>
+          <p class="permission-text">
+            Activez les notifications pour recevoir des alertes importantes sur les signalements et mises à jour.
+          </p>
+        </div>
       </div>
 
       <!-- Notifications List -->
-      <div v-else class="notifications-list">
+      <div v-else class="notifications-list" :key="notifications.length">
         <div 
           v-for="notification in notifications" 
           :key="notification.id"
@@ -78,7 +95,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { 
   IonModal, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
   IonContent, IonSpinner, IonIcon, IonBadge
@@ -102,6 +119,7 @@ const {
   notifications, 
   isLoading, 
   unreadCount, 
+  notificationPermission,
   requestPermission, 
   markAsRead, 
   removeNotification, 
@@ -142,6 +160,11 @@ const clearAll = () => {
     clearAllNotifications()
   }
 }
+
+// Watcher pour forcer la mise à jour du modal
+watch(() => notifications.value.length, (newLength, oldLength) => {
+  console.log('🔄 NotificationsModal: Nombre de notifications changé de', oldLength, 'à', newLength)
+}, { immediate: true })
 </script>
 
 <style scoped>
@@ -243,5 +266,27 @@ const clearAll = () => {
 
 .notification-action-btn.delete:hover {
   opacity: 0.8;
+}
+
+/* Permission Prompt Styles */
+.permission-prompt {
+  text-align: center;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.permission-button {
+  margin: 16px 0;
+  min-height: 44px;
+}
+
+.permission-text {
+  font-size: 13px;
+  color: var(--ion-color-medium);
+  line-height: 1.4;
+  margin: 12px 0 0 0;
+  max-width: 280px;
+  margin-left: auto;
+  margin-right: auto;
 }
 </style>

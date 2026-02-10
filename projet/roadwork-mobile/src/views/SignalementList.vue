@@ -186,7 +186,6 @@
 
           </ion-item>
 
-          <!-- Section développée avec détails -->
           <ion-item v-if="expandedSignalements.includes(signalement.id)" class="expanded-details">
             <ion-label class="ion-padding">
               <div class="details-container">
@@ -203,13 +202,13 @@
                 </div>
                 
                 <div class="detail-row">
-                  <strong>Budget:</strong>
-                  <p>{{ formatBudget(signalement.budget) }}</p>
+                  <strong>Statut:</strong>
+                  <p>{{ getStatutInfo(signalement) }}</p>
                 </div>
                 
                 <div class="detail-row">
-                  <strong>Adresse:</strong>
-                  <p>{{ signalement.adresse || 'Non spécifiée' }}</p>
+                  <strong>Budget:</strong>
+                  <p>{{ formatBudget(signalement.budget) }}</p>
                 </div>
                 
                 <div class="detail-row">
@@ -218,17 +217,18 @@
                 </div>
                 
                 <div class="detail-row">
+                  <strong>Créé par:</strong>
+                  <p>{{ signalement.id_utilisateur_createur || 'Anonyme' }}</p>
+                </div>
+                
+                <div class="detail-row">
                   <strong>Date de création:</strong>
                   <p>{{ formatDate(signalement.date_creation) }}</p>
                 </div>
                 
                 <div class="detail-row">
-                  <strong>Statut:</strong>
-                  <p>
-                    <ion-badge :color="getStatusColor(getCurrentStatus(signalement))">
-                      {{ getCurrentStatus(signalement) }}
-                    </ion-badge>
-                  </p>
+                  <strong>Adresse:</strong>
+                  <p>{{ signalement.adresse || 'Non spécifiée' }}</p>
                 </div>
                 
                 <div class="detail-row">
@@ -275,8 +275,6 @@
               </div>
             </ion-label>
           </ion-item>
-
-
 
           <ion-item-options side="end">
 
@@ -367,12 +365,10 @@ import {
 } from 'ionicons/icons';
 import { useAuthStore } from '@/store/modules/auth';
 import { useSignalementsStore } from '@/store/modules/signalements';
-import { useEntreprisesStore } from '@/store/modules/entreprises';
 
 const router = useRouter();
 const authStore = useAuthStore();
 const signalementsStore = useSignalementsStore();
-const entreprisesStore = useEntreprisesStore();
 
 // États
 
@@ -484,23 +480,6 @@ const getProblemIcon = (signalement) => {
 
 
 
-const getEntrepriseInfo = (signalement) => {
-  if (!signalement.id_entreprise) {
-    return 'Non spécifiée';
-  }
-  
-  // Chercher l'entreprise dans le store (le getter gère la conversion string/number)
-  const entreprise = entreprisesStore.getEntrepriseById(signalement.id_entreprise);
-  
-  if (entreprise) {
-    return entreprise.nom;
-  }
-  
-  return `Entreprise #${signalement.id_entreprise}`;
-};
-
-
-
 const getStatusCount = (statusName) => {
 
   return signalements.value.filter(s => 
@@ -511,7 +490,37 @@ const getStatusCount = (statusName) => {
 
 };
 
+const getStatutInfo = (signalement) => {
+  const status = getCurrentStatus(signalement);
+  const statusColor = getStatusColor(status);
+  return status;
+};
 
+const formatBudget = (budget) => {
+  if (!budget || budget === 0) return 'Non assigné';
+  return new Intl.NumberFormat('fr-MG', {
+    style: 'currency',
+    currency: 'MGA',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(budget);
+};
+
+const getEntrepriseInfo = (signalement) => {
+  if (!signalement.id_entreprise) {
+    return 'Non assigné';
+  }
+  
+  if (signalement.nom_entreprise) {
+    return signalement.nom_entreprise;
+  }
+  
+  if (signalement.entreprise) {
+    return signalement.entreprise;
+  }
+  
+  return `Entreprise #${signalement.id_entreprise}`;
+};
 
 const formatDate = (dateString) => {
 
@@ -649,26 +658,6 @@ const toggleSignalementExpansion = (signalementId) => {
 
 };
 
-const formatBudget = (budget) => {
-
-  if (!budget) return 'Non spécifié';
-
-  return new Intl.NumberFormat('fr-MG', {
-
-    style: 'currency',
-
-    currency: 'MGA',
-
-    minimumFractionDigits: 0,
-
-    maximumFractionDigits: 0
-
-  }).format(budget);
-
-};
-
-
-
 const viewOnMap = async (signalement) => {
 
   // Retourner à la carte avec focus sur ce signalement
@@ -750,7 +739,6 @@ const viewPhoto = async (photo) => {
 onMounted(async () => {
   await loadSignalements();
   await signalementsStore.fetchStatuts();
-  await entreprisesStore.fetchEntreprises(); // Charger les entreprises dynamiquement
 });
 
 </script>
@@ -759,140 +747,165 @@ onMounted(async () => {
 
 <style scoped>
 
-.loading-container {
-
-  display: flex;
-
-  flex-direction: column;
-
-  align-items: center;
-
-  justify-content: center;
-
-  padding: 3rem;
-
-  text-align: center;
-
+/* Dark background for signalement list */
+ion-content {
+  --background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
 }
 
-
-
-.empty-state {
-
-  display: flex;
-
-  flex-direction: column;
-
-  align-items: center;
-
-  justify-content: center;
-
-  padding: 3rem;
-
-  text-align: center;
-
+/* Dark theme for list items */
+ion-item {
+  --background: rgba(45, 55, 72, 0.8);
+  --color: #f7fafc;
+  --border-color: rgba(74, 85, 104, 0.6);
+  --border-radius: 12px;
+  margin-bottom: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-
-
-.empty-state ion-icon {
-
-  color: var(--ion-color-medium);
-
-  margin-bottom: 1rem;
-
+ion-item:hover {
+  --background: rgba(45, 55, 72, 1);
+  --border-color: rgba(74, 85, 104, 0.8);
 }
 
-
-
-.empty-state h3 {
-
-  margin: 0.5rem 0;
-
-  color: var(--ion-color-medium);
-
+/* Dark theme for labels and text */
+ion-label {
+  --color: #f7fafc !important;
+  font-weight: 500;
 }
 
-
-
-.empty-state p {
-
-  color: var(--ion-color-medium);
-
-  margin-bottom: 1rem;
-
-  text-align: center;
-
+ion-label h2 {
+  color: #f7fafc !important;
+  font-weight: 600;
 }
 
+ion-label h3 {
+  color: #f7fafc !important;
+  font-weight: 500;
+}
+
+ion-label p {
+  color: #cbd5e0 !important;
+}
+
+/* Dark theme for cards */
+ion-card {
+  --background: rgba(45, 55, 72, 0.8);
+  --color: #f7fafc;
+  --border-color: rgba(74, 85, 104, 0.6);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+ion-card-header {
+  --background: rgba(30, 41, 59, 0.8);
+  --color: #f7fafc;
+  --border-color: rgba(74, 85, 104, 0.6);
+}
+
+ion-card-title {
+  --color: #f7fafc !important;
+  font-weight: 600;
+}
+
+/* Dark theme for chips */
 ion-chip {
-
+  --background: rgba(49, 130, 206, 0.2);
+  --color: #3182ce;
+  --border-color: rgba(49, 130, 206, 0.4);
   margin: 2px;
-
   cursor: pointer;
-
 }
 
+/* Dark theme for expanded details */
 .expanded-details {
-
-  --background: rgba(49, 130, 206, 0.05);
-
+  --background: rgba(30, 41, 59, 0.6);
   border-left: 4px solid var(--ion-color-primary);
-
-}
-
-.details-container {
-
-  padding: 1rem;
-
 }
 
 .details-container h4 {
-
-  color: var(--ion-color-primary);
-
+  color: #f7fafc !important;
   margin-bottom: 1rem;
-
   font-weight: 600;
-
-}
-
-.detail-row {
-
-  margin-bottom: 1rem;
-
 }
 
 .detail-row strong {
-
-  color: var(--ion-color-dark);
-
+  color: #cbd5e0 !important;
   display: block;
-
   margin-bottom: 0.25rem;
-
   font-size: 0.9rem;
-
 }
 
 .detail-row p {
-
-  color: var(--ion-color-medium);
-
+  color: #a0aec0 !important;
   margin: 0;
-
   line-height: 1.4;
-
 }
 
 .detail-actions {
-
   margin-top: 1.5rem;
-
   padding-top: 1rem;
+  border-top: 1px solid rgba(74, 85, 104, 0.6);
+}
 
-  border-top: 1px solid var(--ion-color-light);
+/* Dark theme for buttons */
+ion-button {
+  --color: #f7fafc;
+}
 
+ion-button[color="primary"] {
+  --background: rgba(49, 130, 206, 0.8);
+  --color: #f7fafc;
+}
+
+ion-button[color="secondary"] {
+  --background: rgba(72, 187, 120, 0.8);
+  --color: #f7fafc;
+}
+
+ion-button[color="danger"] {
+  --background: rgba(229, 62, 62, 0.8);
+  --color: #f7fafc;
+}
+
+/* Dark theme for badges */
+ion-badge {
+  --background: #3182ce;
+  --color: white;
+}
+
+/* Dark theme for loading and empty states */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+}
+
+.empty-state ion-icon {
+  color: #a0aec0;
+  margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+  margin: 0.5rem 0;
+  color: #cbd5e0 !important;
+}
+
+.empty-state p {
+  color: #a0aec0;
+  margin-bottom: 1rem;
+  text-align: center;
 }
 
 /* Photo gallery styles */
@@ -910,7 +923,7 @@ ion-chip {
   border-radius: 8px;
   cursor: pointer;
   transition: transform 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .detail-photo:hover {
@@ -923,11 +936,11 @@ ion-chip {
   justify-content: center;
   width: 80px;
   height: 80px;
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.3);
   border-radius: 8px;
   font-size: 0.9rem;
   font-weight: 600;
-  color: var(--ion-color-medium);
+  color: #a0aec0;
 }
 
 </style>

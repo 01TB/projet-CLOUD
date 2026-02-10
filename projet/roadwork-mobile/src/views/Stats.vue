@@ -186,7 +186,7 @@ import {
 } from '@ionic/vue';
 import {
   refresh, download, shareSocial, alertCircle, checkmarkCircle, time,
-  warning
+  warning, documentText
 } from 'ionicons/icons';
 import { useAuthStore } from '@/store/modules/auth';
 import { useSignalementsStore } from '@/store/modules/signalements';
@@ -475,6 +475,45 @@ onMounted(() => {
 </script>
 
 <style scoped>
+
+/* Dark background for stats page */
+ion-content {
+  --background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+}
+
+/* Dark theme for cards */
+ion-card {
+  --background: rgba(45, 55, 72, 0.8);
+  --color: #f7fafc;
+  --border-color: rgba(74, 85, 104, 0.6);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  margin: 1rem;
+}
+
+ion-card:hover {
+  --background: rgba(45, 55, 72, 1);
+  --border-color: rgba(74, 85, 104, 0.8);
+}
+
+ion-card-header {
+  --background: rgba(30, 41, 59, 0.8);
+  --color: #f7fafc;
+  --border-color: rgba(74, 85, 104, 0.6);
+  padding-bottom: 0;
+}
+
+ion-card-title {
+  --color: #f7fafc !important;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+ion-card-content {
+  --color: #f7fafc;
+}
+
+/* Dark theme for loading container */
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -484,6 +523,11 @@ onMounted(() => {
   text-align: center;
 }
 
+.loading-container p {
+  color: #cbd5e0 !important;
+}
+
+/* Dark theme for stat items */
 .stat-item {
   text-align: center;
   padding: 1rem;
@@ -491,32 +535,34 @@ onMounted(() => {
 
 .stat-item ion-icon {
   margin-bottom: 0.5rem;
+  color: #3182ce !important;
 }
 
 .stat-item h3 {
   margin: 0;
   font-size: 1.8rem;
-  color: var(--ion-color-primary);
+  color: #3182ce !important;
 }
 
 .stat-item p {
   margin: 0.5rem 0 0;
-  color: var(--ion-color-medium);
+  color: #cbd5e0 !important;
   font-size: 0.9rem;
 }
 
+/* Dark theme for chart container */
 .chart-container {
   height: 200px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--ion-color-light);
+  background: rgba(30, 41, 59, 0.6);
   border-radius: 8px;
   margin-bottom: 1rem;
-  color: var(--ion-color-medium);
+  color: #a0aec0;
 }
 
-/* Styles pour les graphiques simples */
+/* Dark theme for simple charts */
 .simple-chart {
   margin-bottom: 1rem;
 }
@@ -531,7 +577,7 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: var(--ion-color-primary);
+  background: rgba(49, 130, 206, 0.8);
   color: white;
   padding: 0.5rem 1rem;
   border-radius: 4px;
@@ -547,7 +593,7 @@ onMounted(() => {
   opacity: 0.9;
 }
 
-/* Timeline styles */
+/* Dark theme for timeline */
 .simple-timeline {
   margin-bottom: 1rem;
 }
@@ -561,14 +607,14 @@ onMounted(() => {
 
 .timeline-date {
   font-size: 0.85rem;
-  color: var(--ion-color-medium);
+  color: #a0aec0 !important;
   font-weight: 500;
 }
 
 .timeline-bar {
   display: flex;
   align-items: center;
-  background: var(--ion-color-light);
+  background: rgba(30, 41, 59, 0.6);
   border-radius: 4px;
   height: 2rem;
   position: relative;
@@ -577,7 +623,7 @@ onMounted(() => {
 
 .timeline-fill {
   height: 100%;
-  background: var(--ion-color-primary);
+  background: rgba(49, 130, 206, 0.8);
   transition: width 0.3s ease;
 }
 
@@ -593,13 +639,13 @@ onMounted(() => {
 
 .timeline-note {
   text-align: center;
-  color: var(--ion-color-medium);
+  color: #a0aec0 !important;
   font-size: 0.85rem;
   margin-top: 0.5rem;
   font-style: italic;
 }
 
-/* Styles pour l'état vide des graphiques */
+/* Dark theme for empty chart state */
 .empty-chart {
   display: flex;
   flex-direction: column;
@@ -607,30 +653,106 @@ onMounted(() => {
   justify-content: center;
   padding: 3rem 2rem;
   text-align: center;
-  color: var(--ion-color-medium);
+  color: #a0aec0 !important;
 }
 
 .empty-chart ion-icon {
-  color: var(--ion-color-medium);
+  color: #a0aec0 !important;
   margin-bottom: 1rem;
 }
 
 .empty-chart p {
   margin: 0;
   font-size: 1rem;
-  color: var(--ion-color-medium);
+  color: #a0aec0 !important;
 }
 
-ion-card {
-  margin: 1rem;
+/* Dark theme for segments */
+ion-segment {
+  --background: rgba(45, 55, 72, 0.8);
+  --border-radius: 8px;
 }
 
-ion-card-header {
-  padding-bottom: 0;
+ion-segment-button {
+  --color: #cbd5e0;
+  --background: rgba(45, 55, 72, 0.6);
+  --border-color: rgba(74, 85, 104, 0.6);
 }
 
-ion-card-title {
-  font-size: 1.1rem;
-  font-weight: 600;
+ion-segment-button.segment-button-checked {
+  --color: #f7fafc;
+  --background: rgba(49, 130, 206, 0.8);
+  --border-color: rgba(49, 130, 206, 0.8);
 }
+
+/* Dark theme for list items */
+ion-item {
+  --background: rgba(45, 55, 72, 0.8);
+  --color: #f7fafc;
+  --border-color: rgba(74, 85, 104, 0.6);
+  --border-radius: 12px;
+  margin-bottom: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+ion-item:hover {
+  --background: rgba(45, 55, 72, 1);
+  --border-color: rgba(74, 85, 104, 0.8);
+}
+
+ion-label {
+  --color: #f7fafc !important;
+  font-weight: 500;
+}
+
+/* Dark theme for spinner */
+ion-spinner {
+  color: #3182ce;
+}
+
+/* Dark theme for badges */
+ion-badge {
+  --background: #3182ce;
+  --color: white;
+}
+
+/* Dark theme for notes */
+ion-note {
+  --color: #a0aec0 !important;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  ion-card {
+    margin: 0.5rem;
+  }
+  
+  .stat-item h3 {
+    font-size: 1.5rem;
+  }
+  
+  .timeline-date {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  ion-card {
+    margin: 0.25rem;
+  }
+  
+  .stat-item h3 {
+    font-size: 1.3rem;
+  }
+  
+  .timeline-date {
+    font-size: 0.75rem;
+  }
+  
+  .chart-bar {
+    padding: 0.4rem 0.8rem;
+    min-height: 1.8rem;
+  }
+}
+
 </style>

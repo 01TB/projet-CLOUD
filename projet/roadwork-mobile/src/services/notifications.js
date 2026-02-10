@@ -72,15 +72,41 @@ class NotificationService {
 
   /**
    * Vérifier la connectivité avec le backend Firebase Cloud Functions
+   * @param {string} authToken - Token d'authentification optionnel
    * @returns {Promise<boolean} True si connecté
    */
-  async checkBackendConnectivity() {
+  async checkBackendConnectivity(authToken = null) {
     try {
-      // Test simple avec HEAD request pour vérifier la disponibilité
-      await this.api.head('/updateFcmToken', { 
-        timeout: 5000
-      })
-      return true
+      // Option 1: Tester avec /me si token disponible
+      if (authToken) {
+        await this.api.get('/me', { 
+          timeout: 5000,
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          },
+          validateStatus: (status) => status < 500
+        })
+        console.log('✅ Backend accessible (authentifié)')
+        return true
+      } else {
+        // Option 2: Tester avec un endpoint public ou gérer l'erreur 401
+        try {
+          await this.api.get('/getEntreprises', { 
+            timeout: 5000,
+            validateStatus: (status) => status < 500
+          })
+          console.log('✅ Backend accessible (endpoint public)')
+          return true
+        } catch (err) {
+          if (err.response?.status === 401 || err.response?.status === 403) {
+            // Normal pour les endpoints qui nécessitent une authentification
+            console.log('✅ Backend accessible (authentification requise)')
+            return true
+          } else {
+            throw err
+          }
+        }
+      }
     } catch (error) {
       if (error.code === 'ECONNABORTED') {
         console.warn('⚠️ Backend non accessible - timeout')
@@ -89,7 +115,7 @@ class NotificationService {
         console.warn('⚠️ Backend en erreur - serveur indisponible')
         return false
       } else {
-        // Erreurs 4xx ou 405 = backend accessible mais méthode non autorisée (normal)
+        // Autres erreurs 4xx = backend accessible
         console.log('✅ Backend accessible')
         return true
       }

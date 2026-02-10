@@ -5,6 +5,7 @@ import piniaPluginPersistedstate from 'pinia-plugin-persistedstate';
 
 import App from './App.vue';
 import router from './router';
+import { useAuthStore } from '@/store/modules/auth';
 
 // Importation des styles Ionic
 import '@ionic/vue/css/core.css';
@@ -43,5 +44,15 @@ const app = createApp(App)
   .use(pinia);
 
 router.isReady().then(() => {
+  // Initialiser le mode visiteur si aucun utilisateur n'est connecté
+  const authStore = useAuthStore();
+  authStore.initializeAuth();
+  
+  // Si ni authentifié ni visiteur, activer automatiquement le mode visiteur
+  if (!authStore.isAuthenticated && !authStore.isVisitor) {
+    authStore.enableVisitorMode();
+    console.log('👋 Mode visiteur automatiquement activé');
+  }
+  
   app.mount('#app');
 });

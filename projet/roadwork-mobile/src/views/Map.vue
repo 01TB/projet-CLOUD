@@ -61,8 +61,8 @@
                 <h3>{{ signalement.description }}</h3>
                 <p><strong>Surface:</strong> {{ signalement.surface ? signalement.surface + ' m²' : 'Non spécifiée' }}</p>
                 <p><strong>Budget:</strong> {{ formatBudget(signalement.budget) }}</p>
-                <p><strong>Adresse:</strong> {{ signalement.adresse || 'Non spécifiée' }}</p>
                 <p><strong>Entreprise responsable:</strong> {{ getEntrepriseInfo(signalement) }}</p>
+                <p><strong>Adresse:</strong> {{ signalement.adresse || 'Non spécifiée' }}</p>
                 <p><strong>Date:</strong> {{ formatDate(signalement.date_creation) }}</p>
                 
                 <!-- Photos -->
@@ -160,27 +160,22 @@
       </ion-fab>
 
       <!-- Statistiques simplifiées (temporairement sans slides) -->
-      <div v-if="showStats" class="stats-container">
-        <div class="stats-grid">
-          <div class="stat-card">
-            <ion-icon :icon="alertCircle" size="large"></ion-icon>
-            <h3>{{ stats.total_signalements || 0 }}</h3>
-            <p>Signalements</p>
-          </div>
+      <div v-show="showStats" class="stats-container">
+        <div class="stats-container">
           <div class="stat-card">
             <ion-icon :icon="square" size="large"></ion-icon>
-            <h3>{{ stats.total_surface || 0 }} m²</h3>
-            <p>Surface totale</p>
-          </div>
-          <div class="stat-card">
-            <ion-icon :icon="cash" size="large"></ion-icon>
-            <h3>{{ formatBudget(stats.total_budget) }}</h3>
-            <p>Budget total</p>
+            <h3>{{ signalements.length }}</h3>
+            <p>Total signalements</p>
           </div>
           <div class="stat-card">
             <ion-icon :icon="trendingUp" size="large"></ion-icon>
-            <h3>{{ stats.avancement_moyen || 0 }}%</h3>
-            <p>Avancement moyen</p>
+            <h3>{{ getStatsByStatus('En cours') }}</h3>
+            <p>En cours</p>
+          </div>
+          <div class="stat-card">
+            <ion-icon :icon="checkmarkCircle" size="large"></ion-icon>
+            <h3>{{ getStatsByStatus('Terminé') }}</h3>
+            <p>Terminés</p>
           </div>
         </div>
       </div>
@@ -203,18 +198,25 @@
             <ion-list-header>
               <ion-label>Statut</ion-label>
             </ion-list-header>
+            
+            <!-- Loading state -->
+            <ion-item v-show="!statusesLoaded">
+              <ion-spinner slot="start"></ion-spinner>
+              <ion-label>Chargement des statuts...</ion-label>
+            </ion-item>
+            
+            <!-- Status checkboxes -->
             <ion-item 
               v-for="statut in statuts" 
               :key="statut.id"
-              :class="{ 'filter-disabled': filters.mesSignalements }"
+              v-show="statusesLoaded"
             >
               <ion-checkbox
                 slot="start"
                 :checked="filters.statuts.includes(statut.nom)"
                 @ionChange="toggleStatutFilter(statut.nom)"
-                :disabled="filters.mesSignalements"
               ></ion-checkbox>
-              <ion-label :class="{ 'text-disabled': filters.mesSignalements }">{{ statut.nom }}</ion-label>
+              <ion-label>{{ statut.nom }}</ion-label>
               <ion-badge slot="end">{{ getStatutCount(statut.nom) }}</ion-badge>
             </ion-item>
             
@@ -258,36 +260,58 @@ import {
   IonButton, IonIcon, IonButtons, IonMenuButton, IonFab,
   IonFabButton, IonModal, IonList,
   IonListHeader, IonItem, IonCheckbox, IonLabel, IonBadge,
-  alertController 
+  IonSpinner, alertController 
 } from '@ionic/vue';
 import {
   refresh, locate, filter, add, alertCircle,
-  square, cash, trendingUp, create, trash, chatbubble, eye, person
+  square, trendingUp, create, trash, chatbubble, eye, person, checkmarkCircle
 } from 'ionicons/icons';
 import { LMap, LTileLayer, LMarker, LIcon, LPopup } from '@vue-leaflet/vue-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Geolocation } from '@capacitor/geolocation';
 import { useAuthStore } from '@/store/modules/auth';
 import { useSignalementsStore } from '@/store/modules/signalements';
-import { useEntreprisesStore } from '@/store/modules/entreprises';
-import { useAuthCheck } from '@/composables/useAuthCheck';
 import SignalementModal from '@/components/SignalementModal.vue';
 import L from 'leaflet';
 
-// Configuration Leaflet avec URLs CDN
+// Configuration optimisée pour mobile
+const createOptimizedTileLayer = () => {
+  return L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    minZoom: 3,
+    maxNativeZoom: 19,
+    keepBuffer: 2,
+    updateWhenIdle: true,
+    updateWhenZooming: false,
+    updateInterval: 200,
+    tileSize: 256,
+    zoomOffset: 0,
+    zoomReverse: false,
+    detectRetina: true,
+    crossOrigin: true,
+    reuseTiles: true,
+    bounds: null,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  });
+};
+
+// Configuration Leaflet avec URLs CDN optimisés
 delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+
+L.Icon.mergeOptions({
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+  shadowAnchor: [2, -2]
 });
 
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
 const signalementsStore = useSignalementsStore();
-const entreprisesStore = useEntreprisesStore();
-const { checkAuthAndRedirect } = useAuthCheck();
 
 // Références
 const map = ref(null);
@@ -303,7 +327,7 @@ const selectedCoordinates = ref({ lat: -18.8792, lng: 47.5079 });
 
 // Filtres
 const filters = ref({
-  statuts: ['Nouveau', 'En attente', 'En cours', 'En validation', 'Validé', 'Terminé'], // Inclure tous les statuts possibles
+  statuts: [], // Sera initialisé avec les statuts du backend
   mesSignalements: false
 });
 
@@ -313,6 +337,17 @@ const isUser = computed(() => authStore.isUser);
 const hasGeolocation = computed(() => !!userLocation.value);
 const statuts = computed(() => signalementsStore.statuts || []);
 const stats = computed(() => signalementsStore.stats || {});
+const signalements = computed(() => signalementsStore.signalements || []);
+const statusesLoaded = computed(() => statuts.value.length > 0);
+
+// Watcher pour initialiser les filtres quand les statuts sont chargés
+watch(statuts, (newStatuts) => {
+  if (newStatuts.length > 0) {
+    // Toujours réinitialiser les filtres avec les statuts du backend
+    // pour s'assurer qu'ils sont à jour
+    filters.value.statuts = newStatuts.map(s => s.nom);
+  }
+}, { immediate: true });
 
 const authStatus = computed(() => {
   return authStore.isLoggedIn && authStore.token;
@@ -327,7 +362,7 @@ const userLocationIcon = computed(() => {
   });
 });
 
-// Options pour les tiles de la carte
+// Options pour les tiles de la carte optimisées pour mobile
 const tileOptions = {
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   maxZoom: 19,
@@ -335,10 +370,13 @@ const tileOptions = {
   noWrap: false,
   tileSize: 256,
   zoomOffset: 0,
-  keepBuffer: 4,
-  updateWhenIdle: false,
+  keepBuffer: 2,
+  updateWhenIdle: true,
   updateWhenZooming: false,
-  preferCanvas: true
+  updateInterval: 200,
+  preferCanvas: true,
+  reuseTiles: true,
+  crossOrigin: true
 };
 
 const filteredSignalements = computed(() => {
@@ -374,7 +412,25 @@ const validMarkers = computed(() => {
 });
   
   
-// Méthodes
+// Gestion de la mémoire pour les marqueurs
+const cleanupMarkers = () => {
+  // Nettoyer les marqueurs quand ils ne sont plus visibles
+  if (validMarkers.value.length > 100) {
+    // Garder seulement les 50 marqueurs les plus récents
+    const markersToKeep = validMarkers.value.slice(-50);
+    validMarkers.value = markersToKeep;
+  }
+};
+
+// Nettoyage complet des marqueurs
+const clearAllMarkers = () => {
+  validMarkers.value.forEach(marker => {
+    if (marker.leafletObject) {
+      map.value?.leafletObject?.removeLayer(marker.leafletObject);
+    }
+  });
+  validMarkers.value = [];
+};
 const onMapReady = async () => {
   // Vérifier l'authentification avant de charger les données
   // await authStore.checkAuth();
@@ -383,8 +439,13 @@ const onMapReady = async () => {
 };
 
 const onMapClick = async (event) => {
+  console.log('🗺️ Map clicked!', event);
+  console.log('🗺️ Click coordinates:', event.latlng);
+  console.log('🗺️ Auth status:', authStatus.value);
+  
   // Vérifier si l'utilisateur est connecté (simple vérification de token)
   if (!authStatus.value) {
+    console.log('🗺️ User not authenticated, showing login prompt');
     const alert = await alertController.create({
       header: 'Connexion requise',
       message: 'Veuillez vous connecter pour créer un signalement',
@@ -397,6 +458,7 @@ const onMapClick = async (event) => {
   
   // Obtenir les coordonnées du clic
   const { lat, lng } = event.latlng;
+  console.log('🗺️ Coordinates extracted:', { lat, lng });
   
   // Confirmer la création d'un signalement à cet endroit
   const alert = await alertController.create({
@@ -408,14 +470,19 @@ const onMapClick = async (event) => {
     buttons: [
       {
         text: 'Annuler',
-        role: 'cancel'
+        role: 'cancel',
+        handler: () => {
+          console.log('🗺️ User cancelled signalement creation');
+        }
       },
       {
         text: 'Créer',
         handler: () => {
+          console.log('🗺️ User confirmed signalement creation');
           // Ouvrir le modal avec les coordonnées
           selectedCoordinates.value = { lat, lng };
           signalementModalOpen.value = true;
+          console.log('🗺️ Modal opened with coordinates:', selectedCoordinates.value);
         }
       }
     ]
@@ -434,7 +501,6 @@ const loadInitialData = async () => {
     await signalementsStore.fetchSignalements();
     // fetchStats n'existe plus dans le store, les stats sont déjà dans le state
     await signalementsStore.fetchStatuts();
-    await entreprisesStore.fetchEntreprises();
   } catch (error) {
     // En cas d'erreur 500, afficher un message plus informatif
     if (error.response && error.response.status === 500) {
@@ -515,15 +581,39 @@ const getMarkerIcon = (signalement) => {
   }
   
   const status = getCurrentStatus(signalement);
-  const colors = {
-    'Nouveau': 'violet',
-    'En attente': 'red',
-    'En cours': 'orange', 
-    'En validation': 'yellow',
-    'Validé': 'lightgreen',
-    'Terminé': 'green'
-  };
-  const color = colors[status] || 'red';
+  
+  // Récupérer la couleur depuis le backend si disponible, sinon utiliser des couleurs par défaut
+  const statutBackend = statuts.value.find(s => s.nom === status);
+  let color = 'red'; // Couleur par défaut
+  
+  if (statutBackend && statutBackend.couleur) {
+    // Utiliser la couleur du backend (adapter si nécessaire)
+    const backendColor = statutBackend.couleur.toLowerCase();
+    // Mapper les couleurs du backend vers les couleurs disponibles dans Leaflet
+    const colorMapping = {
+      'rouge': 'red',
+      'vert': 'green',
+      'bleu': 'blue',
+      'jaune': 'yellow',
+      'orange': 'orange',
+      'violet': 'violet',
+      'lightgreen': 'lightgreen',
+      'darkgreen': 'darkgreen',
+      'gray': 'grey'
+    };
+    color = colorMapping[backendColor] || backendColor;
+  } else {
+    // Couleurs par défaut si pas de correspondance dans le backend
+    const defaultColors = {
+      'Nouveau': 'violet',
+      'En attente': 'red',
+      'En cours': 'orange', 
+      'En validation': 'yellow',
+      'Validé': 'lightgreen',
+      'Terminé': 'green'
+    };
+    color = defaultColors[status] || 'red';
+  }
   
   // URL valide pour les icônes Leaflet
   return `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`;
@@ -536,29 +626,31 @@ const getCurrentStatus = (signalement) => {
   return 'En attente';
 };
 
-const formatBudget = (budget) => {
-  if (!budget) return '0 Ar';
-  return new Intl.NumberFormat('fr-MG', {
-    style: 'currency',
-    currency: 'MGA',
-    minimumFractionDigits: 0
-  }).format(budget);
-};
-
 const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString('fr-MG');
 };
 
+const formatBudget = (budget) => {
+  if (!budget || budget === 0) return 'Non assigné';
+  return new Intl.NumberFormat('fr-MG', {
+    style: 'currency',
+    currency: 'MGA',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(budget);
+};
+
 const getEntrepriseInfo = (signalement) => {
   if (!signalement.id_entreprise) {
-    return 'Non spécifiée';
+    return 'Non assigné';
   }
   
-  // Chercher l'entreprise dans le store (le getter gère la conversion string/number)
-  const entreprise = entreprisesStore.getEntrepriseById(signalement.id_entreprise);
+  if (signalement.nom_entreprise) {
+    return signalement.nom_entreprise;
+  }
   
-  if (entreprise) {
-    return entreprise.nom;
+  if (signalement.entreprise) {
+    return signalement.entreprise;
   }
   
   return `Entreprise #${signalement.id_entreprise}`;
@@ -603,10 +695,8 @@ const toggleFilter = () => {
 };
 
 const toggleStatutFilter = (statut) => {
-  // Empêcher la modification des filtres de statut si "Mes signalements uniquement" est actif
-  if (filters.value.mesSignalements) {
-    return;
-  }
+  // Permettre la modification des filtres de statut même si "Mes signalements uniquement" est actif
+  // car nous voulons que tous les filtres soient toujours cochés
   
   const index = filters.value.statuts.indexOf(statut);
   if (index > -1) {
@@ -622,9 +712,15 @@ const getStatutCount = (statutName) => {
   ).length;
 };
 
+const getStatsByStatus = (statutName) => {
+  return (signalementsStore.signalements || []).filter(sig => 
+    getCurrentStatus(sig) === statutName
+  ).length;
+};
+
 const resetFilters = () => {
   filters.value = {
-    statuts: ['Nouveau', 'En attente', 'En cours', 'En validation', 'Validé', 'Terminé'], // Tous les statuts par défaut
+    statuts: statuts.value.map(s => s.nom), // Utiliser les statuts du backend
     mesSignalements: false
   };
 };
@@ -653,7 +749,12 @@ const toggleMySignalements = async () => {
     await alert.present();
     return;
   }
+  
+  // Inverser l'état du filtre
   filters.value.mesSignalements = !filters.value.mesSignalements;
+  
+  // Garder tous les statuts cochés par défaut (ne pas vider les filtres de statut)
+  // Les filtres de statut restent toujours cochés
 };
 
 const handleMesSignalementsChange = async () => {
@@ -672,13 +773,8 @@ const handleMesSignalementsChange = async () => {
   // Inverser l'état du filtre
   filters.value.mesSignalements = !filters.value.mesSignalements;
   
-  // Si "Mes signalements uniquement" est activé, vider les filtres de statut
-  if (filters.value.mesSignalements) {
-    filters.value.statuts = [];
-  } else {
-    // Sinon, réinitialiser tous les statuts
-    filters.value.statuts = ['Nouveau', 'En attente', 'En cours', 'En validation', 'Validé', 'Terminé'];
-  }
+  // Garder tous les statuts cochés par défaut (ne pas vider les filtres de statut)
+  // Les filtres de statut restent toujours cochés
 };
 
 const viewPhoto = async (photo) => {
@@ -730,6 +826,11 @@ onMounted(async () => {
   
   onUnmounted(() => {
     clearInterval(interval);
+    // Nettoyer les marqueurs et la carte
+    clearAllMarkers();
+    if (map.value?.leafletObject) {
+      map.value.leafletObject.remove();
+    }
   });
   
   // Initialiser l'authentification depuis localStorage
@@ -738,8 +839,14 @@ onMounted(async () => {
   // Vérifier l'authentification au montage
   await authStore.checkAuth();
   
+  // Charger les statuts du backend
+  await signalementsStore.fetchStatuts();
+  
   // Gérer les query parameters pour focus sur un signalement
   handleSignalementFocus();
+  
+  // Optimiser la mémoire périodiquement
+  setInterval(cleanupMarkers, 30000); // Nettoyer toutes les 30 secondes
 });
 
 </script>
@@ -751,6 +858,22 @@ onMounted(async () => {
   position: absolute;
   top: 0;
   left: 0;
+  z-index: 1;
+}
+
+/* Ensure map container receives clicks */
+.map-container .leaflet-container {
+  z-index: 1;
+  pointer-events: auto;
+}
+
+/* Fix for Ionic content overlay */
+ion-content {
+  --background: transparent;
+}
+
+ion-content::part(scroll) {
+  z-index: 0;
 }
 
 /* Statistics improvements */

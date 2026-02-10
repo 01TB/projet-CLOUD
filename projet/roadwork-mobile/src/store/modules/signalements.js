@@ -7,13 +7,7 @@ export const useSignalementsStore = defineStore('signalements', {
     signalements: [],
     currentSignalement: null,
     mySignalements: [],
-    statuts: [
-      { id: "statut1", nom: "En attente", valeur: 0 },
-      { id: "statut2", nom: "En cours", valeur: 25 },
-      { id: "statut3", nom: "En validation", valeur: 50 },
-      { id: "statut4", nom: "Validé", valeur: 75 },
-      { id: "statut5", nom: "Terminé", valeur: 100 }
-    ],
+    statuts: [], // Sera initialisé avec les données du backend
     stats: {
       total_signalements: 0,
       total_surface: 0,
@@ -33,7 +27,12 @@ export const useSignalementsStore = defineStore('signalements', {
       try {
         const result = await signalementService.getSignalementsPaginated(page, limit, filters);
         if (result.success) {
-          this.signalements = result.data;
+          // Lazy loading: ajouter les nouveaux signalements sans remplacer les anciens
+          if (page === 1) {
+            this.signalements = result.data;
+          } else {
+            this.signalements.push(...result.data);
+          }
           this.pagination = result.pagination;
           this.calculateStats(); // Calculer les stats après le fetch
         }
@@ -246,27 +245,13 @@ export const useSignalementsStore = defineStore('signalements', {
         if (result.success && result.data && result.data.length > 0) {
           this.statuts = result.data;
         } else {
-          // Statuts par défaut si l'API ne retourne rien
-          this.statuts = [
-            { id: "statut1", nom: "En attente", valeur: 0 },
-            { id: "statut2", nom: "En cours", valeur: 25 },
-            { id: "statut3", nom: "En validation", valeur: 50 },
-            { id: "statut4", nom: "Validé", valeur: 75 },
-            { id: "statut5", nom: "Terminé", valeur: 100 }
-          ];
+          // Garder le tableau vide si l'API ne retourne rien
+          this.statuts = [];
         }
       } catch (error) {
         console.error('Error fetching statuts:', error);
-        // Statuts par défaut en cas d'erreur
-        this.statuts = [
-          { id: "statut1", nom: "En attente", valeur: 0 },
-          { id: "statut2", nom: "En cours", valeur: 25 },
-          { id: "statut3", nom: "En validation", valeur: 50 },
-          { id: "statut4", nom: "Validé", valeur: 75 },
-          { id: "statut5", nom: "Terminé", valeur: 100 }
-        ];
-      } finally {
-        this.loading = false;
+        // Garder le tableau vide en cas d'erreur
+        this.statuts = [];
       }
     }
   }

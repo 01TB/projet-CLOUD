@@ -1,10 +1,12 @@
 import { defineStore } from 'pinia';
 import AuthService from '@/services/auth';
+import { nextTick } from 'vue';
 
 export const useAuthStore = defineStore('auth', {
   state: () => {
     const idToken = localStorage.getItem('idToken');
     const token = localStorage.getItem('token');
+    const isVisitor = localStorage.getItem('isVisitor') === 'true';
     
     // Ne stocker que les tokens valides (non "undefined" et non null)
     const validIdToken = (idToken && idToken !== 'undefined') ? idToken : null;
@@ -15,6 +17,7 @@ export const useAuthStore = defineStore('auth', {
       token: validIdToken || validToken || null,
       idToken: validIdToken || null,
       isAuthenticated: false,
+      isVisitor: isVisitor,
       loading: false,
       error: null
     };
@@ -34,10 +37,25 @@ export const useAuthStore = defineStore('auth', {
           this.token = result.token || result.idToken; // Utiliser le token retourné par le service
           this.idToken = result.idToken || result.token;
           this.isAuthenticated = true;
+          this.isVisitor = false; // S'assurer que le mode visiteur est désactivé
           
           localStorage.setItem('token', this.token);
           localStorage.setItem('idToken', this.idToken);
           localStorage.setItem('user', JSON.stringify(result.user));
+          localStorage.removeItem('isVisitor'); // Nettoyer le mode visiteur
+          
+          // Générer le FCM Token après connexion réussie (avec nextTick pour éviter les problèmes de lifecycle)
+          nextTick(async () => {
+            try {
+              // Import dynamique pour éviter les problèmes de lifecycle
+              const { useNotifications } = await import('@/composables/useNotifications');
+              const { generateFcmToken } = useNotifications();
+              await generateFcmToken();
+              console.log(' FCM Token généré et envoyé après connexion');
+            } catch (error) {
+              console.warn(' Erreur génération FCM Token après connexion:', error);
+            }
+          });
           
           return { success: true, user: result.user };
         } else {
@@ -66,10 +84,25 @@ export const useAuthStore = defineStore('auth', {
           this.token = result.token || result.idToken;
           this.idToken = result.idToken || result.token;
           this.isAuthenticated = true;
+          this.isVisitor = false; // S'assurer que le mode visiteur est désactivé
           
           localStorage.setItem('token', this.token);
           localStorage.setItem('idToken', this.idToken);
           localStorage.setItem('user', JSON.stringify(result.user));
+          localStorage.removeItem('isVisitor'); // Nettoyer le mode visiteur
+          
+          // Générer le FCM Token après inscription réussie (avec nextTick pour éviter les problèmes de lifecycle)
+          nextTick(async () => {
+            try {
+              // Import dynamique pour éviter les problèmes de lifecycle
+              const { useNotifications } = await import('@/composables/useNotifications');
+              const { generateFcmToken } = useNotifications();
+              await generateFcmToken();
+              console.log(' FCM Token généré et envoyé après inscription');
+            } catch (error) {
+              console.warn(' Erreur génération FCM Token après inscription:', error);
+            }
+          });
           
           return { success: true, user: result.user };
         } else {
@@ -97,12 +130,15 @@ export const useAuthStore = defineStore('auth', {
       this.token = null;
       this.idToken = null;
       this.isAuthenticated = false;
+      this.isVisitor = false;
       this.error = null;
       
       // Nettoyer le localStorage
       localStorage.removeItem('token');
       localStorage.removeItem('idToken');
       localStorage.removeItem('user');
+      localStorage.removeItem('fcmToken'); // Nettoyer aussi le FCM token
+      localStorage.removeItem('isVisitor'); // Nettoyer aussi le mode visiteur
     },
 
     async checkAuth() {
@@ -139,6 +175,7 @@ export const useAuthStore = defineStore('auth', {
       const idToken = localStorage.getItem('idToken');
       const token = localStorage.getItem('token');
       const userStr = localStorage.getItem('user');
+      const isVisitor = localStorage.getItem('isVisitor') === 'true';
       
       // Nettoyer les tokens invalides
       if (idToken === 'undefined') localStorage.removeItem('idToken');
@@ -153,20 +190,40 @@ export const useAuthStore = defineStore('auth', {
           this.token = validToken;
           this.idToken = (idToken && idToken !== 'undefined') ? idToken : null;
           this.isAuthenticated = true;
+          this.isVisitor = false;
           console.log('Auth initialized from localStorage:', {
             user: this.user,
             hasToken: !!this.token,
             hasIdToken: !!this.idToken,
-            tokenValue: this.token
+            tokenValue: this.token,
+            isVisitor: false
           });
         } catch (error) {
           console.error('Error parsing user from localStorage:', error);
           this.logout();
         }
+      } else if (isVisitor) {
+        // Mode visiteur
+        this.isVisitor = true;
+        console.log('Visitor mode initialized:', { isVisitor: true });
       } else {
         // Nettoyer les données invalides
         this.logout();
       }
+    },
+
+    // Activer le mode visiteur
+    enableVisitorMode() {
+      this.isVisitor = true;
+      localStorage.setItem('isVisitor', 'true');
+      console.log('👋 Mode visiteur activé');
+    },
+
+    // Désactiver le mode visiteur
+    disableVisitorMode() {
+      this.isVisitor = false;
+      localStorage.removeItem('isVisitor');
+      console.log('👤 Mode visiteur désactivé');
     }
   },
 
@@ -174,7 +231,6 @@ export const useAuthStore = defineStore('auth', {
     isLoggedIn: (state) => state.isAuthenticated,
     isManager: (state) => state.user?.role === 1,
     isUser: (state) => state.user?.role === 2,
-    isVisitor: (state) => !state.isAuthenticated || state.user?.role === 3,
-    userName: (state) => state.user?.email?.split('@')[0] || 'Utilisateur'
+    userName: (state) => state.user?.email?.split('@')[0] || 'Visiteur'
   }
 });

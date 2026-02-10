@@ -3,6 +3,7 @@ import { getMessaging, getToken, onMessage } from 'firebase/messaging'
 import { initializeApp } from 'firebase/app'
 import { useAuthStore } from '@/store/modules/auth'
 import { notificationService } from '@/services/notifications'
+import '@/styles/notifications.css'
 
 // Configuration Firebase (REMPLACER AVEC VOS VRAIES CLÉS)
 const firebaseConfig = {
@@ -24,25 +25,26 @@ export function useNotifications() {
   const notifications = ref([])
   const isLoading = ref(false)
   const authStore = useAuthStore()
+  const isListenerActive = ref(false) // ← Flag pour éviter les activations multiples
 
   // Sauvegarder le token FCM dans le backend
-  const saveTokenToBackend = async (token) => {
+  const saveTokenToBackend = async (token, authToken) => {
     try {
-      // Vérifier si l'utilisateur est connecté et a un token
-      if (!authStore.token) {
+      // Vérifier si le token d'authentification est fourni
+      if (!authToken) {
         console.warn('❌ Aucun token d\'authentification disponible pour sauvegarder le token FCM')
         return false
       }
 
-      // Vérifier la connectivité avec le backend
-      const isConnected = await notificationService.checkBackendConnectivity()
+      // Vérifier la connectivité avec le backend (avec authentification)
+      const isConnected = await notificationService.checkBackendConnectivity(authToken)
       if (!isConnected) {
         console.warn('⚠️ Backend non accessible - token sauvegardé uniquement en local')
         return false
       }
 
       // Envoyer le token au backend avec authentification Bearer
-      const response = await notificationService.saveFcmToken(token, authStore.token)
+      const response = await notificationService.saveFcmToken(token, authToken)
       console.log('✅ Token FCM sauvegardé dans le backend:', response)
       return true
     } catch (error) {
@@ -54,59 +56,76 @@ export function useNotifications() {
     }
   }
 
-  // Demander la permission et obtenir le token
+  // Générer le FCM Token pour les utilisateurs authentifiés
+  const generateFcmToken = async () => {
+    try {
+      // Vérifier si l'utilisateur est authentifié
+      if (!authStore.isAuthenticated) {
+        console.warn('❌ Utilisateur non authentifié - Impossible de générer le FCM Token')
+        return null
+      }
+
+      // Vérifier si le token existe déjà
+      if (fcmToken.value) {
+        console.log('ℹ️ FCM Token déjà existant:', fcmToken.value)
+        return fcmToken.value
+      }
+
+      // Demander la permission si nécessaire
+      if (notificationPermission.value !== 'granted') {
+        const permission = await Notification.requestPermission()
+        notificationPermission.value = permission
+        
+        if (permission !== 'granted') {
+          console.warn('❌ Permission notification refusée')
+          return null
+        }
+      }
+
+      // Activer l'écouteur des messages
+      setupMessageListener()
+
+      // Générer le token FCM
+      const token = await getToken(messaging, {
+        vapidKey: 'BJKuYKYqZr4v8azAGVTKeFiFR8DHlbsKE2spbhC4GEWIt50xqeSBSXopPw-siBK--l4x0X4A6Tb4PlHlWYwtAN4'
+      })
+
+      if (token) {
+        fcmToken.value = token
+        localStorage.setItem('fcmToken', token)
+        console.log('🔑 FCM Token généré:', token)
+        
+        // Envoyer le token au backend
+        await saveTokenToBackend(token, authStore.token)
+        
+        return token
+      }
+
+      return null
+    } catch (error) {
+      console.error('❌ Erreur génération FCM Token:', error)
+      return null
+    }
+  }
+
+  // Demander la permission et obtenir le token (déclenché par utilisateur)
   const requestPermission = async () => {
     try {
       isLoading.value = true
       
-      // Demander la permission de notification
-      const result = await navigator.permissions.query({ name: 'notifications' })
-      if (result.state === 'granted') {
-        notificationPermission.value = 'granted'
-        console.log('✅ Permission notification déjà accordée')
+      // Demander la permission de notification (doit être déclenché par utilisateur)
+      const permission = await Notification.requestPermission()
+      notificationPermission.value = permission
+      
+      if (permission === 'granted') {
+        console.log('✅ Permission notification accordée')
         
-        // Obtenir le token FCM
-        const token = await getToken(messaging, {
-          vapidKey: 'BJKuYKYqZr4v8azAGVTKeFiFR8DHlbsKE2spbhC4GEWIt50xqeSBSX' // remplacé
-        })
+        // Activer l'écoute des messages immédiatement
+        setupMessageListener()
         
-        if (token) {
-          fcmToken.value = token
-          console.log('🔑 Token FCM:', token)
-          
-          // Sauvegarder le token dans localStorage
-          localStorage.setItem('fcmToken', token)
-          
-          // Envoyer le token au backend pour sauvegarde
-          await saveTokenToBackend(token)
-        }
-      } else if (result.state === 'prompt') {
-        // Demander la permission
-        const permission = await Notification.requestPermission()
-        notificationPermission.value = permission
-        
-        if (permission === 'granted') {
-          console.log('✅ Permission notification accordée')
-          
-          // Obtenir le token FCM
-          const token = await getToken(messaging, {
-            vapidKey: 'BJKuYKYqZr4v8azAGVTKeFiFR8DHlbsKE2spbhC4GEWIt50xqeSBSX' // À remplacer avec votre vraie clé VAPID
-          })
-          
-          if (token) {
-            fcmToken.value = token
-            console.log('🔑 Token FCM:', token)
-            
-            // Sauvegarder le token dans localStorage
-            localStorage.setItem('fcmToken', token)
-            
-            // Envoyer le token au backend pour sauvegarde
-            await saveTokenToBackend(token)
-          }
-        } else {
-          console.warn('❌ Permission notification refusée')
-          notificationPermission.value = 'denied'
-        }
+        // NE PAS générer le token FCM ici
+        // Le token sera généré UNIQUEMENT lors de la connexion dans le store d'authentification
+        console.log('ℹ️ Permission accordée - Token FCM sera généré lors de la connexion')
       } else {
         console.warn('❌ Permission notification refusée')
         notificationPermission.value = 'denied'
@@ -119,8 +138,33 @@ export function useNotifications() {
     }
   }
 
+  // Vérifier la permission actuelle sans la demander
+  const checkPermission = async () => {
+    try {
+      const result = await navigator.permissions.query({ name: 'notifications' })
+      notificationPermission.value = result.state
+      
+      if (result.state === 'granted') {
+        console.log('✅ Permission notification déjà accordée')
+        
+        // Activer l'écoute des messages si permission accordée
+        setupMessageListener()
+      }
+    } catch (error) {
+      console.error('❌ Erreur vérification permission:', error)
+      notificationPermission.value = 'default'
+    }
+  }
+
   // Écouter les messages au premier plan
   const setupMessageListener = () => {
+    // Éviter d'activer l'écouteur plusieurs fois
+    if (isListenerActive.value) {
+      console.log('⚠️ Écouteur déjà actif, activation ignorée')
+      return
+    }
+    
+    console.log('🔧 Activation de l\'écouteur de messages Firebase...')
     const unsubscribe = onMessage(messaging, (payload) => {
       console.log('📨 Notification reçue au premier plan:', payload)
       
@@ -134,8 +178,17 @@ export function useNotifications() {
         read: false
       }
       
+      console.log('📝 Notification créée:', notification)
+      console.log('📝 Notifications actuelles avant ajout:', notifications.value.length)
+      
       // Ajouter à la liste des notifications
       notifications.value.unshift(notification)
+      
+      // Persister dans localStorage avec debounce
+      debouncedSaveNotifications()
+      
+      console.log('📝 Notifications après ajout:', notifications.value.length)
+      console.log('📝 Liste complète:', notifications.value)
       
       // Limiter à 50 notifications max
       if (notifications.value.length > 50) {
@@ -149,6 +202,8 @@ export function useNotifications() {
       }
     })
     
+    isListenerActive.value = true
+    console.log('✅ Écouteur de messages Firebase activé avec succès')
     return unsubscribe
   }
 
@@ -171,9 +226,46 @@ export function useNotifications() {
     
     // Auto-suppression après 5 secondes
     setTimeout(() => {
-      toast.classList.remove('show')
-      setTimeout(() => document.body.removeChild(toast), 300)
+      toast.classList.add('hide')
+      setTimeout(() => {
+        if (document.body.contains(toast)) {
+          document.body.removeChild(toast)
+        }
+      }, 300)
     }, 5000)
+  }
+
+  // Fonction de sauvegarde optimisée avec debounce
+  let saveTimeout = null;
+  const debouncedSaveNotifications = () => {
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => {
+      saveNotificationsToStorage();
+    }, 1000); // Attendre 1 seconde avant de sauvegarder
+  };
+
+  // Persister les notifications dans localStorage
+  const saveNotificationsToStorage = () => {
+    try {
+      localStorage.setItem('notifications', JSON.stringify(notifications.value));
+      console.log('💾 Notifications sauvegardées dans localStorage')
+    } catch (error) {
+      console.error('❌ Erreur sauvegarde notifications:', error)
+    }
+  }
+
+  // Charger les notifications depuis localStorage
+  const loadNotificationsFromStorage = () => {
+    try {
+      const saved = localStorage.getItem('notifications')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        notifications.value = parsed
+        console.log('📂 Notifications chargées depuis localStorage:', parsed.length)
+      }
+    } catch (error) {
+      console.error('❌ Erreur chargement notifications:', error)
+    }
   }
 
   // Marquer une notification comme lue
@@ -181,6 +273,8 @@ export function useNotifications() {
     const notification = notifications.value.find(n => n.id === notificationId)
     if (notification) {
       notification.read = true
+      debouncedSaveNotifications()
+      console.log('📖 Notification marquée comme lue:', notificationId)
     }
   }
 
@@ -189,12 +283,34 @@ export function useNotifications() {
     const index = notifications.value.findIndex(n => n.id === notificationId)
     if (index > -1) {
       notifications.value.splice(index, 1)
+      debouncedSaveNotifications()
+      console.log('🗑️ Notification supprimée:', notificationId)
     }
   }
 
   // Vider toutes les notifications
   const clearAllNotifications = () => {
     notifications.value = []
+    debouncedSaveNotifications()
+    console.log('🗑️ Toutes les notifications supprimées')
+  }
+
+  // Supprimer le FCM Token localement (déconnexion)
+  const removeFcmToken = async () => {
+    try {
+      // NE PAS supprimer le token du backend, seulement le token local
+      // Le backend doit conserver le token pour les futures sessions
+      
+      // Nettoyer le token local uniquement
+      fcmToken.value = null
+      localStorage.removeItem('fcmToken')
+      
+      console.log('🗑️ FCM Token supprimé localement (backend conservé)')
+      return true
+    } catch (error) {
+      console.error('❌ Erreur suppression locale FCM Token:', error)
+      throw error
+    }
   }
 
   // Compteur de notifications non lues
@@ -204,18 +320,19 @@ export function useNotifications() {
 
   // Initialiser au montage
   onMounted(async () => {
-    // Vérifier la permission actuelle
-    const permissionResult = await navigator.permissions.query({ name: 'notifications' })
-    notificationPermission.value = permissionResult.state
+    // Charger les notifications depuis localStorage
+    loadNotificationsFromStorage()
     
-    // Récupérer le token sauvegardé
-    const savedToken = localStorage.getItem('fcmToken')
-    if (savedToken) {
-      fcmToken.value = savedToken
-    }
+    // Vérifier la permission actuelle sans la demander
+    await checkPermission()
     
-    // Si permission déjà accordée, configurer l'écoute
-    if (permissionResult.state === 'granted') {
+    // NE PAS générer automatiquement le token FCM ici
+    // Le token sera généré uniquement lors de la connexion/inscription
+    // dans le store d'authentification
+    
+    // Activer l'écoute des messages si permission accordée
+    // (même sans token FCM pour les visiteurs)
+    if (notificationPermission.value === 'granted') {
       setupMessageListener()
     }
   })
@@ -227,9 +344,12 @@ export function useNotifications() {
     isLoading,
     unreadCount,
     requestPermission,
+    checkPermission,
     markAsRead,
     removeNotification,
-    clearAllNotifications
+    clearAllNotifications,
+    removeFcmToken,
+    generateFcmToken
   }
 }
 

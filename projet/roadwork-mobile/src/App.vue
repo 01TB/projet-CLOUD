@@ -22,39 +22,17 @@
           
           <ion-item button @click="navigateTo('/map')" class="menu-item">
             <ion-icon :icon="map" slot="start" class="menu-icon"></ion-icon>
-            <ion-note slot="end" color="medium">Carte</ion-note>
+            <ion-label slot="end" color="medium">Carte</ion-label>
           </ion-item>
           
           <ion-item button @click="navigateTo('/signalements')" class="menu-item">
             <ion-icon :icon="list" slot="start" class="menu-icon"></ion-icon>
-            <ion-note slot="end" color="medium">Signalements</ion-note>
+            <ion-label slot="end" color="medium">Signalements</ion-label>
           </ion-item>
           
           <ion-item button @click="navigateTo('/stats')" class="menu-item">
             <ion-icon :icon="barChart" slot="start" class="menu-icon"></ion-icon>
-            <ion-note slot="end" color="medium">Statistiques</ion-note>
-          </ion-item>
-          
-          <ion-item button @click="navigateTo('/profile')" class="menu-item" v-if="isAuthenticated">
-            <ion-icon :icon="person" slot="start" class="menu-icon"></ion-icon>
-            <ion-note slot="end" color="medium">Mon compte</ion-note>
-          </ion-item>
-        </ion-list>
-        
-        <!-- Notifications -->
-        <ion-list class="nav-section" v-if="isAuthenticated">
-          <ion-list-header>
-            <ion-label class="section-title">Notifications</ion-label>
-          </ion-list-header>
-          
-          <ion-item button @click="openNotifications" class="menu-item notification-item">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <ion-icon :icon="notificationsOutline" slot="start" class="menu-icon"></ion-icon>
-              <ion-note slot="end" color="medium">Mes notifications</ion-note>
-              <ion-badge v-if="unreadCount > 0" color="danger" class="notification-badge">
-                {{ unreadCount > 99 ? '99+' : unreadCount }}
-              </ion-badge>
-            </div>
+            <ion-label slot="end" color="medium">Statistiques</ion-label>
           </ion-item>
         </ion-list>
         
@@ -64,22 +42,41 @@
         <!-- Section authentification -->
         <ion-list class="auth-section">
           <ion-list-header>
-            <ion-label class="section-title">Compte</ion-label>
+            <ion-label class="section-title">Utilisateur</ion-label>
           </ion-list-header>
           
           <ion-item button @click="navigateTo('/login')" class="menu-item auth-item" v-if="!isAuthenticated">
             <ion-icon :icon="logIn" slot="start" class="menu-icon auth-icon"></ion-icon>
-            <ion-chip slot="end" color="primary" outline>Se connecter</ion-chip>
+            <ion-chip slot="start" color="primary" outline>Se connecter</ion-chip>
           </ion-item>
           
           <ion-item button @click="navigateTo('/register')" class="menu-item auth-item" v-if="!isAuthenticated">
             <ion-icon :icon="personAdd" slot="start" class="menu-icon auth-icon"></ion-icon>
-            <ion-chip slot="end" color="success" outline>S'inscrire</ion-chip>
+            <ion-chip slot="start" color="success" outline>S'inscrire</ion-chip>
+          </ion-item>
+
+          
+          <ion-item button @click="navigateTo('/profile')" class="menu-item" v-if="isAuthenticated">
+            <ion-icon :icon="person" slot="start" class="menu-icon"></ion-icon>
+            <ion-label slot="end" color="medium">Mon compte</ion-label>
+          </ion-item>
+          
+          <ion-item button @click="openNotifications" class="menu-item" v-if="isAuthenticated">
+            <ion-icon :icon="notificationsOutline" slot="start" class="menu-icon"></ion-icon>
+            <ion-label slot="end" color="medium">Mes notifications</ion-label>
+            <ion-badge 
+              v-if="unreadCount > 0" 
+              color="danger" 
+              slot="end"
+              :key="`badge-${unreadCount}-${Date.now()}`"
+            >
+              {{ unreadCount > 99 ? '99+' : unreadCount }}
+            </ion-badge>
           </ion-item>
           
           <ion-item button @click="logout" class="menu-item logout-item" v-if="isAuthenticated">
             <ion-icon :icon="logOut" slot="start" class="menu-icon logout-icon"></ion-icon>
-            <ion-note slot="end" color="danger">Quitter</ion-note>
+            <ion-label slot="end" color="danger">Quitter</ion-label>
           </ion-item>
         </ion-list>
         
@@ -108,6 +105,7 @@
     <!-- Notifications Modal -->
     <NotificationsModal 
       :is-open="notificationsOpen" 
+      :key="notifications.length"
       @dismiss="closeNotifications" 
     />
   </ion-app>
@@ -285,10 +283,10 @@ ion-content {
 }
 
 .menu-item:hover {
-  --background: rgba(255, 255, 255, 1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transform: translateY(-1px);
-  border-color: rgba(49, 130, 206, 0.3);
+  --background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transform: none;
+  border-color: rgba(226, 232, 240, 0.8);
 }
 
 .menu-item:active {
@@ -313,15 +311,22 @@ ion-content {
   font-weight: 400;
 }
 
-/* Auth items */
-.auth-item {
-  --background: linear-gradient(135deg, rgba(49, 130, 206, 0.05) 0%, rgba(49, 130, 206, 0.02) 100%);
-  border-color: rgba(49, 130, 206, 0.2);
+.menu-item ion-badge[color="danger"] {
+  background: #ef4444;
+  color: white;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  min-width: 20px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
 }
 
-.auth-item:hover {
-  --background: linear-gradient(135deg, rgba(49, 130, 206, 0.1) 0%, rgba(49, 130, 206, 0.05) 100%);
-  border-color: rgba(49, 130, 206, 0.4);
+/* Auth items */
+.auth-item {
+  --background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(226, 232, 240, 0.8);
 }
 
 .auth-icon {
@@ -329,13 +334,8 @@ ion-content {
 }
 
 .logout-item {
-  --background: linear-gradient(135deg, rgba(229, 62, 62, 0.05) 0%, rgba(229, 62, 62, 0.02) 100%);
-  border-color: rgba(229, 62, 62, 0.2);
-}
-
-.logout-item:hover {
-  --background: linear-gradient(135deg, rgba(229, 62, 62, 0.1) 0%, rgba(229, 62, 62, 0.05) 100%);
-  border-color: rgba(229, 62, 62, 0.4);
+  --background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(226, 232, 240, 0.8);
 }
 
 .logout-icon {
@@ -365,31 +365,31 @@ ion-content {
   transition: all 0.2s ease;
   min-height: 56px;
   border: 1px solid rgba(226, 232, 240, 0.8);
+  position: relative;
 }
 
 .notification-item:hover {
-  --background: rgba(255, 255, 255, 1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transform: translateY(-1px);
-  border-color: rgba(49, 130, 206, 0.3);
+  --background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transform: none;
+  border-color: rgba(226, 232, 240, 0.8);
 }
 
-.notification-badge {
-  position: absolute;
-  top: -8px;
-  right: -8px;
+.notification-item ion-label {
+  color: #2d3748 !important;
+  font-weight: 500;
+}
+
+.notification-item ion-badge {
   background: #ef4444;
   color: white;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: bold;
-  border: 2px solid white;
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  min-width: 20px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
 }
 
 /* Menu footer */
@@ -627,6 +627,129 @@ ion-list-header ion-label {
   .menu-footer {
     border-top-color: rgba(74, 85, 104, 0.8);
   }
+}
+
+/* Unified header styling - matching side-bar */
+ion-header {
+  --background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
+  --color: white;
+  --border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+ion-header ion-toolbar {
+  --background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
+  --color: white;
+}
+
+ion-header ion-title {
+  --color: white !important;
+  font-weight: 600;
+}
+
+ion-header ion-button {
+  --color: white;
+}
+
+ion-header ion-icon {
+  color: white;
+}
+
+/* Map page specific header */
+ion-page ion-header {
+  --background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
+  --color: white;
+}
+
+ion-page ion-header ion-toolbar {
+  --background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
+  --color: white;
+}
+
+/* List page specific header */
+ion-list-header {
+  --background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
+  --color: white !important;
+  font-weight: 600;
+}
+
+/* Filter modal header */
+ion-modal ion-header {
+  --background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
+  --color: white;
+  --border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+ion-modal ion-toolbar {
+  --background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
+  --color: white;
+}
+
+ion-modal ion-title {
+  --color: white !important;
+  font-weight: 600;
+}
+
+/* Filter content background */
+ion-modal ion-content {
+  --background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+}
+
+ion-modal ion-list {
+  background: transparent;
+}
+
+ion-modal ion-item {
+  --background: rgba(255, 255, 255, 0.9);
+  --color: #2d3748;
+  --border-color: rgba(226, 232, 240, 0.8);
+  --border-radius: 12px;
+  margin-bottom: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+ion-modal ion-item:hover {
+  --background: rgba(255, 255, 255, 1);
+  --border-color: rgba(49, 130, 206, 0.3);
+}
+
+ion-modal ion-label {
+  --color: #2d3748 !important;
+  font-weight: 500;
+}
+
+ion-modal ion-checkbox {
+  --background: rgba(255, 255, 255, 0.8);
+  --border-color: rgba(226, 232, 240, 0.8);
+  --checkmark-color: #3182ce;
+}
+
+ion-modal ion-checkbox:checked {
+  --background: rgba(49, 130, 206, 0.8);
+  --border-color: #3182ce;
+}
+
+ion-modal ion-badge {
+  --background: #3182ce;
+  --color: white;
+}
+
+ion-modal ion-spinner {
+  --color: #3182ce;
+}
+
+ion-modal ion-note {
+  --color: #718096 !important;
+}
+
+ion-modal ion-chip {
+  --background: rgba(49, 130, 206, 0.1);
+  --color: #3182ce;
+  --border-color: rgba(49, 130, 206, 0.3);
+}
+
+ion-modal ion-footer {
+  --background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+  --border-top: 1px solid rgba(226, 232, 240, 0.8);
 }
 
 /* Animation improvements */

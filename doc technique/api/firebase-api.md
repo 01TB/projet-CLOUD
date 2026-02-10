@@ -665,10 +665,8 @@ Cette documentation décrit les endpoints REST API déployés sur Firebase Cloud
 
 - `description` (string, optionnel) : Description du signalement
 - `surface` (number, requis) : Surface en m² (> 0)
-- `budget` (number, requis) : Budget en Ariary (> 0)
 - `adresse` (string, optionnel) : Adresse textuelle
 - `localisation` (object, requis) : Coordonnées GPS [longitude, latitude]
-- `id_entreprise` (string, optionnel) : ID de l'entreprise assignée
 
 **Réponse succès (201)** :
 
